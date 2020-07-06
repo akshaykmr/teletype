@@ -28,28 +28,8 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`oorja hello [FILE]`](#oorja-hello-file)
 * [`oorja help [COMMAND]`](#oorja-help-command)
-
-## `oorja hello [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ oorja hello [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-
-EXAMPLE
-  $ oorja hello
-  hello world from ./src/hello.ts!
-```
-
-_See code: [src/commands/hello.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.0.0/src/commands/hello.ts)_
+* [`oorja teletype [ROOM]`](#oorja-teletype-room)
 
 ## `oorja help [COMMAND]`
 
@@ -67,4 +47,32 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
+
+## `oorja teletype [ROOM]`
+
+launch a terminal streaming session in oorja.
+
+```
+USAGE
+  $ oorja teletype [ROOM]
+
+OPTIONS
+  -h, --help         show CLI help
+  -m, --multiplex    allows room users to WRITE TO YOUR SHELL. Can be helpful or painful. Off by default
+  -s, --shell=shell  [default: /usr/bin/fish] shell to use. e.g. bash, fish
+
+EXAMPLES
+  $ oorja teletype
+  will prompt to choose streaming destination - existing room or create a new one.
+
+
+  $ oorja teletype https://oorja.io/rooms?id=foo
+  will stream to the room specified by secret link, you must have joined the room before streaming.
+
+
+  $ oorja teletype -m https://oorja.io/rooms?id=foo
+  Will also allow room participants to write to your terminal!
+```
+
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.0.0/src/commands/teletype/index.ts)_
 <!-- commandsstop -->
