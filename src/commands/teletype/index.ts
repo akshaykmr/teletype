@@ -15,6 +15,7 @@ const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
 )}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`;
 
 export default class TeleType extends Command {
+  static aliases = ['tty']
   static description = "launch a terminal streaming session in oorja.";
 
   static examples = [
@@ -56,9 +57,11 @@ Will also allow room participants to write to your terminal!
     } = this.parse(TeleType);
 
     if (args.room) {
-      const roomURL = this.parseLink(roomLink);
+      const roomURL = this.parseLink(args.room);
       return;
     }
+
+    console.log('(use -h for description and options) \n')
 
     // room not known, prompt
     const ROOM = "to an existing room (you have the room link)";
