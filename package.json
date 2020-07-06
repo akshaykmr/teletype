@@ -11,6 +11,7 @@
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
+    "prettier": "^2.0.5",
     "tslib": "^1"
   },
   "devDependencies": {
@@ -18,6 +19,11 @@
     "@types/node": "^10",
     "globby": "^10",
     "ts-node": "^8",
+    "tslint": "^6.1.1",
+    "tslint-config-airbnb": "^5.11.2",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.3.0",
+    "tslint-react": "^4.2.0",
     "typescript": "^3.3"
   },
   "engines": {
@@ -47,7 +53,10 @@
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "test": "echo NO TESTS",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "lint": "tslint -p ./tsconfig.json -t stylish",
+    "lint-fix": "tslint -p ./tsconfig.json -t stylish --fix",
+    "prettier": "prettier --write './**/*.{ts,tsx,js,css,html}'"
   },
   "types": "lib/index.d.ts"
 }
