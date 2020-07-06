@@ -116,6 +116,8 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
   });
 };
 
+// leaving specific types for later,
+// when there are more channel users
 export type JoinChannelOptions<T> = {
   channel: string;
   params: T;

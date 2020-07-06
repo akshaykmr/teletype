@@ -36,36 +36,34 @@ export const preflightChecks = async (env: env) => {
   const suryaConfig = getSuryaConfig(env);
   initializeSurya(suryaConfig);
 
-  return fetchCliManifest()
-    .then((manifest) => {
-      if (manifest.cliVersion > cliVersion) {
-        spinner.fail(
-          chalk.yellowBright(
-            "your oorja cli is outdated. please run: npm update -g oorja"
-          )
-        );
-        process.exit(1);
-      }
-    })
-    .then(async () => {
-      const user = await fetchSessionUser();
-      spinner.succeed(`authenticated: Welcome ${user.name}`);
-      spinner.start("establishing comms");
-      return establishSocket(suryaConfig)
-        .then(() => spinner.succeed())
-        .catch((e) => {
-          spinner.fail("socket connection failure..");
-          throw e;
-        });
-    })
-    .catch((e) => {
-      if (e instanceof Unauthorized) {
-        spinner.fail("Your access token failed authentication, resetting...");
-        setENVAccessToken(env, "");
-      } else {
-        spinner.fail("something went wrong :(");
-      }
-      throw e;
-      // process.exit(1);
-    });
+  try {
+    const manifest = await fetchCliManifest();
+    if (manifest.cliVersion > cliVersion) {
+      spinner.fail(
+        chalk.yellowBright(
+          "your oorja cli is outdated. please run: npm update -g oorja"
+        )
+      );
+      process.exit(1);
+    }
+
+    const user = await fetchSessionUser();
+    spinner.succeed(`authenticated: Welcome ${user.name}`);
+    spinner.start("establishing comms");
+    return establishSocket(suryaConfig)
+      .then(() => spinner.succeed())
+      .catch((e) => {
+        spinner.fail("socket connection failure..");
+        throw e;
+      });
+  } catch (e) {
+    if (e instanceof Unauthorized) {
+      spinner.fail("Your access token failed authentication, resetting...");
+      setENVAccessToken(env, "");
+    } else {
+      spinner.fail("something went wrong :(");
+    }
+    throw e;
+    // process.exit(1);
+  }
 };
