@@ -13,6 +13,7 @@
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
     "chalk": "^4.1.0",
+    "conf-cli": "^0.1.9",
     "enquirer": "^2.3.6",
     "prettier": "^2.0.5",
     "tslib": "^1"
@@ -30,7 +31,7 @@
     "typescript": "^3.3"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.4.0"
   },
   "files": [
     "/bin",
@@ -49,7 +50,8 @@
     "commands": "./lib/commands",
     "bin": "oorja",
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-help",
+      "conf-cli"
     ]
   },
   "repository": "akshaykmr/oorja-cli",
