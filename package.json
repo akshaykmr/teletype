@@ -9,6 +9,7 @@
   },
   "bugs": "https://github.com/akshaykmr/oorja-cli/issues",
   "dependencies": {
+    "@msgpack/msgpack": "^1.12.2",
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
@@ -18,12 +19,15 @@
     "conf-cli": "^0.1.9",
     "enquirer": "^2.3.6",
     "ora": "^4.0.4",
+    "phoenix": "1.5.3",
     "prettier": "^2.0.5",
-    "tslib": "^1"
+    "tslib": "^1",
+    "ws": "^7.3.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
     "@types/node": "^10",
+    "@types/phoenix": "1.4.2",
     "globby": "^10",
     "ts-node": "^8",
     "tslint": "^6.1.1",
@@ -67,5 +71,9 @@
     "lint-fix": "tslint -p ./tsconfig.json -t stylish --fix",
     "prettier": "prettier --write './**/*.{ts,tsx,js,css,html}'"
   },
-  "types": "lib/index.d.ts"
+  "types": "lib/index.d.ts",
+  "optionalDependencies": {
+    "bufferutil": "^4.0.1",
+    "utf-8-validate": "^5.0.2"
+  }
 }
