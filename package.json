@@ -4,13 +4,16 @@
   "version": "0.0.0",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
-    "oorja": "./bin/run"
+    "oorja": "./bin/run",
+    "teletype": "./bin run teletype"
   },
   "bugs": "https://github.com/akshaykmr/oorja-cli/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
+    "chalk": "^4.1.0",
+    "enquirer": "^2.3.6",
     "prettier": "^2.0.5",
     "tslib": "^1"
   },
@@ -37,7 +40,8 @@
   ],
   "homepage": "https://github.com/akshaykmr/oorja-cli",
   "keywords": [
-    "oclif"
+    "oorja",
+    "cli"
   ],
   "license": "SEE LICENSE IN license.txt",
   "main": "lib/index.js",
