@@ -1,3 +1,13 @@
+const WebSocket = require("ws");
+
+// smol HACK: it was all going so great :(
+// phoenix.js is built for the browser
+// to make it work on node, supply Websocket as global var
+global.window = {
+  WebSocket,
+};
+global.WebSocket = WebSocket
+
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { Socket, Channel, Presence } from "phoenix";
 import { encode, decode } from "@msgpack/msgpack";

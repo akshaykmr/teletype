@@ -2,9 +2,6 @@ import chalk = require("chalk");
 const { Input } = require("enquirer");
 const ora = require("ora");
 
-// it was all going so great :(
-import "./hackish-workaround";
-
 import {
   env,
   getSuryaConfig,
@@ -64,6 +61,5 @@ export const preflightChecks = async (env: env) => {
       spinner.fail("something went wrong :(");
     }
     throw e;
-    // process.exit(1);
   }
 };

@@ -4,7 +4,7 @@ import { Command, flags } from "@oclif/command";
 
 import * as os from "os";
 import * as chalk from "chalk";
-import { TeletypeOptions } from "../../lib/teletype";
+import { teletypeApp } from "../../lib/teletype";
 import {
   determineENV,
   ROOM_LINK_SAMPLE,
@@ -16,7 +16,7 @@ import { preflightChecks } from "../../lib/cli";
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
 
-export default class TeleType extends Command {
+export default class TeleTypeCommand extends Command {
   static aliases = ["tty"];
   static description = "launch a terminal streaming session in oorja.";
 
@@ -56,7 +56,7 @@ Will also allow room participants to write to your terminal!
     const {
       args,
       flags: { shell, multiplex },
-    } = this.parse(TeleType);
+    } = this.parse(TeleTypeCommand);
 
     if (args.room) {
       await this.stream(args.room, { shell, multiplex });
@@ -103,7 +103,8 @@ Will also allow room participants to write to your terminal!
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
     await this.setup(env);
-
+    const roomId = roomURL.searchParams.get!("id");
+    await teletypeApp({roomId, ...options})
     this.exit(0);
   }
 
@@ -113,7 +114,9 @@ Will also allow room participants to write to your terminal!
 
   private parseLink(roomLink: string) {
     try {
-      return new URL(roomLink);
+      const url = new URL(roomLink);
+      if (!url.searchParams.get('id')) throw "invalid";
+      return url;
     } catch {
       console.log(INVALID_ROOM_LINK_MESSAGE);
       process.exit(0);
