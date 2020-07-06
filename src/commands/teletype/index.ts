@@ -4,15 +4,12 @@ import { Command, flags } from "@oclif/command";
 
 import * as os from "os";
 import * as chalk from "chalk";
+import { TeletypeOptions } from '../../lib/teletype';
+import { determineENV, ROOM_LINK_SAMPLE, INVALID_ROOM_LINK_MESSAGE, env } from '../../lib/config';
+import { preflightChecks } from '../../lib/cli';
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
-
-const ROOM_LINK_SAMPLE = "https://oorja.io/rooms?id=foo";
-
-const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
-  "invalid url "
-)}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`;
 
 export default class TeleType extends Command {
   static aliases = ['tty']
@@ -23,11 +20,11 @@ export default class TeleType extends Command {
 will prompt to choose streaming destination - existing room or create a new one.
 
 `,
-    `${chalk.blueBright(`$ oorja teletype ${ROOM_LINK_SAMPLE}`)}
+    `${chalk.blueBright(`$ oorja teletype '${ROOM_LINK_SAMPLE}'`)}
 will stream to the room specified by secret link, you must have joined the room before streaming.
 
 `,
-    `${chalk.blueBright(`$ oorja teletype -m ${ROOM_LINK_SAMPLE}`)}
+    `${chalk.blueBright(`$ oorja teletype -m '${ROOM_LINK_SAMPLE}'`)}
 Will also allow room participants to write to your terminal!
 
 `,
@@ -57,7 +54,7 @@ Will also allow room participants to write to your terminal!
     } = this.parse(TeleType);
 
     if (args.room) {
-      const roomURL = this.parseLink(args.room);
+      this.stream(args.room, {shell, multiplex})
       return;
     }
 
@@ -83,15 +80,28 @@ Will also allow room participants to write to your terminal!
             })
               .run()
               .then((roomLink: string) => {
-                const roomURL = this.parseLink(roomLink);
+                this.stream(roomLink, {shell, multiplex})
               });
             break;
           case NEW:
             console.log(chalk.blue("coming soon"));
+            const env = determineENV()
+            console.log(env)
+            // setup env
             break;
         }
       })
       .catch(process.exit);
+  }
+
+  private stream(roomLink: string, options: {shell: string, multiplex: boolean}) {
+    const roomURL = this.parseLink(roomLink);
+    const env = determineENV(roomURL)
+    this.setup(env)
+  }
+
+  private setup(env: env) {
+    preflightChecks(env)
   }
 
   private parseLink(roomLink: string) {
