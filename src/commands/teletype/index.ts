@@ -60,7 +60,7 @@ Will also allow room participants to write to your terminal!
 
     if (args.room) {
       await this.stream(args.room, { shell, multiplex });
-      return
+      return;
     }
 
     console.log("(use -h for description and options) \n");
@@ -73,7 +73,7 @@ Will also allow room participants to write to your terminal!
         name: "",
         message: "Choose streaming destination",
         choices: [ROOM, NEW],
-      }).run()
+      }).run();
 
       switch (answer) {
         case ROOM:
@@ -81,18 +81,18 @@ Will also allow room participants to write to your terminal!
             name: "room secret link",
             message:
               "enter the room secret link. (copy browser url from an open room)",
-          }).run()
+          }).run();
           await this.stream(roomLink, { shell, multiplex });
           break;
         case NEW:
           console.log(chalk.blue("coming soon"));
           const env = determineENV();
-          await this.setup(env)
+          await this.setup(env);
           // setup env
           break;
       }
     } catch {
-      process.exit(100)
+      process.exit(100);
     }
   }
 
@@ -104,7 +104,7 @@ Will also allow room participants to write to your terminal!
     const env = determineENV(roomURL);
     await this.setup(env);
 
-    this.exit(0)
+    this.exit(0);
   }
 
   private async setup(env: env) {

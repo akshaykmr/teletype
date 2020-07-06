@@ -3,7 +3,7 @@ const { Input } = require("enquirer");
 const ora = require("ora");
 
 // it was all going so great :(
-import './hackish-workaround';
+import "./hackish-workaround";
 
 import {
   env,
@@ -50,10 +50,13 @@ export const preflightChecks = async (env: env) => {
     .then(async () => {
       const user = await fetchSessionUser();
       spinner.succeed(`authenticated: Welcome ${user.name}`);
-      spinner.start("establishing comms")
+      spinner.start("establishing comms");
       return establishSocket(suryaConfig)
-      .then(() => spinner.succeed())
-      .catch((e) => {spinner.fail("socket connection failure.."); throw e;})
+        .then(() => spinner.succeed())
+        .catch((e) => {
+          spinner.fail("socket connection failure..");
+          throw e;
+        });
     })
     .catch((e) => {
       if (e instanceof Unauthorized) {

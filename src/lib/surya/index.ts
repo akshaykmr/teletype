@@ -113,7 +113,7 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
       process.exit(2);
     });
     socket.connect();
-  })
+  });
 };
 
 export type JoinChannelOptions<T> = {
