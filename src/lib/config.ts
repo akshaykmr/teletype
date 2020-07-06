@@ -1,24 +1,35 @@
-import chalk = require('chalk');
+import chalk = require("chalk");
 
-const Conf = require('conf');
+const Conf = require("conf");
 export const config = new Conf();
 
-let SURYA_URL: string = '';
-let ACCESS_TOKEN: string = '';
+export type env = "staging" | "prod" | "local";
 
 export type SuryaConfig = {
   url: string;
   token: string;
-}
+  wsUrl: string;
+};
 
-export const getSuryaConfig = (): SuryaConfig => {
+export const getSuryaConfig = (env: env): SuryaConfig => {
+  const geturls = (env: env) => {
+    switch (env) {
+      case "staging":
+        return {
+          url: "https://surya-staging.oorja.io",
+          wsUrl: "wss://surya-staging.oorja.io",
+        };
+      case "local":
+        return { url: "http://localhost:4000", wsUrl: "ws://localhost:4000" };
+      case "prod":
+        return { url: "https://surya.oorja.io", wsUrl: "wss://surya.oorja.io" };
+    }
+  };
   return {
-    url: SURYA_URL,
-    token: ACCESS_TOKEN
-  }
-}
-
-export type env = "staging" | "prod" | "local"
+    ...geturls(env),
+    token: getENVAccessToken(env),
+  };
+};
 
 export const ROOM_LINK_SAMPLE = "https://oorja.io/rooms?id=foo";
 
@@ -27,36 +38,24 @@ export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
 )}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`;
 
 export const determineENV = (roomURL?: URL): env => {
-  if (!roomURL) return config.get("env") || "prod"
-  switch(roomURL.host) {
-    case "oorja.io": return "prod"
-    case "staging.oorja.io": return "staging"
-    case "localhost:3000": return "local"
+  if (!roomURL) return config.get("env") || "prod";
+  switch (roomURL.host) {
+    case "oorja.io":
+      return "prod";
+    case "staging.oorja.io":
+      return "staging";
+    case "localhost:3000":
+      return "local";
     default:
-      console.error(INVALID_ROOM_LINK_MESSAGE)
-      process.exit(1)
+      console.error(INVALID_ROOM_LINK_MESSAGE);
+      process.exit(1);
   }
-}
-
-export const setupENV = (env: env) => {
-  ACCESS_TOKEN = getENVAccessToken(env)
-  switch(env) {
-    case "staging":
-      SURYA_URL = 'https://surya-staging.oorja.io'
-      break;
-    case "local":
-      SURYA_URL = 'http://localhost:4000'
-      break;
-    case "prod":
-      SURYA_URL = 'https://surya.oorja.io'
-      break;
-  }
-}
+};
 
 export const getENVAccessToken = (env: env): string => {
-  return config.get(`${env}-access-token`)
-}
+  return config.get(`${env}-access-token`);
+};
 
 export const setENVAccessToken = (env: env, token: string) => {
-  config.set(`${env}-access-token`, token)
-}
+  config.set(`${env}-access-token`, token);
+};

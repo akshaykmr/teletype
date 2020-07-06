@@ -9,7 +9,6 @@ export type RoomApps = {
   appList: RoomApp[];
 };
 
-
 export type UserProfile = {
   id: string;
   name: string;
@@ -24,8 +23,8 @@ type ResourceTimestamps = {
 };
 
 export type CliManifest = {
-  cliVersion: number
-}
+  cliVersion: number;
+};
 
 export type User = UserProfile & ResourceTimestamps;
 
