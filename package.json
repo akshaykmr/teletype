@@ -18,9 +18,11 @@
     "chalk": "^4.1.0",
     "conf-cli": "^0.1.9",
     "enquirer": "^2.3.6",
+    "node-pty": "^0.9.0",
     "ora": "^4.0.4",
     "phoenix": "1.5.3",
     "prettier": "^2.0.5",
+    "term-size": "^2.2.0",
     "tslib": "^1",
     "ws": "^7.3.1"
   },
