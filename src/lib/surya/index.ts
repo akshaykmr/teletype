@@ -6,7 +6,7 @@ const WebSocket = require("ws");
 global.window = {
   WebSocket,
 };
-global.WebSocket = WebSocket
+global.WebSocket = WebSocket;
 
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { Socket, Channel, Presence } from "phoenix";

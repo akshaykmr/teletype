@@ -2,8 +2,6 @@ const { Select, Input } = require("enquirer");
 import { URL } from "url";
 import { Command, flags } from "@oclif/command";
 
-import { spawn } from "node-pty";
-
 import * as os from "os";
 import * as chalk from "chalk";
 import { teletypeApp } from "../../lib/teletype";
@@ -84,6 +82,7 @@ Will also allow room participants to write to your terminal!
             message:
               "enter the room secret link. (copy browser url from an open room)",
           }).run();
+          process.stdin.resume()  // TODO: investigate weird quirk. stdin hangs if this is not present
           await this.stream(roomLink, { shell, multiplex, process });
           break;
         case NEW:
@@ -100,13 +99,13 @@ Will also allow room participants to write to your terminal!
 
   private async stream(
     roomLink: string,
-    options: { shell: string; multiplex: boolean, process: NodeJS.Process }
+    options: { shell: string; multiplex: boolean; process: NodeJS.Process }
   ) {
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
     await this.setup(env);
     const roomId = roomURL.searchParams.get!("id");
-    await teletypeApp({roomId, ...options})
+    await teletypeApp({ roomId, ...options });
     this.exit(0);
   }
 
@@ -117,7 +116,7 @@ Will also allow room participants to write to your terminal!
   private parseLink(roomLink: string) {
     try {
       const url = new URL(roomLink);
-      if (!url.searchParams.get('id')) throw "invalid";
+      if (!url.searchParams.get("id")) throw "invalid";
       return url;
     } catch {
       console.log(INVALID_ROOM_LINK_MESSAGE);

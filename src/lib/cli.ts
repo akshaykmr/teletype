@@ -29,7 +29,10 @@ const promptForToken = (): Promise<string> => {
 export const preflightChecks = async (env: env) => {
   const token = getENVAccessToken(env) || (await promptForToken());
   setENVAccessToken(env, token);
-  const spinner = ora("authenticating").start();
+  const spinner = ora({
+    text: "authenticating",
+    discardStdin: false,
+  }).start();
   const suryaConfig = getSuryaConfig(env);
   initializeSurya(suryaConfig);
 
@@ -48,7 +51,7 @@ export const preflightChecks = async (env: env) => {
     spinner.succeed(`authenticated: Welcome ${user.name}`);
     spinner.start("establishing comms");
     return establishSocket(suryaConfig)
-      .then(() => spinner.succeed())
+      .then(() => spinner.succeed().clear())
       .catch((e) => {
         spinner.fail("socket connection failure..");
         throw e;

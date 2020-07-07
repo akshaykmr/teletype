@@ -1,16 +1,14 @@
-import { spawn } from "node-pty";
+import { spawn, IPty } from "node-pty";
 import * as os from "os";
 import * as termSize from "term-size";
 import * as chalk from "chalk";
-import { joinChannel } from './surya';
-import { Hash } from './surya/types';
-
-
+import { joinChannel } from "./surya";
+import { Hash } from "./surya/types";
 
 enum MessageType {
   IN = "i",
   OUT = "o",
-  DIMENSIONS = "d"
+  DIMENSIONS = "d",
 }
 
 export type TeletypeOptions = {
@@ -23,17 +21,29 @@ export type TeletypeOptions = {
 type dimensions = {
   rows: number;
   cols: number;
-}
-
+};
 
 const getDimensions = (): dimensions => {
-  const {rows, columns} =  termSize();
-  return {rows, cols: columns};
-}
+  const { rows, columns } = termSize();
+  return { rows, cols: columns };
+};
 
-const SELF = 'self';
+const areDimensionEqual = (a: dimensions, b: dimensions): boolean => {
+  return a.rows === b.rows && a.cols === b.cols;
+};
+
+const SELF = "self";
 const userDimensions: Hash<dimensions> = {};
 userDimensions[SELF] = getDimensions();
+
+const resizeBestFit = (term: IPty) => {
+  const allViewports = Object.values(userDimensions);
+  const minrows = Math.min(...allViewports.map((d) => d.rows));
+  const mincols = Math.min(...allViewports.map((d) => d.cols));
+  term.resize(mincols, minrows);
+};
+
+let term: IPty;
 
 export const teletypeApp = (config: TeletypeOptions) => {
   const username = os.userInfo().username;
@@ -44,30 +54,87 @@ export const teletypeApp = (config: TeletypeOptions) => {
       channel: `teletype:${config.roomId}`,
       params: {
         username,
-        hostname
+        hostname,
       },
       onJoin: () => {
         console.log(chalk.green("joined room channel"));
-        console.log(chalk.bold(chalk.blueBright("TeleType")))
-        console.log(chalk.blue(`${chalk.bold(`${username}@${hostname}`)} spawning streaming shell: ${chalk.bold(`${config.shell}`)}`));
-        console.log("note: The shell may resize for best view for all room participants.")
+        console.log(chalk.bold(chalk.blueBright("TeleType")));
+        console.log(
+          chalk.blue(
+            `${chalk.bold(
+              `${username}@${hostname}`
+            )} spawning streaming shell: ${chalk.bold(`${config.shell}`)}`
+          )
+        );
+        console.log(
+          "note: The shell may resize for best view for all room participants."
+        );
+
+        const stdin = config.process.stdin;
+        const stdout = config.process.stdout;
+
+        const dimensions = userDimensions[SELF];
+        term = spawn(config.shell, [], {
+          name: "xterm-color",
+          cols: dimensions.cols,
+          rows: dimensions.rows,
+          cwd: config.process.cwd(),
+          // @ts-ignore
+          env: config.process.env,
+        });
+
+        setInterval(() => {
+          // track own dimensions and keep it up to date
+          const lastKnown = userDimensions[SELF];
+          const latest = getDimensions();
+
+          if (areDimensionEqual(lastKnown, latest)) {
+            return;
+          }
+          userDimensions[SELF] = latest;
+          resizeBestFit(term);
+        }, 1000);
+
+        term.on("data", (d: string) => {
+          stdout.write(d);
+          // revisit: is it worth having one letter names, instead of something descriptive
+          // does it really save bytes?
+          channel.push("new_msg", { t: MessageType.OUT, d: d, b: true });
+        });
+        term.on("exit", () => {
+          console.log(
+            chalk.blueBright("terminated shell stream to oorja. byee!")
+          );
+          resolve();
+        });
+
+        stdin.setEncoding("utf8");
+        stdin.setRawMode!(true);
+        stdin.setEncoding("utf8");
+
+        stdin.on("data", (d) => term.write(d));
       },
       onClose: () => {
-        console.log("connection closed");
-        process.exit(3)
+        console.log(chalk.redBright("connection closed"));
+        process.exit(3);
       },
       onError: () => {
-        console.log("connection error")
+        console.log(chalk.redBright("connection error"));
         process.exit(4);
       },
-      onMessage: console.log,
+      onMessage: ({ from: { session }, t, d }) => {
+        switch (t) {
+          case "d":
+            userDimensions[session] = d;
+            resizeBestFit(term);
+            break;
+        }
+      },
       handleSessionJoin: (s) => {},
       handleSessionLeave: (s) => {
-        delete userDimensions[s]
-        // resize
+        delete userDimensions[s];
+        resizeBestFit(term);
       },
-    })
-  })
-}
-
-
+    });
+  });
+};
