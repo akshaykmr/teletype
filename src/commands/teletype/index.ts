@@ -82,7 +82,7 @@ Will also allow room participants to write to your terminal!
             message:
               "enter the room secret link. (copy browser url from an open room)",
           }).run();
-          process.stdin.resume()  // TODO: investigate weird quirk. stdin hangs if this is not present
+          process.stdin.resume(); // TODO: investigate weird quirk. stdin hangs if this is not present
           await this.stream(roomLink, { shell, multiplex, process });
           break;
         case NEW:
