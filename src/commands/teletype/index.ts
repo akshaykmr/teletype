@@ -2,6 +2,8 @@ const { Select, Input } = require("enquirer");
 import { URL } from "url";
 import { Command, flags } from "@oclif/command";
 
+import { spawn } from "node-pty";
+
 import * as os from "os";
 import * as chalk from "chalk";
 import { teletypeApp } from "../../lib/teletype";
@@ -59,7 +61,7 @@ Will also allow room participants to write to your terminal!
     } = this.parse(TeleTypeCommand);
 
     if (args.room) {
-      await this.stream(args.room, { shell, multiplex });
+      await this.stream(args.room, { shell, multiplex, process });
       return;
     }
 
@@ -82,7 +84,7 @@ Will also allow room participants to write to your terminal!
             message:
               "enter the room secret link. (copy browser url from an open room)",
           }).run();
-          await this.stream(roomLink, { shell, multiplex });
+          await this.stream(roomLink, { shell, multiplex, process });
           break;
         case NEW:
           console.log(chalk.blue("coming soon"));
@@ -98,7 +100,7 @@ Will also allow room participants to write to your terminal!
 
   private async stream(
     roomLink: string,
-    options: { shell: string; multiplex: boolean }
+    options: { shell: string; multiplex: boolean, process: NodeJS.Process }
   ) {
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);

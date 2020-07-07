@@ -5,10 +5,19 @@ import * as chalk from "chalk";
 import { joinChannel } from './surya';
 import { Hash } from './surya/types';
 
+
+
+enum MessageType {
+  IN = "i",
+  OUT = "o",
+  DIMENSIONS = "d"
+}
+
 export type TeletypeOptions = {
   roomId: string;
   shell: string;
   multiplex: boolean;
+  process: NodeJS.Process;
 };
 
 type dimensions = {
