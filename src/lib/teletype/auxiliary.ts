@@ -6,15 +6,19 @@ import { Hash } from "../surya/types";
 export const initScreen = (
   username: string,
   hostname: string,
-  shell: string
+  shell: string,
+  multiplexed: boolean
 ) => {
   console.log(chalk.green("joined room channel"));
   console.log(chalk.bold(chalk.blueBright("TeleType")));
-  console.log(
-    chalk.yellowBright(
-      "You have allowed room participants to write to your shell"
-    )
-  );
+
+  if (multiplexed) {
+    console.log(
+      chalk.yellowBright(
+        "You have allowed room participants to write to your shell"
+      )
+    );
+  }
   console.log(
     chalk.blue(
       `${chalk.bold(
@@ -26,7 +30,7 @@ export const initScreen = (
     `Note: Your shell size may adjust for optimum viewing experience for all participants.
 To terminate stream run ${chalk.yellowBright(
       "exit"
-    )} or press ${chalk.yellowBright("ctrl-d")}`
+    )} or press ${chalk.yellowBright("ctrl-d")} \n`
   );
 };
 

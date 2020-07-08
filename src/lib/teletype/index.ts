@@ -54,7 +54,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
         multiplexed: config.multiplex,
       },
       onJoin: () => {
-        initScreen(username, hostname, config.shell);
+        initScreen(username, hostname, config.shell, config.multiplex);
 
         const stdin = config.process.stdin;
         const stdout = config.process.stdout;
