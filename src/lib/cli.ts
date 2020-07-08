@@ -22,7 +22,7 @@ const promptForToken = (): Promise<string> => {
   return new Input({
     name: "Access Token",
     message:
-      "Running for the first time? Please enter your access token for authentication",
+      "Running oorja-cli (https://oorja.io) for the first time, Please enter your access token for authentication:",
   }).run();
 };
 

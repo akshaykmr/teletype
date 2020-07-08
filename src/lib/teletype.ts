@@ -67,7 +67,10 @@ export const teletypeApp = (config: TeletypeOptions) => {
           )
         );
         console.log(
-          "note: The shell may resize for best view for all room participants."
+          `Note: Your shell size may adjust for optimum viewing experience for all participants.
+To terminate stream run ${chalk.yellowBright(
+            "exit"
+          )} or press ${chalk.yellowBright("ctrl-d")}`
         );
 
         const stdin = config.process.stdin;
