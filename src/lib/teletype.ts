@@ -55,10 +55,16 @@ export const teletypeApp = (config: TeletypeOptions) => {
       params: {
         username,
         hostname,
+        multiplexed: config.multiplex,
       },
       onJoin: () => {
         console.log(chalk.green("joined room channel"));
         console.log(chalk.bold(chalk.blueBright("TeleType")));
+        console.log(
+          chalk.yellowBright(
+            "You have allowed room participants to write to your shell"
+          )
+        );
         console.log(
           chalk.blue(
             `${chalk.bold(
@@ -118,11 +124,11 @@ To terminate stream run ${chalk.yellowBright(
         stdin.on("data", (d) => term.write(d));
       },
       onClose: () => {
-        console.log(chalk.redBright("connection closed"));
+        console.log(chalk.redBright("connection closed, terminated stream."));
         process.exit(3);
       },
       onError: () => {
-        console.log(chalk.redBright("connection error"));
+        console.log(chalk.redBright("connection error, terminated stream."));
         process.exit(4);
       },
       onMessage: ({ from: { session }, t, d }) => {
@@ -130,6 +136,9 @@ To terminate stream run ${chalk.yellowBright(
           case "d":
             userDimensions[session] = d;
             resizeBestFit(term);
+            break;
+          case "i":
+            term.write(d);
             break;
         }
       },
