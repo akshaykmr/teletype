@@ -27,7 +27,7 @@ const promptForToken = (): Promise<string> => {
 };
 
 export const preflightChecks = async (env: env) => {
-  const token = getENVAccessToken(env) || (await promptForToken());
+  const token = getENVAccessToken(env) || (await promptForToken()).trim();
   setENVAccessToken(env, token);
   const spinner = ora({
     text: "authenticating",
