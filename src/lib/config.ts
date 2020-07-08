@@ -1,4 +1,5 @@
 import chalk = require("chalk");
+import { URL } from "url";
 
 const Conf = require("conf");
 export const config = new Conf();

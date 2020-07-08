@@ -1,9 +1,15 @@
 import { spawn, IPty } from "node-pty";
 import * as os from "os";
-import * as termSize from "term-size";
-import * as chalk from "chalk";
-import { joinChannel } from "./surya";
-import { Hash } from "./surya/types";
+import { joinChannel } from "../surya";
+import { Hash } from "../surya/types";
+import {
+  getDimensions,
+  dimensions,
+  initScreen,
+  areDimensionEqual,
+  resizeBestFit,
+} from "./auxiliary";
+import chalk = require("chalk");
 
 enum MessageType {
   IN = "i",
@@ -18,32 +24,22 @@ export type TeletypeOptions = {
   process: NodeJS.Process;
 };
 
-type dimensions = {
-  rows: number;
-  cols: number;
-};
-
-const getDimensions = (): dimensions => {
-  const { rows, columns } = termSize();
-  return { rows, cols: columns };
-};
-
-const areDimensionEqual = (a: dimensions, b: dimensions): boolean => {
-  return a.rows === b.rows && a.cols === b.cols;
-};
-
 const SELF = "self";
 const userDimensions: Hash<dimensions> = {};
 userDimensions[SELF] = getDimensions();
 
-const resizeBestFit = (term: IPty) => {
-  const allViewports = Object.values(userDimensions);
-  const minrows = Math.min(...allViewports.map((d) => d.rows));
-  const mincols = Math.min(...allViewports.map((d) => d.cols));
-  term.resize(mincols, minrows);
-};
-
 let term: IPty;
+
+const reEvaluateOwnDimensions = () => {
+  const lastKnown = userDimensions[SELF];
+  const latest = getDimensions();
+
+  if (areDimensionEqual(lastKnown, latest)) {
+    return;
+  }
+  userDimensions[SELF] = latest;
+  resizeBestFit(term, userDimensions);
+};
 
 export const teletypeApp = (config: TeletypeOptions) => {
   const username = os.userInfo().username;
@@ -58,31 +54,12 @@ export const teletypeApp = (config: TeletypeOptions) => {
         multiplexed: config.multiplex,
       },
       onJoin: () => {
-        console.log(chalk.green("joined room channel"));
-        console.log(chalk.bold(chalk.blueBright("TeleType")));
-        console.log(
-          chalk.yellowBright(
-            "You have allowed room participants to write to your shell"
-          )
-        );
-        console.log(
-          chalk.blue(
-            `${chalk.bold(
-              `${username}@${hostname}`
-            )} spawning streaming shell: ${chalk.bold(`${config.shell}`)}`
-          )
-        );
-        console.log(
-          `Note: Your shell size may adjust for optimum viewing experience for all participants.
-To terminate stream run ${chalk.yellowBright(
-            "exit"
-          )} or press ${chalk.yellowBright("ctrl-d")}`
-        );
+        initScreen(username, hostname, config.shell);
 
         const stdin = config.process.stdin;
         const stdout = config.process.stdout;
-
         const dimensions = userDimensions[SELF];
+
         term = spawn(config.shell, [], {
           name: "xterm-color",
           cols: dimensions.cols,
@@ -92,17 +69,8 @@ To terminate stream run ${chalk.yellowBright(
           env: config.process.env,
         });
 
-        setInterval(() => {
-          // track own dimensions and keep it up to date
-          const lastKnown = userDimensions[SELF];
-          const latest = getDimensions();
-
-          if (areDimensionEqual(lastKnown, latest)) {
-            return;
-          }
-          userDimensions[SELF] = latest;
-          resizeBestFit(term);
-        }, 1000);
+        // track own dimensions and keep it up to date
+        setInterval(reEvaluateOwnDimensions, 1000);
 
         term.on("data", (d: string) => {
           stdout.write(d);
@@ -133,11 +101,11 @@ To terminate stream run ${chalk.yellowBright(
       },
       onMessage: ({ from: { session }, t, d }) => {
         switch (t) {
-          case "d":
+          case MessageType.DIMENSIONS:
             userDimensions[session] = d;
-            resizeBestFit(term);
+            resizeBestFit(term, userDimensions);
             break;
-          case "i":
+          case MessageType.IN:
             term.write(d);
             break;
         }
@@ -145,7 +113,7 @@ To terminate stream run ${chalk.yellowBright(
       handleSessionJoin: (s) => {},
       handleSessionLeave: (s) => {
         delete userDimensions[s];
-        resizeBestFit(term);
+        resizeBestFit(term, userDimensions);
       },
     });
   });
