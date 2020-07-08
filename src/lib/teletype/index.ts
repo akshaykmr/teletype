@@ -25,25 +25,26 @@ export type TeletypeOptions = {
 };
 
 const SELF = "self";
-const userDimensions: Hash<dimensions> = {};
-userDimensions[SELF] = getDimensions();
-
-let term: IPty;
-
-const reEvaluateOwnDimensions = () => {
-  const lastKnown = userDimensions[SELF];
-  const latest = getDimensions();
-
-  if (areDimensionEqual(lastKnown, latest)) {
-    return;
-  }
-  userDimensions[SELF] = latest;
-  resizeBestFit(term, userDimensions);
-};
 
 export const teletypeApp = (config: TeletypeOptions) => {
   const username = os.userInfo().username;
   const hostname = os.hostname();
+
+  const userDimensions: Hash<dimensions> = {};
+  userDimensions[SELF] = getDimensions();
+
+  let term: IPty;
+
+  const reEvaluateOwnDimensions = () => {
+    const lastKnown = userDimensions[SELF];
+    const latest = getDimensions();
+
+    if (areDimensionEqual(lastKnown, latest)) {
+      return;
+    }
+    userDimensions[SELF] = latest;
+    resizeBestFit(term, userDimensions);
+  };
 
   return new Promise((resolve) => {
     const channel = joinChannel({
