@@ -23,7 +23,7 @@ const promptForToken = (): Promise<string> => {
     name: "Access Token",
     message:
       "Running oorja-cli (https://oorja.io) for the first time, Please enter your access token for authentication:",
-  }).run();
+  }).run()
 };
 
 export const preflightChecks = async (env: env) => {
@@ -46,7 +46,6 @@ export const preflightChecks = async (env: env) => {
       );
       process.exit(1);
     }
-
     const user = await fetchSessionUser();
     spinner.succeed(`authenticated: Welcome ${user.name}`);
     spinner.start("establishing comms");

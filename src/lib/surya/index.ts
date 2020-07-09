@@ -1,21 +1,12 @@
-const WebSocket = require("ws");
-
-// smol HACK: it was all going so great :(
-// phoenix.js is built for the browser
-// to make it work on node, supply Websocket as global var
-global.window = {
-  WebSocket,
-};
-global.WebSocket = WebSocket;
-
+const https = require('https');
 import axios, { AxiosError, AxiosInstance } from "axios";
-import { Socket, Channel, Presence } from "phoenix";
 import { encode, decode } from "@msgpack/msgpack";
 
 import { defaultParser } from "./resources";
 import { User, RoomApps, Room, CliManifest } from "./types";
 import { SuryaConfig } from "../config";
 import { Unauthorized } from "./errors";
+import { Socket, Channel, Presence } from "./vendor/phoenix";
 
 const camelcaseKeys = require("camelcase-keys");
 
@@ -26,6 +17,10 @@ let socket: Socket;
 
 export const initializeSurya = (config: SuryaConfig) => {
   client = axios.create({
+    httpsAgent: new https.Agent({
+      minVersion: "TLSv1.2",
+      maxVersion: "TLSv1.2"
+    }),
     baseURL: `${config.url}/api/v1`,
     timeout: 5000,
     responseType: "json",
@@ -110,7 +105,7 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
   };
   return new Promise((resolve, reject) => {
     let initialConnection = false;
-    socket = new Socket(`${config.url}/socket`, {
+    socket = new Socket(`${config.wsUrl}/socket`, {
       params: {
         access_token: config.token,
       },
@@ -130,6 +125,7 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
       console.error("connection error");
       process.exit(2);
     });
+    // @ts-ignore
     socket.connect();
   });
 };
@@ -164,15 +160,15 @@ export const joinChannel = ({
 
   let presences: any = [];
 
-  chan.on("new_msg", (msg) => {
+  chan.on("new_msg", (msg: any) => {
     onMessage(msg);
   });
 
-  chan.on("presence_state", (response) => {
-    Presence.syncState(presences, response, handleSessionJoin);
+  chan.on("presence_state", (response: any) => {
+    Presence.syncState(presences, response, handleSessionJoin, undefined);
     presences = response;
   });
-  chan.on("presence_diff", (newPresence) => {
+  chan.on("presence_diff", (newPresence: any) => {
     presences = Presence.syncDiff(
       presences,
       newPresence,
@@ -183,10 +179,10 @@ export const joinChannel = ({
 
   chan
     .join()
-    .receive("ok", (resp) => {
+    .receive("ok", () => {
       if (onJoin) onJoin();
     })
-    .receive("error", (resp) => {
+    .receive("error", (resp: any) => {
       console.error("Unable to join", resp);
       process.exit(3);
     });
