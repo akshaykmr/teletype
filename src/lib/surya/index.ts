@@ -108,7 +108,8 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
     const data = new Uint8Array(rawdata);
     return callback(decode(data.buffer));
   };
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    let initialConnection = false;
     socket = new Socket(`${config.url}/socket`, {
       params: {
         access_token: config.token,
@@ -117,8 +118,15 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
       encode: encodeMessage,
       decode: decodeMessage,
     });
-    socket.onOpen(resolve);
+    socket.onOpen(() => {
+      initialConnection = true;
+      resolve();
+    });
     socket.onError(() => {
+      if (!initialConnection) {
+        reject();
+        return;
+      }
       console.error("connection error");
       process.exit(2);
     });
