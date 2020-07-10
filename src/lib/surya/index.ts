@@ -1,4 +1,4 @@
-const https = require('https');
+const https = require("https");
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { encode, decode } from "@msgpack/msgpack";
 
@@ -19,7 +19,7 @@ export const initializeSurya = (config: SuryaConfig) => {
   client = axios.create({
     httpsAgent: new https.Agent({
       minVersion: "TLSv1.2",
-      maxVersion: "TLSv1.2"
+      maxVersion: "TLSv1.2",
     }),
     baseURL: `${config.url}/api/v1`,
     timeout: 5000,

@@ -60,3 +60,25 @@ export const getENVAccessToken = (env: env): string => {
 export const setENVAccessToken = (env: env, token: string) => {
   config.set(`${env}-access-token`, token);
 };
+
+export type oorjaConfig = {
+  url: string;
+};
+
+export const getoorjaConfig = (env: env): oorjaConfig => {
+  let url: string;
+  switch (env) {
+    case "local":
+      url = "http://localhost:3000";
+      break;
+    case "staging":
+      url = "https://staging.oorja.io";
+      break;
+    case "prod":
+      url = "https://oorja.io";
+      break;
+  }
+  return {
+    url: url,
+  };
+};

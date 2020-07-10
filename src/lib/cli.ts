@@ -23,7 +23,7 @@ const promptForToken = (): Promise<string> => {
     name: "Access Token",
     message:
       "Running oorja-cli (https://oorja.io) for the first time, Please enter your access token for authentication:",
-  }).run()
+  }).run();
 };
 
 export const preflightChecks = async (env: env) => {

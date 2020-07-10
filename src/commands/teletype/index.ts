@@ -1,17 +1,20 @@
 const { Select, Input } = require("enquirer");
 import { URL } from "url";
 import { Command, flags } from "@oclif/command";
+const ora = require("ora");
 
 import * as os from "os";
 import * as chalk from "chalk";
-import { teletypeApp } from "../../lib/teletype";
+import { teletypeApp, TeletypeOptions } from "../../lib/teletype";
 import {
   determineENV,
   ROOM_LINK_SAMPLE,
   INVALID_ROOM_LINK_MESSAGE,
   env,
+  getoorjaConfig,
 } from "../../lib/config";
 import { preflightChecks } from "../../lib/cli";
+import { createRoom } from "../../lib/surya";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -86,15 +89,34 @@ Will also allow room participants to write to your terminal!
           await this.stream(roomLink, { shell, multiplex, process });
           break;
         case NEW:
-          console.log(chalk.blue("coming soon"));
+          // TODO: refactor, move into func
           const env = determineENV();
           await this.setup(env);
-          // setup env
+
+          const spinner = ora({
+            text: chalk.blueBright("creating room with TeleType app"),
+            discardStdin: false,
+          }).start();
+          const room = await createRoom({
+            roomName: "-",
+            apps: {
+              appList: [{ appId: "39", config: {} }],
+            },
+          });
+          spinner.succeed(chalk.greenBright("room created")).clear();
+          const oorjaUrl = getoorjaConfig(env).url;
+          const link = `${oorjaUrl}/rooms?id=${room.id}`;
+          console.log(`\n${chalk.cyanBright(link)}\n`);
+          console.log("share this link with your friends :)");
+
+          process.stdin.resume();
+          await teletypeApp({ roomId: room.id, shell, multiplex, process });
           break;
       }
     } catch {
       process.exit(100);
     }
+    process.exit(0);
   }
 
   private async stream(
