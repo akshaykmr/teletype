@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+process.argv.splice(2, 0, 'teletype')
+
+require('@oclif/command').run()
+  .then(require('@oclif/command/flush'))
+  .catch(require('@oclif/errors/handle'))

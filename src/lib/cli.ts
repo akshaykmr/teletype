@@ -7,6 +7,7 @@ import {
   getSuryaConfig,
   getENVAccessToken,
   setENVAccessToken,
+  CLI_VERSION,
 } from "./config";
 import {
   fetchCliManifest,
@@ -15,8 +16,6 @@ import {
   establishSocket,
 } from "./surya";
 import { Unauthorized } from "./surya/errors";
-
-const cliVersion = 0;
 
 const promptForToken = (): Promise<string> => {
   return new Input({
@@ -38,7 +37,7 @@ export const preflightChecks = async (env: env) => {
 
   try {
     const manifest = await fetchCliManifest();
-    if (manifest.cliVersion > cliVersion) {
+    if (manifest.cliVersion > CLI_VERSION) {
       spinner.fail(
         chalk.yellowBright(
           "your oorja cli is outdated. please run: npm update -g oorja"
