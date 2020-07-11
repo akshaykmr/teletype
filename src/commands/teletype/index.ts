@@ -127,6 +127,7 @@ Will also allow room participants to write to your terminal!
     const env = determineENV(roomURL);
     await this.setup(env);
     const roomId = roomURL.searchParams.get!("id");
+    // @ts-ignore
     await teletypeApp({ roomId, ...options });
     this.exit(0);
   }

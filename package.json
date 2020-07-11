@@ -1,11 +1,11 @@
 {
   "name": "oorja",
   "description": "cli tool for interacting with oorja",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/run",
-    "teletype": "./bin run teletype"
+    "teletype": "./bin/run teletype"
   },
   "bugs": "https://github.com/akshaykmr/oorja-cli/issues",
   "dependencies": {
@@ -64,7 +64,7 @@
   "repository": "akshaykmr/oorja-cli",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
-    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "prepack": "rm -rf lib && tsc --skipLibCheck true && oclif-dev manifest && oclif-dev readme",
     "test": "echo NO TESTS",
     "version": "oclif-dev readme && git add README.md",
     "lint": "tslint -p ./tsconfig.json -t stylish",

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // MIT License
 
 // Copyright (c) 2014 Chris McCord
