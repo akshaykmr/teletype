@@ -19,7 +19,7 @@ $ npm install -g oorja
 $ oorja COMMAND
 running command...
 $ oorja (-v|--version|version)
-oorja/0.0.0 linux-x64 node-v12.17.0
+oorja/0.1.0 linux-x64 node-v12.17.0
 $ oorja --help [COMMAND]
 USAGE
   $ oorja COMMAND
@@ -28,8 +28,33 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
+* [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
 * [`oorja help [COMMAND]`](#oorja-help-command)
 * [`oorja teletype [ROOM]`](#oorja-teletype-room)
+
+## `oorja conf [KEY] [VALUE]`
+
+manage configuration
+
+```
+USAGE
+  $ oorja conf [KEY] [VALUE]
+
+ARGUMENTS
+  KEY    key of the config
+  VALUE  value of the config
+
+OPTIONS
+  -d, --cwd=cwd          config file location
+  -d, --delete           delete?
+  -h, --help             show CLI help
+  -k, --key=key          key of the config
+  -n, --name=name        config file name
+  -p, --project=project  project name
+  -v, --value=value      value of the config
+```
+
+_See code: [conf-cli](https://github.com/natzcam/conf-cli/blob/v0.1.9/src/commands/conf.ts)_
 
 ## `oorja help [COMMAND]`
 
@@ -61,18 +86,21 @@ OPTIONS
   -m, --multiplex    allows room users to WRITE TO YOUR SHELL. Can be helpful or painful. Off by default
   -s, --shell=shell  [default: /usr/bin/fish] shell to use. e.g. bash, fish
 
+ALIASES
+  $ oorja tty
+
 EXAMPLES
   $ oorja teletype
   will prompt to choose streaming destination - existing room or create a new one.
 
 
-  $ oorja teletype https://oorja.io/rooms?id=foo
+  $ oorja teletype 'https://oorja.io/rooms?id=foo'
   will stream to the room specified by secret link, you must have joined the room before streaming.
 
 
-  $ oorja teletype -m https://oorja.io/rooms?id=foo
+  $ oorja teletype -m 'https://oorja.io/rooms?id=foo'
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.0.0/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.1.0/src/commands/teletype/index.ts)_
 <!-- commandsstop -->
