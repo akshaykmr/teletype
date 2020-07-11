@@ -1,11 +1,11 @@
 {
   "name": "oorja",
   "description": "cli tool for interacting with oorja",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/run",
-    "teletype": "./bin/teletype.cmd"
+    "teletype": "./bin/teletype"
   },
   "bugs": "https://github.com/akshaykmr/oorja-cli/issues",
   "dependencies": {
