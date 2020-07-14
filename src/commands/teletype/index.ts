@@ -115,6 +115,7 @@ Will also allow room participants to write to your terminal!
               "^^ you'll be streaming here, share this link with your friends."
             )
           );
+          this.clearstdin();
           await teletypeApp({ roomId: room.id, shell, multiplex, process });
           break;
       }
@@ -124,11 +125,16 @@ Will also allow room participants to write to your terminal!
     process.exit(0);
   }
 
+  private clearstdin() {
+    process.stdin.read();
+    process.stdin.resume(); // FIXME: investigate weird quirk. stdin hangs if this is not present
+  }
+
   private async stream(
     roomLink: string,
     options: { shell: string; multiplex: boolean; process: NodeJS.Process }
   ) {
-    process.stdin.resume(); // TODO: investigate weird quirk. stdin hangs if this is not present
+    this.clearstdin();
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
     await this.setup(env);
