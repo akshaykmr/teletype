@@ -6,8 +6,8 @@ export const CLI_VERSION = 0;
 const Conf = require("conf");
 
 export const config = new Conf({
-  projectName: 'oorja',
-  projectVersion: CLI_VERSION
+  projectName: "oorja",
+  projectVersion: CLI_VERSION,
 });
 
 export type env = "staging" | "prod" | "local";

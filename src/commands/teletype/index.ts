@@ -85,7 +85,6 @@ Will also allow room participants to write to your terminal!
             message:
               "enter the room secret link. (copy browser url from an open room)",
           }).run();
-          process.stdin.resume(); // TODO: investigate weird quirk. stdin hangs if this is not present
           await this.stream(roomLink, { shell, multiplex, process });
           break;
         case NEW:
@@ -100,16 +99,22 @@ Will also allow room participants to write to your terminal!
           const room = await createRoom({
             roomName: "-",
             apps: {
-              appList: [{ appId: "39", config: {} }],
+              appList: [
+                { appId: "39", config: {} },
+                { appId: "31", config: {} },
+                { appId: "40", config: {} },
+              ],
             },
           });
           spinner.succeed(chalk.greenBright("room created")).clear();
           const oorjaUrl = getoorjaConfig(env).url;
           const link = `${oorjaUrl}/rooms?id=${room.id}`;
           console.log(`\n${chalk.cyanBright(link)}\n`);
-          console.log("share this link with your friends :)");
-
-          process.stdin.resume();
+          console.log(
+            chalk.blueBright(
+              "^^ you'll be streaming here, share this link with your friends."
+            )
+          );
           await teletypeApp({ roomId: room.id, shell, multiplex, process });
           break;
       }
@@ -123,6 +128,7 @@ Will also allow room participants to write to your terminal!
     roomLink: string,
     options: { shell: string; multiplex: boolean; process: NodeJS.Process }
   ) {
+    process.stdin.resume(); // TODO: investigate weird quirk. stdin hangs if this is not present
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
     await this.setup(env);
