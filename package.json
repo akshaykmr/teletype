@@ -1,7 +1,7 @@
 {
   "name": "oorja",
   "description": "cli tool for interacting with oorja",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/run",
