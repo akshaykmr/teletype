@@ -5,7 +5,7 @@ import { encode, decode } from "@msgpack/msgpack";
 import { defaultParser } from "./resources";
 import { User, RoomApps, Room, CliManifest } from "./types";
 import { SuryaConfig } from "../config";
-import { Unauthorized } from "./errors";
+import { Unauthorized, BadRequest } from "./errors";
 import { Socket, Channel, Presence } from "./vendor/phoenix";
 
 const camelcaseKeys = require("camelcase-keys");
@@ -36,6 +36,8 @@ const handleError = (error: AxiosError) => {
     switch (response.status) {
       case 401:
         throw new Unauthorized();
+      case 400:
+        throw new BadRequest();
     }
   }
   throw error;

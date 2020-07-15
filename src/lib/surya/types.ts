@@ -1,4 +1,4 @@
-type ProfileType = "GitHub" | "Google";
+type ProfileType = "GitHub" | "Google" | "anon";
 
 export type RoomApp = {
   appId: string;
