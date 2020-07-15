@@ -15,6 +15,8 @@ import {
 } from "../../lib/config";
 import { preflightChecks } from "../../lib/cli";
 import { createRoom } from "../../lib/surya";
+import { BadRequest } from "../../lib/surya/errors";
+import { Room } from "../../lib/surya/types";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -96,19 +98,29 @@ Will also allow room participants to write to your terminal!
             text: chalk.blueBright("creating room with TeleType app"),
             discardStdin: false,
           }).start();
-          const room = await createRoom({
-            roomName: "-",
-            apps: {
-              appList: [
-                { appId: "39", config: {} },
-                { appId: "31", config: {} },
-                { appId: "40", config: {} },
-              ],
-            },
-          });
+          let room: Room;
+          try {
+            room = await createRoom({
+              roomName: "-",
+              apps: {
+                appList: [
+                  { appId: "39", config: {} },
+                  { appId: "31", config: {} },
+                  { appId: "40", config: {} },
+                ],
+              },
+            });
+          } catch (e) {
+            if (e instanceof BadRequest) {
+              spinner.fail(
+                "failed to create room. Note: you cannot create rooms as an anonymous user"
+              );
+              process.exit(9);
+            }
+          }
           spinner.succeed(chalk.greenBright("room created")).clear();
           const oorjaUrl = getoorjaConfig(env).url;
-          const link = `${oorjaUrl}/rooms?id=${room.id}`;
+          const link = `${oorjaUrl}/rooms?id=${room!.id}`;
           console.log(`\n${chalk.cyanBright(link)}\n`);
           console.log(
             chalk.blueBright(
@@ -116,7 +128,7 @@ Will also allow room participants to write to your terminal!
             )
           );
           this.clearstdin();
-          await teletypeApp({ roomId: room.id, shell, multiplex, process });
+          await teletypeApp({ roomId: room!.id, shell, multiplex, process });
           break;
       }
     } catch {
@@ -134,11 +146,11 @@ Will also allow room participants to write to your terminal!
     roomLink: string,
     options: { shell: string; multiplex: boolean; process: NodeJS.Process }
   ) {
-    this.clearstdin();
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
     await this.setup(env);
     const roomId = roomURL.searchParams.get!("id");
+    this.clearstdin();
     // @ts-ignore
     await teletypeApp({ roomId, ...options });
     this.exit(0);
