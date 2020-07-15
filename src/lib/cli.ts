@@ -52,7 +52,7 @@ export const preflightChecks = async (env: env) => {
       setENVAccessToken(env, "");
       console.log(
         chalk.yellowBright(
-          "You're an anonymous user. cli, will not remember the token"
+          "You're an anonymous user. CLI will not remember the token"
         )
       );
     }
