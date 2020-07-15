@@ -47,6 +47,15 @@ export const preflightChecks = async (env: env) => {
     }
     const user = await fetchSessionUser();
     spinner.succeed(`authenticated: Welcome ${user.name}`);
+    if (user.profileType === "anon") {
+      // don't persist tokens for anonymous users
+      setENVAccessToken(env, "");
+      console.log(
+        chalk.yellowBright(
+          "You're an anonymous user. cli, will not remember the token"
+        )
+      );
+    }
     spinner.start("establishing comms");
     return establishSocket(suryaConfig)
       .then(() => spinner.succeed().clear())
