@@ -77,7 +77,7 @@ Will also allow room participants to write to your terminal!
       const answer = await new Select({
         name: "",
         message: "Choose streaming destination",
-        choices: [ROOM, NEW],
+        choices: [NEW, ROOM],
       }).run();
 
       switch (answer) {
@@ -85,7 +85,7 @@ Will also allow room participants to write to your terminal!
           const roomLink = await new Input({
             name: "room secret link",
             message:
-              "enter the room secret link. (copy browser url from an open room)",
+              "enter the room secret link. (click the share button in the room)",
           }).run();
           await this.stream(roomLink, { shell, multiplex, process });
           break;
@@ -160,7 +160,7 @@ Will also allow room participants to write to your terminal!
     return preflightChecks(env);
   }
 
-  private parseLink(roomLink: string) {
+  private parseLink(roomLink: string): URL {
     try {
       const url = new URL(roomLink);
       if (!url.searchParams.get("id")) throw "invalid";
