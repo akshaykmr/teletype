@@ -107,7 +107,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
             resizeBestFit(term, userDimensions);
             break;
           case MessageType.IN:
-            term.write(d);
+            if (config.multiplex) term.write(d);
             break;
         }
       },
