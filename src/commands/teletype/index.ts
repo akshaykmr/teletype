@@ -5,7 +5,7 @@ const ora = require("ora");
 
 import * as os from "os";
 import * as chalk from "chalk";
-import { teletypeApp, TeletypeOptions } from "../../lib/teletype";
+import { teletypeApp } from "../../lib/teletype";
 import {
   determineENV,
   ROOM_LINK_SAMPLE,
@@ -23,18 +23,18 @@ const DEFAULT_SHELL =
 
 export default class TeleTypeCommand extends Command {
   static aliases = ["tty"];
-  static description = "launch a terminal streaming session in oorja.";
+  static description = `Launch a terminal streaming session in oorja.`;
 
   static examples = [
-    `${chalk.blueBright("$ oorja teletype")}
+    `${chalk.blueBright("$ teletype")}
 will prompt to choose streaming destination - existing room or create a new one.
 
 `,
-    `${chalk.blueBright(`$ oorja teletype '${ROOM_LINK_SAMPLE}'`)}
+    `${chalk.blueBright(`$ teletype '${ROOM_LINK_SAMPLE}'`)}
 will stream to the room specified by secret link, you must have joined the room before streaming.
 
 `,
-    `${chalk.blueBright(`$ oorja teletype -m '${ROOM_LINK_SAMPLE}'`)}
+    `${chalk.blueBright(`$ teletype -m '${ROOM_LINK_SAMPLE}'`)}
 Will also allow room participants to write to your terminal!
 
 `,
