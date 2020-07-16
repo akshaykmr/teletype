@@ -19,7 +19,7 @@ $ npm install -g oorja
 $ oorja COMMAND
 running command...
 $ oorja (-v|--version|version)
-oorja/0.1.9 linux-x64 node-v12.17.0
+oorja/0.1.10 linux-x64 node-v12.17.0
 $ oorja --help [COMMAND]
 USAGE
   $ oorja COMMAND
@@ -75,7 +75,7 @@ _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0
 
 ## `oorja teletype [ROOM]`
 
-launch a terminal streaming session in oorja.
+Launch a terminal streaming session in oorja.
 
 ```
 USAGE
@@ -90,17 +90,17 @@ ALIASES
   $ oorja tty
 
 EXAMPLES
-  $ oorja teletype
+  $ teletype
   will prompt to choose streaming destination - existing room or create a new one.
 
 
-  $ oorja teletype 'https://oorja.io/rooms?id=foo'
+  $ teletype 'https://oorja.io/rooms?id=foo'
   will stream to the room specified by secret link, you must have joined the room before streaming.
 
 
-  $ oorja teletype -m 'https://oorja.io/rooms?id=foo'
+  $ teletype -m 'https://oorja.io/rooms?id=foo'
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.1.9/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.1.10/src/commands/teletype/index.ts)_
 <!-- commandsstop -->
