@@ -18,6 +18,7 @@ enum MessageType {
 }
 
 export type TeletypeOptions = {
+  userId: string;
   roomId: string;
   shell: string;
   multiplex: boolean;
@@ -88,7 +89,6 @@ export const teletypeApp = (config: TeletypeOptions) => {
 
         stdin.setEncoding("utf8");
         stdin.setRawMode!(true);
-        stdin.setEncoding("utf8");
 
         stdin.on("data", (d) => term.write(d));
       },
@@ -107,8 +107,21 @@ export const teletypeApp = (config: TeletypeOptions) => {
             resizeBestFit(term, userDimensions);
             break;
           case MessageType.IN:
-            if (config.multiplex) term.write(d);
-            break;
+            const userId = session.split(":")[0];
+            if (config.multiplex) {
+              term.write(d);
+              return;
+            }
+            if (userId === config.userId) {
+              term.write(d);
+            } else {
+              console.log(
+                chalk.redBright(
+                  `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`
+                )
+              );
+              process.exit(5);
+            }
         }
       },
       handleSessionJoin: (s) => {},
