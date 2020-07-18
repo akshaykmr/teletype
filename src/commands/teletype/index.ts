@@ -5,18 +5,14 @@ const ora = require("ora");
 
 import * as os from "os";
 import * as chalk from "chalk";
-import { teletypeApp } from "../../lib/teletype";
 import {
   determineENV,
   ROOM_LINK_SAMPLE,
   INVALID_ROOM_LINK_MESSAGE,
-  env,
-  getoorjaConfig,
 } from "../../lib/config";
-import { preflightChecks } from "../../lib/cli";
-import { createRoom } from "../../lib/surya";
 import { BadRequest } from "../../lib/surya/errors";
 import { Room } from "../../lib/surya/types";
+import { getApp } from "../../lib/oorja";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -64,7 +60,7 @@ Will also allow room participants to write to your terminal!
     } = this.parse(TeleTypeCommand);
 
     if (args.room) {
-      await this.stream(args.room, { shell, multiplex, process });
+      await this.streamToLink(args.room, { shell, multiplex, process });
       return;
     }
 
@@ -87,20 +83,18 @@ Will also allow room participants to write to your terminal!
             message:
               "enter the room secret link. (click the share button in the room)",
           }).run();
-          await this.stream(roomLink, { shell, multiplex, process });
+          await this.streamToLink(roomLink, { shell, multiplex, process });
           break;
         case NEW:
-          // TODO: refactor, move into func
-          const env = determineENV();
-          await this.setup(env);
-
+          // TODO: refactor, move into own func
+          const app = await getApp();
           const spinner = ora({
             text: chalk.blueBright("creating room with TeleType app"),
             discardStdin: false,
           }).start();
           let room: Room;
           try {
-            room = await createRoom({
+            room = await app.createRoom({
               roomName: "-",
               apps: {
                 appList: [
@@ -119,8 +113,7 @@ Will also allow room participants to write to your terminal!
             }
           }
           spinner.succeed(chalk.greenBright("room created")).clear();
-          const oorjaUrl = getoorjaConfig(env).url;
-          const link = `${oorjaUrl}/rooms?id=${room!.id}`;
+          const link = app.linkForRoom(room!.id);
           console.log(`\n${chalk.cyanBright(link)}\n`);
           console.log(
             chalk.blueBright(
@@ -128,7 +121,7 @@ Will also allow room participants to write to your terminal!
             )
           );
           this.clearstdin();
-          await teletypeApp({ roomId: room!.id, shell, multiplex, process });
+          await app.teletype({ roomId: room!.id, shell, multiplex, process });
           break;
       }
     } catch {
@@ -142,22 +135,19 @@ Will also allow room participants to write to your terminal!
     process.stdin.resume(); // FIXME: investigate weird quirk. stdin hangs if this is not present
   }
 
-  private async stream(
+  private async streamToLink(
     roomLink: string,
     options: { shell: string; multiplex: boolean; process: NodeJS.Process }
   ) {
+    // TODO: move link validation to oorja-lib, if I have to do this at more places
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
-    await this.setup(env);
+    const app = await getApp(env);
     const roomId = roomURL.searchParams.get!("id");
     this.clearstdin();
     // @ts-ignore
-    await teletypeApp({ roomId, ...options });
+    await app.teletype({ roomId, ...options });
     this.exit(0);
-  }
-
-  private async setup(env: env) {
-    return preflightChecks(env);
   }
 
   private parseLink(roomLink: string): URL {
