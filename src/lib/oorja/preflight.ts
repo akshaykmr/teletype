@@ -8,14 +8,14 @@ import {
   getENVAccessToken,
   setENVAccessToken,
   CLI_VERSION,
-} from "./config";
+} from "../config";
 import {
   fetchCliManifest,
   initializeSurya,
   fetchSessionUser,
   establishSocket,
-} from "./surya";
-import { Unauthorized } from "./surya/errors";
+} from "../surya";
+import { Unauthorized } from "../surya/errors";
 
 const promptForToken = (): Promise<string> => {
   return new Input({
@@ -58,7 +58,10 @@ export const preflightChecks = async (env: env) => {
     }
     spinner.start("establishing comms");
     return establishSocket(suryaConfig)
-      .then(() => spinner.succeed().clear())
+      .then(() => {
+        spinner.succeed().clear();
+        return user;
+      })
       .catch((e) => {
         spinner.fail("socket connection failure..");
         throw e;
