@@ -63,7 +63,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
         const dimensions = userDimensions[SELF];
 
         term = spawn(config.shell, [], {
-          name: "xterm-color",
+          name: "xterm-256color",
           cols: dimensions.cols,
           rows: dimensions.rows,
           cwd: config.process.cwd(),
