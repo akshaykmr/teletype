@@ -1,6 +1,6 @@
 {
   "name": "oorja",
-  "description": "cli tool for interacting with oorja",
+  "description": "stream terminals to the web and more.",
   "version": "0.1.12",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
@@ -20,7 +20,6 @@
     "enquirer": "^2.3.6",
     "node-pty": "^0.9.0",
     "ora": "^4.0.4",
-    "prettier": "^2.0.5",
     "term-size": "^2.2.0",
     "tslib": "^1",
     "ws": "^7.3.1"
@@ -35,7 +34,8 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
     "tslint-react": "^4.2.0",
-    "typescript": "^3.3"
+    "typescript": "^3.3",
+    "prettier": "^2.0.5"
   },
   "engines": {
     "node": ">=10.4.0"
@@ -48,6 +48,7 @@
   ],
   "homepage": "https://github.com/akshaykmr/oorja-cli",
   "keywords": [
+    "teletype",
     "oorja",
     "cli"
   ],

@@ -60,7 +60,7 @@ Will also allow room participants to write to your terminal!
     } = this.parse(TeleTypeCommand);
 
     if (args.room) {
-      await this.streamToLink(args.room, { shell, multiplex, process });
+      await this.streamToLink({ shell, multiplex, roomLink: args.room });
       return;
     }
 
@@ -75,53 +75,12 @@ Will also allow room participants to write to your terminal!
         message: "Choose streaming destination",
         choices: [NEW, ROOM],
       }).run();
-
       switch (answer) {
         case ROOM:
-          const roomLink = await new Input({
-            name: "room secret link",
-            message:
-              "enter the room secret link. (click the share button in the room)",
-          }).run();
-          await this.streamToLink(roomLink, { shell, multiplex, process });
+          await this.streamToLink({ shell, multiplex });
           break;
         case NEW:
-          // TODO: refactor, move into own func
-          const app = await getApp();
-          const spinner = ora({
-            text: chalk.blueBright("creating room with TeleType app"),
-            discardStdin: false,
-          }).start();
-          let room: Room;
-          try {
-            room = await app.createRoom({
-              roomName: "-",
-              apps: {
-                appList: [
-                  { appId: "39", config: {} },
-                  { appId: "31", config: {} },
-                  { appId: "40", config: {} },
-                ],
-              },
-            });
-          } catch (e) {
-            if (e instanceof BadRequest) {
-              spinner.fail(
-                "failed to create room. Note: you cannot create rooms as an anonymous user"
-              );
-              process.exit(9);
-            }
-          }
-          spinner.succeed(chalk.greenBright("room created")).clear();
-          const link = app.linkForRoom(room!.id);
-          console.log(`\n${chalk.cyanBright(link)}\n`);
-          console.log(
-            chalk.blueBright(
-              "^^ you'll be streaming here, share this link with your friends."
-            )
-          );
-          this.clearstdin();
-          await app.teletype({ roomId: room!.id, shell, multiplex, process });
+          await this.createRoomAndStream({ shell, multiplex });
           break;
       }
     } catch {
@@ -130,15 +89,18 @@ Will also allow room participants to write to your terminal!
     process.exit(0);
   }
 
-  private clearstdin() {
-    process.stdin.read();
-    process.stdin.resume(); // FIXME: investigate weird quirk. stdin hangs if this is not present
-  }
-
-  private async streamToLink(
-    roomLink: string,
-    options: { shell: string; multiplex: boolean; process: NodeJS.Process }
-  ) {
+  private async streamToLink(options: {
+    shell: string;
+    multiplex: boolean;
+    roomLink?: string;
+  }) {
+    const roomLink =
+      options.roomLink ||
+      (await new Input({
+        name: "room secret link",
+        message:
+          "enter the room secret link. (click the share button in the room)",
+      }).run());
     // TODO: move link validation to oorja-lib, if I have to do this at more places
     const roomURL = this.parseLink(roomLink);
     const env = determineENV(roomURL);
@@ -146,8 +108,52 @@ Will also allow room participants to write to your terminal!
     const roomId = roomURL.searchParams.get!("id");
     this.clearstdin();
     // @ts-ignore
-    await app.teletype({ roomId, ...options });
+    await app.teletype({ roomId, ...options, process });
     this.exit(0);
+  }
+
+  private async createRoomAndStream({
+    shell,
+    multiplex,
+  }: {
+    shell: string;
+    multiplex: boolean;
+  }) {
+    const app = await getApp();
+    const spinner = ora({
+      text: chalk.blueBright("creating room with TeleType app"),
+      discardStdin: false,
+    }).start();
+    let room: Room;
+    try {
+      room = await app.createRoom({
+        roomName: "-",
+        apps: {
+          appList: [
+            { appId: "39", config: {} },
+            { appId: "31", config: {} },
+            { appId: "40", config: {} },
+          ],
+        },
+      });
+    } catch (e) {
+      if (e instanceof BadRequest) {
+        spinner.fail(
+          "failed to create room. Note: you cannot create rooms as an anonymous user"
+        );
+        process.exit(9);
+      }
+    }
+    spinner.succeed(chalk.greenBright("room created")).clear();
+    const link = app.linkForRoom(room!.id);
+    console.log(`\n${chalk.cyanBright(link)}\n`);
+    console.log(
+      chalk.blueBright(
+        "^^ you'll be streaming here, share this link with your friends."
+      )
+    );
+    this.clearstdin();
+    return await app.teletype({ roomId: room!.id, shell, multiplex, process });
   }
 
   private parseLink(roomLink: string): URL {
@@ -159,5 +165,10 @@ Will also allow room participants to write to your terminal!
       console.log(INVALID_ROOM_LINK_MESSAGE);
       process.exit(0);
     }
+  }
+
+  private clearstdin() {
+    process.stdin.read();
+    process.stdin.resume(); // FIXME: investigate weird quirk. stdin hangs if this is not present
   }
 }
