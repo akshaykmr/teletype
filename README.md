@@ -19,7 +19,7 @@ $ npm install -g oorja
 $ oorja COMMAND
 running command...
 $ oorja (-v|--version|version)
-oorja/0.1.15 linux-x64 node-v12.17.0
+oorja/0.1.16 linux-x64 node-v12.17.0
 $ oorja --help [COMMAND]
 USAGE
   $ oorja COMMAND
@@ -83,7 +83,10 @@ USAGE
 
 OPTIONS
   -h, --help         show CLI help
-  -m, --multiplex    allows room users to WRITE TO YOUR SHELL. Can be helpful or painful. Off by default
+
+  -m, --multiplex    allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room
+                     participants. Off by default
+
   -s, --shell=shell  [default: /usr/bin/fish] shell to use. e.g. bash, fish
 
 ALIASES
@@ -102,5 +105,5 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.1.15/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.1.16/src/commands/teletype/index.ts)_
 <!-- commandsstop -->
