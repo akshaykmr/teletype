@@ -46,7 +46,7 @@ Will also allow room participants to write to your terminal!
     multiplex: flags.boolean({
       char: "m",
       description:
-        "allows room users to WRITE TO YOUR SHELL. Can be helpful or painful. Off by default",
+        "allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default",
       default: false,
     }),
   };
