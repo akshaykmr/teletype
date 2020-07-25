@@ -129,6 +129,7 @@ Will also allow room participants to write to your terminal!
       room = await app.createRoom({
         roomName: "-",
         apps: {
+          defaultFocus: "39",
           appList: [
             { appId: "39", config: {} },
             { appId: "31", config: {} },

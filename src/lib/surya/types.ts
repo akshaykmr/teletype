@@ -6,6 +6,7 @@ export type RoomApp = {
 };
 
 export type RoomApps = {
+  defaultFocus?: string;
   appList: RoomApp[];
 };
 
