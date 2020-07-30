@@ -83,7 +83,7 @@ Will also allow room participants to write to your terminal!
           await this.createRoomAndStream({ shell, multiplex });
           break;
       }
-    } catch {
+    } catch (e) {
       process.exit(100);
     }
     process.exit(0);
@@ -109,7 +109,6 @@ Will also allow room participants to write to your terminal!
     this.clearstdin();
     // @ts-ignore
     await app.teletype({ roomId, ...options, process });
-    this.exit(0);
   }
 
   private async createRoomAndStream({

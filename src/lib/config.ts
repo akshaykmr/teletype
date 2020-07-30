@@ -10,7 +10,7 @@ export const config = new Conf({
   projectVersion: CLI_VERSION,
 });
 
-export type env = "staging" | "prod" | "local";
+export type env = "staging" | "local" | "prod" | "prod-teletype";
 
 export type SuryaConfig = {
   url: string;
@@ -29,6 +29,7 @@ export const getSuryaConfig = (env: env): SuryaConfig => {
       case "local":
         return { url: "http://localhost:4000", wsUrl: "ws://localhost:4000" };
       case "prod":
+      case "prod-teletype":
         return { url: "https://surya.oorja.io", wsUrl: "wss://surya.oorja.io" };
     }
   };
@@ -45,10 +46,12 @@ export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
 )}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`;
 
 export const determineENV = (roomURL?: URL): env => {
-  if (!roomURL) return config.get("env") || "prod";
+  if (!roomURL) return config.get("env") || "prod-teletype";
   switch (roomURL.host) {
     case "oorja.io":
       return "prod";
+    case "teletype.oorja.io":
+      return "prod-teletype";
     case "staging.oorja.io":
       return "staging";
     case "localhost:3000":
@@ -68,23 +71,28 @@ export const setENVAccessToken = (env: env, token: string) => {
 };
 
 export type oorjaConfig = {
-  url: string;
+  host: string;
+  enableTLS: boolean;
 };
 
 export const getoorjaConfig = (env: env): oorjaConfig => {
-  let url: string;
+  let host: string;
   switch (env) {
     case "local":
-      url = "http://localhost:3000";
+      host = "localhost:3000";
       break;
     case "staging":
-      url = "https://staging.oorja.io";
+      host = "staging.oorja.io";
       break;
     case "prod":
-      url = "https://oorja.io";
+      host = "oorja.io";
+      break;
+    case "prod-teletype":
+      host = "teletype.oorja.io";
       break;
   }
   return {
-    url: url,
+    host,
+    enableTLS: env !== "local",
   };
 };

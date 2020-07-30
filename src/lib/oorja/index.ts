@@ -20,16 +20,19 @@ class OORJA {
       return this;
     });
   };
-
   createRoom = createRoom;
 
   linkForRoom = (roomId: string): string => {
-    const oorjaUrl = this.config!.url;
-    return `${oorjaUrl}/rooms?id=${roomId}`;
+    return `${this.oorjaURL()}/rooms?id=${roomId}`;
   };
 
   teletype = (options: Omit<TeletypeOptions, "userId">) =>
     teletypeApp({ userId: this.user!.id, ...options });
+
+  private oorjaURL = () => {
+    const { host, enableTLS } = this.config!;
+    return enableTLS ? `https://${host}` : `http://${host}`;
+  };
 }
 
 let currentEnv: env;
