@@ -27,6 +27,10 @@ const promptForToken = (): Promise<string> => {
 
 export const preflightChecks = async (env: env) => {
   const token = getENVAccessToken(env) || (await promptForToken()).trim();
+  if (!token) {
+    console.log("token not provided :(");
+    process.exit(12);
+  }
   setENVAccessToken(env, token);
   const spinner = ora({
     text: "authenticating",
@@ -57,7 +61,7 @@ export const preflightChecks = async (env: env) => {
       );
     }
     spinner.start("establishing comms");
-    return establishSocket(suryaConfig)
+    return establishSocket(suryaConfig, manifest.suryaHosts)
       .then(() => {
         spinner.succeed().clear();
         return user;

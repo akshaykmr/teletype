@@ -13,29 +13,27 @@ export const config = new Conf({
 export type env = "staging" | "local" | "prod" | "prod-teletype";
 
 export type SuryaConfig = {
-  url: string;
+  host: string;
+  enableTLS: boolean;
   token: string;
-  wsUrl: string;
 };
 
 export const getSuryaConfig = (env: env): SuryaConfig => {
-  const geturls = (env: env) => {
+  const getHost = (env: env) => {
     switch (env) {
       case "staging":
-        return {
-          url: "https://surya-staging.oorja.io",
-          wsUrl: "wss://surya-staging.oorja.io",
-        };
+        return "surya-staging.oorja.io";
       case "local":
-        return { url: "http://localhost:4000", wsUrl: "ws://localhost:4000" };
+        return "localhost:4000";
       case "prod":
       case "prod-teletype":
-        return { url: "https://surya.oorja.io", wsUrl: "wss://surya.oorja.io" };
+        return "surya.oorja.io";
     }
   };
   return {
-    ...geturls(env),
+    host: getHost(env),
     token: getENVAccessToken(env),
+    enableTLS: env !== "local",
   };
 };
 

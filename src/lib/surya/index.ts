@@ -8,6 +8,7 @@ import { User, RoomApps, Room, CliManifest } from "./types";
 import { SuryaConfig } from "../config";
 import { Unauthorized, BadRequest } from "./errors";
 import { Socket, Channel, Presence } from "./vendor/phoenix";
+import { determineClosestHost } from "./best_host";
 
 const camelcaseKeys = require("camelcase-keys");
 
@@ -17,12 +18,15 @@ let client: AxiosInstance;
 let socket: Socket;
 
 export const initializeSurya = (config: SuryaConfig) => {
+  const base = config.enableTLS
+    ? `https://${config.host}`
+    : `http://${config.host}`;
   client = axios.create({
     httpsAgent: new https.Agent({
       minVersion: "TLSv1.2",
       maxVersion: "TLSv1.2",
     }),
-    baseURL: `${config.url}/api/v1`,
+    baseURL: `${base}/api/v1`,
     timeout: 5000,
     responseType: "json",
     headers: {
@@ -95,7 +99,12 @@ export const fetchRoom = async (roomId: string): Promise<Room> => {
   }
 };
 
-export const establishSocket = (config: SuryaConfig): Promise<void> => {
+export const establishSocket = async (
+  config: SuryaConfig,
+  hosts: string[]
+): Promise<void> => {
+  const protocolPrefix = config.enableTLS ? `wss://` : `ws://`;
+  const host = await determineClosestHost(hosts, config.enableTLS);
   let encodeMessage = (rawdata: any, callback: any) => {
     if (!rawdata) return;
     return callback(encode(rawdata));
@@ -108,7 +117,7 @@ export const establishSocket = (config: SuryaConfig): Promise<void> => {
   };
   return new Promise((resolve, reject) => {
     let initialConnection = false;
-    socket = new Socket(`${config.wsUrl}/socket`, {
+    socket = new Socket(`${protocolPrefix}${host}/socket`, {
       params: {
         access_token: config.token,
       },

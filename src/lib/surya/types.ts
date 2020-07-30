@@ -25,6 +25,7 @@ type ResourceTimestamps = {
 
 export type CliManifest = {
   cliVersion: number;
+  suryaHosts: string[];
 };
 
 export type User = UserProfile & ResourceTimestamps;
