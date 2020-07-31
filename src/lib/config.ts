@@ -21,10 +21,9 @@ export type SuryaConfig = {
 export const getSuryaConfig = (env: env): SuryaConfig => {
   const getHost = (env: env) => {
     switch (env) {
-      case "staging":
-        return "surya-staging.oorja.io";
       case "local":
         return "localhost:4000";
+      case "staging":
       case "prod":
       case "prod-teletype":
         return "surya.oorja.io";
