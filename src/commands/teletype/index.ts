@@ -61,7 +61,7 @@ Will also allow room participants to write to your terminal!
 
     if (args.room) {
       await this.streamToLink({ shell, multiplex, roomLink: args.room });
-      return;
+      process.exit(0);
     }
 
     console.log("(use -h for description and options) \n");
