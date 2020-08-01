@@ -74,6 +74,7 @@ export const preflightChecks = async (env: env) => {
     if (e instanceof Unauthorized) {
       spinner.fail("Your access token failed authentication, resetting...");
       setENVAccessToken(env, "");
+      process.exit(33);
     } else {
       spinner.fail("something went wrong :(");
     }
