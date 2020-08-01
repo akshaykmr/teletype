@@ -19,7 +19,7 @@ $ npm install -g oorja
 $ oorja COMMAND
 running command...
 $ oorja (-v|--version|version)
-oorja/0.4.1 linux-x64 node-v12.17.0
+oorja/0.4.2 linux-x64 node-v12.17.0
 $ oorja --help [COMMAND]
 USAGE
   $ oorja COMMAND
@@ -105,5 +105,5 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.4.1/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v0.4.2/src/commands/teletype/index.ts)_
 <!-- commandsstop -->
