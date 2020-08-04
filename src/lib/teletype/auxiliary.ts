@@ -9,7 +9,6 @@ export const initScreen = (
   shell: string,
   multiplexed: boolean
 ) => {
-  console.log(chalk.green("joined room channel"));
   console.log(chalk.bold(chalk.blueBright("TeleType")));
 
   if (multiplexed) {
