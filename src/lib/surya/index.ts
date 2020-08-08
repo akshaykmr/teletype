@@ -195,7 +195,15 @@ export const joinChannel = ({
       if (onJoin) onJoin();
     })
     .receive("error", (resp: any) => {
-      console.error("Unable to join", resp);
+      if (resp && resp.reason === "unauthorized") {
+        if (onError)
+          onError(
+            new Unauthorized(
+              "User needs to join the room before a stream can be started."
+            )
+          );
+        return;
+      }
       process.exit(3);
     });
   return chan;

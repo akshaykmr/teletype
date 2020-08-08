@@ -10,6 +10,7 @@ import {
   resizeBestFit,
 } from "./auxiliary";
 import chalk = require("chalk");
+import { Unauthorized } from "../surya/errors";
 
 enum MessageType {
   IN = "i",
@@ -47,7 +48,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
     resizeBestFit(term, userDimensions);
   };
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const channel = joinChannel({
       channel: `teletype:${config.roomId}`,
       params: {
@@ -96,8 +97,12 @@ export const teletypeApp = (config: TeletypeOptions) => {
         console.log(chalk.redBright("connection closed, terminated stream."));
         process.exit(3);
       },
-      onError: () => {
-        console.log(chalk.redBright("connection error, terminated stream."));
+      onError: (err?: any) => {
+        if (err instanceof Unauthorized) {
+          console.log(chalk.redBright(err.message));
+        } else {
+          console.log(chalk.redBright("connection error, terminated stream."));
+        }
         process.exit(4);
       },
       onMessage: ({ from: { session }, t, d }) => {
