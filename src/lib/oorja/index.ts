@@ -14,7 +14,7 @@ class OORJA {
   initialize = (env: env) => {
     if (this.ready) throw "cannot reinit";
     this.config = getoorjaConfig(env);
-    return preflightChecks(env).then((user) => {
+    return preflightChecks(env, this.linkForTokenGen()).then((user) => {
       this.user = user;
       this.ready = true;
       return this;
@@ -25,6 +25,8 @@ class OORJA {
   linkForRoom = (roomId: string): string => {
     return `${this.oorjaURL()}/rooms?id=${roomId}`;
   };
+
+  linkForTokenGen = () => `${this.oorjaURL()}/access_token`;
 
   teletype = (options: Omit<TeletypeOptions, "userId">) =>
     teletypeApp({ userId: this.user!.id, ...options });

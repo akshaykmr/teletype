@@ -17,16 +17,22 @@ import {
 } from "../surya";
 import { Unauthorized } from "../surya/errors";
 
-const promptForToken = (): Promise<string> => {
+const promptForToken = (generateTokenLink: string): Promise<string> => {
+  console.log(
+    "Running oorja-cli for the first time? You'll need an access token for authentication."
+  );
+  console.log(
+    `You can generate your token here: ${chalk.blue(generateTokenLink)}`
+  );
   return new Input({
     name: "Access Token",
-    message:
-      "Running oorja-cli (https://oorja.io) for the first time, Please enter your access token for authentication:",
+    message: "Please enter your access token for authentication:",
   }).run();
 };
 
-export const preflightChecks = async (env: env) => {
-  const token = getENVAccessToken(env) || (await promptForToken()).trim();
+export const preflightChecks = async (env: env, generateTokenLink: string) => {
+  const token =
+    getENVAccessToken(env) || (await promptForToken(generateTokenLink)).trim();
   if (!token) {
     console.log("token not provided :(");
     process.exit(12);
