@@ -6,7 +6,7 @@ cli tool that allows you to share your terminal online conveniently. Check out [
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/oorja.svg)](https://npmjs.org/package/oorja)
 [![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
-[![License](https://img.shields.io/npm/l/oorja.svg)](https://github.com/akshaykmr/oorja-cli/blob/master/package.json)
+[![License](https://img.shields.io/npm/l/oorja.svg)](https://github.com/akshaykmr/teletype/blob/master/package.json)
 
 <p align="center">
   <img width="600" src="./cli-demo.svg">
@@ -25,7 +25,7 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-requirements nodejs `12.13.0` or later
+requires nodejs `12.13.0` or later
 - `npm install -g oorja`
 - tip: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
 - `teletype`
@@ -74,7 +74,7 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v1.2.3/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.2.3/src/commands/teletype/index.ts)_
 
 ## `oorja help [COMMAND]`
 
@@ -92,4 +92,3 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
-
