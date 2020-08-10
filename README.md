@@ -30,11 +30,17 @@ requirements nodejs `12.13.0` or later
 - tip: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
 - `teletype`
 
+**Note**
+This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat. [privacy policy](https://teletype.oorja.io/privacy_policy)
+
+If you prefer a completely self-hosted thing look at
+these projects for web terminals - [wetty](https://github.com/butlerx/wetty) and [tty-share](https://github.com/elisescu/tty-share)
+
+
 # Commands
 
 * [`oorja teletype [ROOM]`](#oorja-teletype-room)
 * [`oorja help [COMMAND]`](#oorja-help-command)
-* [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
 
 ## `oorja teletype [ROOM]`
 
@@ -87,26 +93,3 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
 
-## `oorja conf [KEY] [VALUE]`
-
-manage configuration
-
-```
-USAGE
-  $ oorja conf [KEY] [VALUE]
-
-ARGUMENTS
-  KEY    key of the config
-  VALUE  value of the config
-
-OPTIONS
-  -d, --cwd=cwd          config file location
-  -d, --delete           delete?
-  -h, --help             show CLI help
-  -k, --key=key          key of the config
-  -n, --name=name        config file name
-  -p, --project=project  project name
-  -v, --value=value      value of the config
-```
-
-_See code: [conf-cli](https://github.com/natzcam/conf-cli/blob/v0.1.9/src/commands/conf.ts)_
