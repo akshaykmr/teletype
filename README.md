@@ -1,77 +1,40 @@
-oorja
+teletype
 =====
 
-cli tool for interacting with oorja
+cli tool that allows you to share your terminal online conveniently. Check out [teletype.oorja.io](https://teletype.oorja.io) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/oorja.svg)](https://npmjs.org/package/oorja)
 [![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
 [![License](https://img.shields.io/npm/l/oorja.svg)](https://github.com/akshaykmr/oorja-cli/blob/master/package.json)
 
+<p align="center">
+  <img width="600" src="./cli-demo.svg">
+</p>
+
+<p align="center">
+  <img src="./teletype-session.png">
+</p>
+
+Your stream can be view-only or collaboration enabled (command-line flag).
+
 <!-- toc -->
-* [Usage](#usage)
+* [Install and stream!](#install-and-stream)
 * [Commands](#commands)
 <!-- tocstop -->
-# Usage
-<!-- usage -->
-```sh-session
-$ npm install -g oorja
-$ oorja COMMAND
-running command...
-$ oorja (-v|--version|version)
-oorja/1.2.3 linux-x64 node-v12.17.0
-$ oorja --help [COMMAND]
-USAGE
-  $ oorja COMMAND
-...
-```
-<!-- usagestop -->
+
+# Install and stream!
+
+requirements nodejs `12.13.0` or later
+- `npm install -g oorja`
+- tip: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
+- `teletype`
+
 # Commands
-<!-- commands -->
-* [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
-* [`oorja help [COMMAND]`](#oorja-help-command)
+
 * [`oorja teletype [ROOM]`](#oorja-teletype-room)
-
-## `oorja conf [KEY] [VALUE]`
-
-manage configuration
-
-```
-USAGE
-  $ oorja conf [KEY] [VALUE]
-
-ARGUMENTS
-  KEY    key of the config
-  VALUE  value of the config
-
-OPTIONS
-  -d, --cwd=cwd          config file location
-  -d, --delete           delete?
-  -h, --help             show CLI help
-  -k, --key=key          key of the config
-  -n, --name=name        config file name
-  -p, --project=project  project name
-  -v, --value=value      value of the config
-```
-
-_See code: [conf-cli](https://github.com/natzcam/conf-cli/blob/v0.1.9/src/commands/conf.ts)_
-
-## `oorja help [COMMAND]`
-
-display help for oorja
-
-```
-USAGE
-  $ oorja help [COMMAND]
-
-ARGUMENTS
-  COMMAND  command to show help for
-
-OPTIONS
-  --all  see all commands in CLI
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
+* [`oorja help [COMMAND]`](#oorja-help-command)
+* [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
 
 ## `oorja teletype [ROOM]`
 
@@ -106,4 +69,44 @@ EXAMPLES
 ```
 
 _See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/oorja-cli/blob/v1.2.3/src/commands/teletype/index.ts)_
-<!-- commandsstop -->
+
+## `oorja help [COMMAND]`
+
+display help for oorja
+
+```
+USAGE
+  $ oorja help [COMMAND]
+
+ARGUMENTS
+  COMMAND  command to show help for
+
+OPTIONS
+  --all  see all commands in CLI
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
+
+## `oorja conf [KEY] [VALUE]`
+
+manage configuration
+
+```
+USAGE
+  $ oorja conf [KEY] [VALUE]
+
+ARGUMENTS
+  KEY    key of the config
+  VALUE  value of the config
+
+OPTIONS
+  -d, --cwd=cwd          config file location
+  -d, --delete           delete?
+  -h, --help             show CLI help
+  -k, --key=key          key of the config
+  -n, --name=name        config file name
+  -p, --project=project  project name
+  -v, --value=value      value of the config
+```
+
+_See code: [conf-cli](https://github.com/natzcam/conf-cli/blob/v0.1.9/src/commands/conf.ts)_
