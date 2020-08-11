@@ -3,10 +3,9 @@ TeleType
 
 cli tool that allows you to share your terminal online conveniently. Check out [teletype.oorja.io](https://teletype.oorja.io) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/oorja.svg)](https://npmjs.org/package/oorja)
 [![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
-[![License](https://img.shields.io/npm/l/oorja.svg)](https://github.com/akshaykmr/teletype/blob/master/package.json)
+[![Follow](https://img.shields.io/twitter/follow/oorja_app?style=social)](https://twitter.com/oorja_app)
 
 <p align="center">
   <img width="600" src="https://teletype.oorja.io/images/cli-demo.svg">
