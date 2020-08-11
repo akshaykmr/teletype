@@ -34,11 +34,13 @@ requires nodejs `12.13.0` or later
 **Note**
 This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://teletype.oorja.io/privacy_policy).
 
+**PRO TIP:**
+Any participant in the room can stream their terminal(s) i.e there can be multiple streams at the same time, and you can switch between them like terminal tabs!
+
 For options: `teletype -h` 
 
-If you prefer a completely self-hosted thing look at
-these projects for web terminals - [wetty](https://github.com/butlerx/wetty) and [tty-share](https://github.com/elisescu/tty-share)
 
+ > If you prefer a completely self-hosted thing look at these projects for web terminals - [wetty](https://github.com/butlerx/wetty) and [tty-share](https://github.com/elisescu/tty-share)
 
 # Commands
 
