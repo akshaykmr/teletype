@@ -7,7 +7,7 @@
     "oorja": "./bin/run",
     "teletype": "./bin/teletype"
   },
-  "bugs": "https://github.com/akshaykmr/teletype/issues",
+  "bugs": "https://github.com/akshaykmr/TeleType/issues",
   "dependencies": {
     "@msgpack/msgpack": "^1.12.2",
     "@oclif/command": "^1",
@@ -46,7 +46,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/akshaykmr/teletype",
+  "homepage": "https://teletype.oorja.io",
   "keywords": [
     "teletype",
     "terminal",
@@ -64,7 +64,7 @@
       "conf-cli"
     ]
   },
-  "repository": "akshaykmr/teletype",
+  "repository": "akshaykmr/TeleType",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc --skipLibCheck true && oclif-dev manifest && oclif-dev readme",
