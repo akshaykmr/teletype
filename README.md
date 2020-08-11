@@ -1,4 +1,4 @@
-teletype
+TeleType
 =====
 
 cli tool that allows you to share your terminal online conveniently. Check out [teletype.oorja.io](https://teletype.oorja.io) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
@@ -29,9 +29,12 @@ requires nodejs `12.13.0` or later
 - `npm install -g oorja`
 - tip: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
 - `teletype`
+- `teletype -m`  (for collaboration mode)
 
 **Note**
-This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat. [privacy policy](https://teletype.oorja.io/privacy_policy)
+This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://teletype.oorja.io/privacy_policy).
+
+For options: `teletype -h` 
 
 If you prefer a completely self-hosted thing look at
 these projects for web terminals - [wetty](https://github.com/butlerx/wetty) and [tty-share](https://github.com/elisescu/tty-share)
