@@ -29,11 +29,15 @@ const promptAuth = async (
   generateTokenLink: string
 ): Promise<string> => {
   const HAS_TOKEN = "I have a token with me";
-  const ANON = "proceed as an anonymous user";
+  const ANON = "Proceed as an anonymous user";
   const SIGN_IN = "sign-in with oorja";
+  console.log(
+    `\n${chalk.bold(
+      "PRO-TIP:"
+    )} if you sign-in, you can control your shell from the web-ui, without enabling collaboration mode for all participants\n`
+  );
   const answer = await new Select({
-    name: "",
-    message: "You need an access-token for authentication",
+    message: "You need an access-token for authentication.\n ",
     choices: [HAS_TOKEN, ANON, SIGN_IN],
   }).run();
   switch (answer) {
@@ -100,9 +104,9 @@ export const preflightChecks = async (env: env, generateTokenLink: string) => {
         throw e;
       });
   } catch (e) {
+    setENVAccessToken(env, "");
     if (e instanceof Unauthorized) {
       spinner.fail("Your access token failed authentication, resetting...");
-      setENVAccessToken(env, "");
       process.exit(33);
     } else {
       spinner.fail("something went wrong :(");
