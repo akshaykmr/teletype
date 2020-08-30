@@ -46,6 +46,7 @@ For options: `teletype -h`
 # Commands
 
 * [`oorja teletype [ROOM]`](#oorja-teletype-room)
+* [`oorja signout`](#oorja-signout)
 * [`oorja help [COMMAND]`](#oorja-help-command)
 
 ## `oorja teletype [ROOM]`
@@ -81,6 +82,18 @@ EXAMPLES
 ```
 
 _See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.2.3/src/commands/teletype/index.ts)_
+
+
+## `oorja signout`
+
+sign-out and clear saved access token from any prior login. By default cli
+saves the token for any signed-in user (anonymous tokens aren't remembered).
+Any new command will ask for a token again after sign-out.
+
+```
+USAGE
+  $ oorja signout
+```
 
 ## `oorja help [COMMAND]`
 
