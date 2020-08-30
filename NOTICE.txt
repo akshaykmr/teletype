@@ -1,0 +1,5 @@
+oorja | teletype
+Copyright 2020 akshay@oorja.io
+
+This product includes software developed for https://oorja.io
+a realtime-collaboration app. see license.txt for details
