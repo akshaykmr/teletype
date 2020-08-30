@@ -1,5 +1,5 @@
 import chalk = require("chalk");
-const { Input } = require("enquirer");
+const { Input, Select } = require("enquirer");
 const ora = require("ora");
 
 import {
@@ -14,25 +14,48 @@ import {
   initializeSurya,
   fetchSessionUser,
   establishSocket,
+  createAnonymousUser,
 } from "../surya";
 import { Unauthorized } from "../surya/errors";
 
-const promptForToken = (generateTokenLink: string): Promise<string> => {
-  console.log(
-    "Running oorja-cli for the first time? You'll need an access token for authentication."
-  );
-  console.log(
-    `You can generate your token here: ${chalk.blue(generateTokenLink)}`
-  );
-  return new Input({
+const promptToken = (): Promise<string> =>
+  new Input({
     name: "Access Token",
     message: "Please enter your access token for authentication:",
   }).run();
+
+const promptAuth = async (
+  env: env,
+  generateTokenLink: string
+): Promise<string> => {
+  const HAS_TOKEN = "I have a token with me";
+  const ANON = "proceed as an anonymous user";
+  const SIGN_IN = "sign-in with oorja";
+  const answer = await new Select({
+    name: "",
+    message: "You need an access-token for authentication",
+    choices: [HAS_TOKEN, ANON, SIGN_IN],
+  }).run();
+  switch (answer) {
+    case HAS_TOKEN:
+      return promptToken();
+    case ANON:
+      console.log("creating anonymous user...");
+      return createAnonymousUser(env);
+    case SIGN_IN:
+      console.log(
+        `You can sign-in and generate your token here: ${chalk.blue(
+          generateTokenLink
+        )}`
+      );
+      return promptToken();
+  }
+  throw Error("unexpected input");
 };
 
 export const preflightChecks = async (env: env, generateTokenLink: string) => {
   const token =
-    getENVAccessToken(env) || (await promptForToken(generateTokenLink)).trim();
+    getENVAccessToken(env) || (await promptAuth(env, generateTokenLink)).trim();
   if (!token) {
     console.log("token not provided :(");
     process.exit(12);
@@ -62,7 +85,7 @@ export const preflightChecks = async (env: env, generateTokenLink: string) => {
       setENVAccessToken(env, "");
       console.log(
         chalk.yellowBright(
-          "You're an anonymous user. CLI will not remember the token"
+          "You're an anonymous user. CLI will not remember the auth-token"
         )
       );
     }

@@ -5,7 +5,7 @@ import { encode, decode } from "@msgpack/msgpack";
 
 import { defaultParser } from "./resources";
 import { User, RoomApps, Room, CliManifest } from "./types";
-import { SuryaConfig } from "../config";
+import { SuryaConfig, env, getSuryaConfig } from "../config";
 import { Unauthorized, BadRequest } from "./errors";
 import { Socket, Channel, Presence } from "./vendor/phoenix";
 import { determineClosestHost } from "./best_host";
@@ -17,16 +17,16 @@ export class SuryaError extends Error {}
 let client: AxiosInstance;
 let socket: Socket;
 
+const suryaBaseURL = (host: string, tlsEnabled: boolean) =>
+  `${tlsEnabled ? "https" : "http"}://${host}/api/v1`;
+
 export const initializeSurya = (config: SuryaConfig) => {
-  const base = config.enableTLS
-    ? `https://${config.host}`
-    : `http://${config.host}`;
   client = axios.create({
     httpsAgent: new https.Agent({
       minVersion: "TLSv1.2",
       maxVersion: "TLSv1.2",
     }),
-    baseURL: `${base}/api/v1`,
+    baseURL: suryaBaseURL(config.host, config.enableTLS),
     timeout: 5000,
     responseType: "json",
     headers: {
@@ -85,6 +85,18 @@ export const createRoom = async ({
   try {
     const response = await client.post("/rooms", body);
     return defaultParser(response.data.data) as Room;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const createAnonymousUser = async (env: env): Promise<string> => {
+  const config = getSuryaConfig(env);
+  try {
+    const response = await axios.post(
+      `${suryaBaseURL(config.host, config.enableTLS)}/session/anon`
+    );
+    return response.data.access_token;
   } catch (error) {
     return handleError(error);
   }
