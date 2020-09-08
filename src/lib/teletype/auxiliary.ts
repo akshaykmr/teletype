@@ -26,7 +26,8 @@ export const initScreen = (
     )
   );
   console.log(
-    `Note: Your shell size may adjust for optimum viewing experience for all participants.
+    `Note: Your shell size may adjust for optimum viewing experience for all participants.\n
+This session is end-to-end encrypted.
 To terminate stream run ${chalk.yellowBright(
       "exit"
     )} or press ${chalk.yellowBright("ctrl-d")} \n`
