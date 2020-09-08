@@ -1,7 +1,7 @@
 import { spawn, IPty } from "node-pty";
 import * as os from "os";
 import { joinChannel } from "../surya";
-import { Hash } from "../surya/types";
+import { Hash, RoomKey } from "../surya/types";
 import {
   getDimensions,
   dimensions,
@@ -11,6 +11,7 @@ import {
 } from "./auxiliary";
 import chalk = require("chalk");
 import { Unauthorized } from "../surya/errors";
+import { encrypt, decrypt } from "../encryption";
 
 enum MessageType {
   IN = "i",
@@ -20,7 +21,7 @@ enum MessageType {
 
 export type TeletypeOptions = {
   userId: string;
-  roomId: string;
+  roomKey: RoomKey;
   shell: string;
   multiplex: boolean;
   process: NodeJS.Process;
@@ -50,7 +51,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
 
   return new Promise((resolve, reject) => {
     const channel = joinChannel({
-      channel: `teletype:${config.roomId}`,
+      channel: `teletype:${config.roomKey.roomId}`,
       params: {
         username,
         hostname,
@@ -79,7 +80,11 @@ export const teletypeApp = (config: TeletypeOptions) => {
           stdout.write(d);
           // revisit: is it worth having one letter names, instead of something descriptive
           // does it really save bytes?
-          channel.push("new_msg", { t: MessageType.OUT, d: d, b: true });
+          channel.push("new_msg", {
+            t: MessageType.OUT,
+            b: true,
+            d: encrypt(d, config.roomKey),
+          });
         });
         term.on("exit", () => {
           console.log(
@@ -112,13 +117,14 @@ export const teletypeApp = (config: TeletypeOptions) => {
             resizeBestFit(term, userDimensions);
             break;
           case MessageType.IN:
+            const data = decrypt(d, config.roomKey);
             const userId = session.split(":")[0];
             if (config.multiplex) {
-              term.write(d);
+              term.write(data);
               return;
             }
             if (userId === config.userId) {
-              term.write(d);
+              term.write(data);
             } else {
               console.log(
                 chalk.redBright(
