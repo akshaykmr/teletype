@@ -1,5 +1,4 @@
 const { Select, Input } = require("enquirer");
-import { URL } from "url";
 import { Command, flags } from "@oclif/command";
 const ora = require("ora");
 
@@ -10,9 +9,7 @@ import {
   ROOM_LINK_SAMPLE,
   INVALID_ROOM_LINK_MESSAGE,
 } from "../../lib/config";
-import { BadRequest } from "../../lib/surya/errors";
-import { Room } from "../../lib/surya/types";
-import { getApp } from "../../lib/oorja";
+import { getApp, InvalidRoomLink } from "../../lib/oorja";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -101,14 +98,17 @@ Will also allow room participants to write to your terminal!
         message:
           "enter the room secret link. (click the share button in the room)",
       }).run());
-    // TODO: move link validation to oorja-lib, if I have to do this at more places
-    const roomURL = this.parseLink(roomLink);
-    const env = determineENV(roomURL);
-    const app = await getApp(env);
-    const roomId = roomURL.searchParams.get!("id");
-    this.clearstdin();
-    // @ts-ignore
-    await app.teletype({ roomId, ...options, process });
+    try {
+      const app = await getApp(roomLink);
+      const roomKey = app.getRoomKey(roomLink);
+      this.clearstdin();
+      await app.teletype({ roomKey, ...options, process });
+    } catch (e) {
+      if (e instanceof InvalidRoomLink) {
+        console.log(INVALID_ROOM_LINK_MESSAGE);
+        process.exit(3);
+      }
+    }
   }
 
   private async createRoomAndStream({
@@ -120,12 +120,11 @@ Will also allow room participants to write to your terminal!
   }) {
     const app = await getApp();
     const spinner = ora({
-      text: chalk.blueBright("creating room with TeleType app"),
+      text: chalk.bold("creating room with TeleType app"),
       discardStdin: false,
     }).start();
-    let room: Room;
     try {
-      room = await app.createRoom({
+      const { roomKey } = await app.createRoom({
         roomName: "-",
         apps: {
           defaultFocus: "39",
@@ -137,34 +136,19 @@ Will also allow room participants to write to your terminal!
           ],
         },
       });
+      spinner.succeed(chalk.bold("room created")).clear();
+      const link = app.linkForRoom(roomKey);
+      console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`);
+      console.log(
+        chalk.bold(
+          "^^ you'll be streaming here, share this link with your friends."
+        )
+      );
+      this.clearstdin();
+      return await app.teletype({ roomKey, shell, multiplex, process });
     } catch (e) {
-      if (e instanceof BadRequest) {
-        spinner.fail(
-          "failed to create room. Note: you cannot create rooms as an anonymous user"
-        );
-        process.exit(9);
-      }
-    }
-    spinner.succeed(chalk.greenBright("room created")).clear();
-    const link = app.linkForRoom(room!.id);
-    console.log(`\n${chalk.cyanBright(link)}\n`);
-    console.log(
-      chalk.blueBright(
-        "^^ you'll be streaming here, share this link with your friends."
-      )
-    );
-    this.clearstdin();
-    return await app.teletype({ roomId: room!.id, shell, multiplex, process });
-  }
-
-  private parseLink(roomLink: string): URL {
-    try {
-      const url = new URL(roomLink);
-      if (!url.searchParams.get("id")) throw "invalid";
-      return url;
-    } catch {
-      console.log(INVALID_ROOM_LINK_MESSAGE);
-      process.exit(0);
+      console.log("failed to create room.");
+      process.exit(9);
     }
   }
 
