@@ -30,18 +30,29 @@ requires nodejs `12.13.0` or later
 - `teletype`
 - `teletype -m`  (for collaboration mode)
 
-**Note**
-This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://teletype.oorja.io/privacy_policy).
-
-Like it ? [follow or tweet](https://twitter.com/oorja_app) 👩🏻‍💻
+**your stream is end-to-end encrypted**
 
 **PRO TIP:**
 Any participant in the room can stream their terminal(s) i.e there can be multiple streams at the same time, and you can switch between them like terminal tabs!
 
 For options: `teletype -h` 
 
+**Note**
+This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://teletype.oorja.io/privacy_policy).
+TLDR: Nothing stored on servers. Your data is end-to-end encrypted, synced between browsers (and cli). No prying eyes.
 
- > If you prefer a completely self-hosted thing look at these projects for web terminals - [wetty](https://github.com/butlerx/wetty) and [tty-share](https://github.com/elisescu/tty-share)
+Like it ? [follow or tweet, tell your colleagues](https://twitter.com/oorja_app) 👩🏻‍💻
+
+Love it ? [please subscribe](https://teletype.oorja.io/subscription) 🖖
+
+open [issues](https://github.com/akshaykmr/TeleType/issues) for bugs, improvements, app-discussions, how-you-are-using-it and anything else really
+
+more ways to [contact](https://teletype.oorja.io/contact).
+If your company is interested in an on-premise solution. Please reach out.
+
+I'm also on the lookout for an awesome team, you can know more about me
+on [my website](https://akshay.oorja.io/). Happy to hear from you!
+
 
 # Commands
 
