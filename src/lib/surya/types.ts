@@ -39,6 +39,11 @@ export type Room = {
   apps: RoomApps;
 };
 
+export type RoomKey = {
+  roomId: string;
+  key: Buffer;
+};
+
 export type Hash<T> = {
   [key: string]: T;
 };

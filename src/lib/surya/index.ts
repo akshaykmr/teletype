@@ -66,7 +66,7 @@ export const fetchSessionUser = async (): Promise<User> => {
   }
 };
 
-type CreateRoomOptions = {
+export type CreateRoomOptions = {
   roomName: string;
   apps: RoomApps;
 };
