@@ -36,7 +36,7 @@ export const getSuryaConfig = (env: env): SuryaConfig => {
   };
 };
 
-export const ROOM_LINK_SAMPLE = "https://oorja.io/rooms?id=foo";
+export const ROOM_LINK_SAMPLE = "https://oorja.io/rooms?id=foo#key";
 
 export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
   "invalid url "

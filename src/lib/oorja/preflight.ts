@@ -34,7 +34,7 @@ const promptAuth = async (
   console.log(
     `\n${chalk.bold(
       "PRO-TIP:"
-    )} if you sign-in, you can control your shell from the web-ui, without enabling collaboration mode for all participants\n`
+    )} if you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for all participants\n`
   );
   const answer = await new Select({
     message: "You need an access-token for authentication.\n ",
