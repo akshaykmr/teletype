@@ -25,8 +25,9 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 # Install and stream!
 
 requires nodejs `12.13.0` or later
-- `npm install -g oorja`
-- tip: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
+
+- optional but highly recommend for successful install: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
+- `npm install -g oorja
 - `teletype`
 - `teletype -m`  (for collaboration mode)
 
