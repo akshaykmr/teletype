@@ -26,8 +26,8 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 requires nodejs `12.13.0` or later
 
-- optional but highly recommend for successful install: [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
-- `npm install -g oorja
+- **optional but highly recommend for successful install -> [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)**
+- `npm install -g oorja`
 - `teletype`
 - `teletype -m`  (for collaboration mode)
 
