@@ -24,7 +24,7 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-requires nodejs `12.13.0` or later
+- Prerequisite: [nodejs `12.13.0` or later](https://nodejs.org/en/download/)
 
 - **optional but highly recommend for successful install -> [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)**
 - `npm install -g oorja`
@@ -40,19 +40,15 @@ For options: `teletype -h`
 
 **Note**
 This is the cli companion for [teletype.oorja.io](https://teletype.oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://teletype.oorja.io/privacy_policy).
-TLDR: Nothing stored on servers. Your data is end-to-end encrypted, synced between browsers (and cli). No prying eyes.
+TLDR: Nothing stored on servers. Your data is end-to-end encrypted, synced between browsers (and cli) 🍻. No prying eyes. 
 
 Like it ? [follow or tweet, tell your colleagues](https://twitter.com/oorja_app) 👩🏻‍💻
 
 Love it ? [please subscribe](https://teletype.oorja.io/subscription) 🖖
 
-open [issues](https://github.com/akshaykmr/TeleType/issues) for bugs, improvements, app-discussions, how-you-are-using-it and anything else really
+Feel free to open [issues](https://github.com/akshaykmr/TeleType/issues) for bugs, improvements, app-discussions, and anything else really.
 
-more ways to [contact](https://teletype.oorja.io/contact).
-If your company is interested in an on-premise solution. Please reach out.
-
-I'm also on the lookout for an awesome team, you can know more about me
-on [my website](https://akshay.oorja.io/). Happy to hear from you!
+More ways to [contact](https://teletype.oorja.io/contact).
 
 
 # Commands
