@@ -111,12 +111,9 @@ export const fetchRoom = async (roomId: string): Promise<Room> => {
   }
 };
 
-export const establishSocket = async (
-  config: SuryaConfig,
-  hosts: string[]
-): Promise<void> => {
+export const establishSocket = async (config: SuryaConfig): Promise<void> => {
   const protocolPrefix = config.enableTLS ? `wss://` : `ws://`;
-  const host = await determineClosestHost(hosts, config.enableTLS);
+  const host = config.host;
   let encodeMessage = (rawdata: any, callback: any) => {
     if (!rawdata) return;
     return callback(encode(rawdata));

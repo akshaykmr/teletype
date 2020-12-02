@@ -4,11 +4,7 @@ const ora = require("ora");
 
 import * as os from "os";
 import * as chalk from "chalk";
-import {
-  determineENV,
-  ROOM_LINK_SAMPLE,
-  INVALID_ROOM_LINK_MESSAGE,
-} from "../../lib/config";
+import { ROOM_LINK_SAMPLE, INVALID_ROOM_LINK_MESSAGE } from "../../lib/config";
 import { getApp, InvalidRoomLink } from "../../lib/oorja";
 
 const DEFAULT_SHELL =

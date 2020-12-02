@@ -93,10 +93,10 @@ export const preflightChecks = async (env: env, generateTokenLink: string) => {
         )
       );
     }
-    spinner.start("establishing comms");
-    return establishSocket(suryaConfig, manifest.suryaHosts)
+    spinner.start("connecting..");
+    return establishSocket(suryaConfig)
       .then(() => {
-        spinner.succeed().clear();
+        spinner.succeed("connected").clear();
         return user;
       })
       .catch((e) => {
