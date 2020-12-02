@@ -8,7 +8,6 @@ import { User, RoomApps, Room, CliManifest } from "./types";
 import { SuryaConfig, env, getSuryaConfig } from "../config";
 import { Unauthorized, BadRequest } from "./errors";
 import { Socket, Channel, Presence } from "./vendor/phoenix";
-import { determineClosestHost } from "./best_host";
 
 const camelcaseKeys = require("camelcase-keys");
 
