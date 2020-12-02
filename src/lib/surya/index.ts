@@ -207,7 +207,7 @@ export const joinChannel = ({
         if (onError)
           onError(
             new Unauthorized(
-              "User needs to join the room before a stream can be started."
+              "unauthorized: user needs to join the room before a stream can be started."
             )
           );
         return;
