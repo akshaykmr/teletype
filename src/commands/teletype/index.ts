@@ -77,6 +77,7 @@ Will also allow room participants to write to your terminal!
           break;
       }
     } catch (e) {
+      throw(e)
       process.exit(100);
     }
     process.exit(0);
