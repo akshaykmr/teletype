@@ -1,11 +1,12 @@
-const { Select, Input } = require("enquirer");
+const { Select } = require("enquirer");
 import { Command, flags } from "@oclif/command";
 const ora = require("ora");
 
 import * as os from "os";
 import * as chalk from "chalk";
-import { ROOM_LINK_SAMPLE, INVALID_ROOM_LINK_MESSAGE } from "../../lib/config";
-import { getApp, InvalidRoomLink } from "../../lib/oorja";
+import { ROOM_LINK_SAMPLE } from "../../lib/config";
+import { getApp } from "../../lib/oorja";
+import { promptRoomLink } from "../../lib/utils";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -23,7 +24,7 @@ will prompt to choose streaming destination - existing room or create a new one.
 will stream to the room specified by secret link, you must have joined the room before streaming.
 
 `,
-    `${chalk.blueBright(`$ teletype -m '${ROOM_LINK_SAMPLE}'`)}
+    `${chalk.blueBright("$ teletype -m")}
 Will also allow room participants to write to your terminal!
 
 `,
@@ -39,7 +40,7 @@ Will also allow room participants to write to your terminal!
     multiplex: flags.boolean({
       char: "m",
       description:
-        "allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default",
+        "Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default",
       default: false,
     }),
   };
@@ -62,23 +63,18 @@ Will also allow room participants to write to your terminal!
     // room not known, prompt
     const ROOM = "to an existing room (you have the room link)";
     const NEW = "new room";
-    try {
-      const answer = await new Select({
-        name: "",
-        message: "Choose streaming destination",
-        choices: [NEW, ROOM],
-      }).run();
-      switch (answer) {
-        case ROOM:
-          await this.streamToLink({ shell, multiplex });
-          break;
-        case NEW:
-          await this.createRoomAndStream({ shell, multiplex });
-          break;
-      }
-    } catch (e) {
-      throw(e)
-      process.exit(100);
+    const answer = await new Select({
+      name: "",
+      message: "Choose streaming destination",
+      choices: [NEW, ROOM],
+    }).run();
+    switch (answer) {
+      case ROOM:
+        await this.streamToLink({ shell, multiplex });
+        break;
+      case NEW:
+        await this.createRoomAndStream({ shell, multiplex });
+        break;
     }
     process.exit(0);
   }
@@ -88,24 +84,11 @@ Will also allow room participants to write to your terminal!
     multiplex: boolean;
     roomLink?: string;
   }) {
-    const roomLink =
-      options.roomLink ||
-      (await new Input({
-        name: "room secret link",
-        message:
-          "enter the room secret link. (click the share button in the room)",
-      }).run());
-    try {
-      const app = await getApp(roomLink);
-      const roomKey = app.getRoomKey(roomLink);
-      this.clearstdin();
-      await app.teletype({ roomKey, ...options, process });
-    } catch (e) {
-      if (e instanceof InvalidRoomLink) {
-        console.log(INVALID_ROOM_LINK_MESSAGE);
-        process.exit(3);
-      }
-    }
+    const roomLink = options.roomLink || (await promptRoomLink());
+    const app = await getApp(roomLink);
+    const roomKey = app.getRoomKey(roomLink);
+    this.clearstdin();
+    await app.teletype({ roomKey, ...options, process });
   }
 
   private async createRoomAndStream({
@@ -116,12 +99,13 @@ Will also allow room participants to write to your terminal!
     multiplex: boolean;
   }) {
     const app = await getApp();
+
     const spinner = ora({
       text: chalk.bold("creating room with TeleType app"),
       discardStdin: false,
     }).start();
-    try {
-      const { roomKey } = await app.createRoom({
+    const { roomKey } = await app
+      .createRoom({
         roomName: "-",
         apps: {
           defaultFocus: "39",
@@ -132,21 +116,22 @@ Will also allow room participants to write to your terminal!
             { appId: "100", config: {} },
           ],
         },
+      })
+      .catch((e) => {
+        console.log("failed to create room.");
+        process.exit(9);
       });
-      spinner.succeed(chalk.bold("room created")).clear();
-      const link = app.linkForRoom(roomKey);
-      console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`);
-      console.log(
-        chalk.bold(
-          "^^ you'll be streaming here, share this link with your friends."
-        )
-      );
-      this.clearstdin();
-      return await app.teletype({ roomKey, shell, multiplex, process });
-    } catch (e) {
-      console.log("failed to create room.");
-      process.exit(9);
-    }
+    spinner.succeed(chalk.bold("room created")).clear();
+
+    const link = app.linkForRoom(roomKey);
+    console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`);
+    console.log(
+      chalk.bold(
+        "^^ you'll be streaming here, share this link with your friends."
+      )
+    );
+    this.clearstdin();
+    return await app.teletype({ roomKey, shell, multiplex, process });
   }
 
   private clearstdin() {

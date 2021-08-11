@@ -1,4 +1,10 @@
-import { env, determineENV, getoorjaConfig, oorjaConfig } from "../config";
+import {
+  env,
+  determineENV,
+  getoorjaConfig,
+  oorjaConfig,
+  INVALID_ROOM_LINK_MESSAGE,
+} from "../config";
 import { User, RoomKey } from "../surya/types";
 import { teletypeApp, TeletypeOptions } from "../teletype";
 import { preflightChecks } from "./preflight";
@@ -41,7 +47,7 @@ class OORJA {
   };
 
   getRoomKey(roomLink: string): RoomKey {
-    const url = parseRoomLink(roomLink);
+    const url = parseRoomURL(roomLink);
     return {
       key: importKey(url.hash),
       roomId: url.searchParams.get("id") as string,
@@ -59,9 +65,12 @@ class OORJA {
   };
 }
 
-const parseRoomLink = (roomLink: string): URL => {
+const parseRoomURL = (roomLink: string): URL => {
   const url = new URL(roomLink);
-  if (!url.searchParams.get("id") || !url.hash) throw new InvalidRoomLink();
+  if (!url.searchParams.get("id") || !url.hash) {
+    console.log(INVALID_ROOM_LINK_MESSAGE);
+    process.exit(3);
+  }
   return url;
 };
 
@@ -69,7 +78,7 @@ let currentEnv: env;
 let oorja: OORJA;
 
 export const getApp = (roomLink?: string): Promise<OORJA> => {
-  const env = determineENV(roomLink ? parseRoomLink(roomLink) : undefined);
+  const env = determineENV(roomLink ? parseRoomURL(roomLink) : undefined);
   if (oorja) {
     if (env !== currentEnv) {
       return Promise.reject("attempt to run different env in same session");
