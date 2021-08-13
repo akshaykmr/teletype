@@ -1,3 +1,5 @@
-export class Unauthorized extends Error {}
+export class ClientError extends Error {}
 
-export class BadRequest extends Error {}
+export class Unauthorized extends ClientError {}
+
+export class BadRequest extends ClientError {}
