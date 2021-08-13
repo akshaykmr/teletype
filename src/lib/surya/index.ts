@@ -90,7 +90,6 @@ export class SuryaClient {
           otp: otp,
         }
       );
-      console.log(response.data);
       return response.data.data.token;
     } catch (error) {
       return handleError(error);

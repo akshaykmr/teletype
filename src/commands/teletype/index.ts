@@ -17,11 +17,11 @@ export default class TeleTypeCommand extends Command {
 
   static examples = [
     `${chalk.blueBright("$ teletype")}
-will prompt to choose streaming destination - existing room or create a new one.
+Will prompt to choose streaming destination - existing room or create a new one.
 
 `,
     `${chalk.blueBright(`$ teletype '${ROOM_LINK_SAMPLE}'`)}
-will stream to the room specified by secret link, you must have joined the room before streaming.
+Will stream to the room specified by secret link, you must have joined the room before streaming.
 
 `,
     `${chalk.blueBright("$ teletype -m")}
@@ -61,8 +61,8 @@ Will also allow room participants to write to your terminal!
     console.log("(use -h for description and options) \n");
 
     // room not known, prompt
-    const ROOM = "to an existing room (you have the room link)";
-    const NEW = "new room";
+    const ROOM = "To an existing room (you have the room link)";
+    const NEW = "New room";
     const answer = await new Select({
       name: "",
       message: "Choose streaming destination",
@@ -86,7 +86,7 @@ Will also allow room participants to write to your terminal!
   }) {
     const roomLink = options.roomLink || (await promptRoomLink());
     if (!roomLink) {
-      console.log(chalk.redBright("room link not provided :("));
+      console.log(chalk.redBright("Room link not provided :("));
       process.exit();
     }
     const app = await getApp({ roomLink });
@@ -105,7 +105,7 @@ Will also allow room participants to write to your terminal!
     const app = await getApp();
 
     const spinner = ora({
-      text: chalk.bold("creating room with TeleType app"),
+      text: chalk.bold("Creating room with TeleType app"),
       discardStdin: false,
     }).start();
     const { roomKey } = await app
@@ -122,16 +122,16 @@ Will also allow room participants to write to your terminal!
         },
       })
       .catch((e) => {
-        console.log("failed to create room.");
+        console.log("Failed to create room.");
         process.exit(9);
       });
-    spinner.succeed(chalk.bold("room created")).clear();
+    spinner.succeed(chalk.bold("Room created")).clear();
 
     const link = app.linkForRoom(roomKey);
     console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`);
     console.log(
       chalk.bold(
-        "^^ you'll be streaming here, share this link with your friends."
+        "^^ You'll be streaming here, share this link with your friends."
       )
     );
     this.clearstdin();

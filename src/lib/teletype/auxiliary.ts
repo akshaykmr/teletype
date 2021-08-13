@@ -22,7 +22,7 @@ export const initScreen = (
     chalk.blue(
       `${chalk.bold(
         `${username}@${hostname}`
-      )} spawning streaming shell: ${chalk.bold(`${shell}`)}`
+      )} Spawning streaming shell: ${chalk.bold(`${shell}`)}`
     )
   );
   console.log(

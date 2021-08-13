@@ -32,11 +32,11 @@ export const promptAuth = async (
   generateTokenLink: string
 ): Promise<string> => {
   const ANON = "Proceed as an anonymous user";
-  const SIGN_IN = "sign-in with oorja";
+  const SIGN_IN = "Sign-in with oorja";
   console.log(
     `\n${chalk.bold(
       "PRO-TIP:"
-    )} if you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for the other participants\n`
+    )} If you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for the other participants\n`
   );
   const answer = await new Select({
     message: "You need an access-token for authentication.\n ",
@@ -44,7 +44,7 @@ export const promptAuth = async (
   }).run();
   switch (answer) {
     case ANON:
-      console.log("creating anonymous user...");
+      console.log("Creating anonymous user...");
       return suryaClient.createAnonymousUser();
     case SIGN_IN:
       console.log(
@@ -54,7 +54,7 @@ export const promptAuth = async (
       );
       return promptToken();
   }
-  throw Error("unexpected input");
+  throw Error("Unexpected input");
 };
 
 export const loginByRoomOTP = async (
@@ -84,7 +84,7 @@ export const validateCliVersion = async (suryaClient: SuryaClient) => {
   if (manifest.cliVersion > CLI_VERSION) {
     console.log(
       chalk.redBright(
-        "your oorja cli is outdated. please run: npm update -g oorja"
+        "Your oorja cli is outdated. Please run: npm update -g oorja"
       )
     );
     process.exit(1);
@@ -116,12 +116,12 @@ export const resumeSession = async (
 
 export const preflight = async (env: env, suryaClient: SuryaClient) => {
   const spinner = ora({
-    text: "authenticating",
+    text: "Authenticating",
     discardStdin: false,
   }).start();
   try {
     const user = await suryaClient.fetchSessionUser();
-    spinner.succeed(`authenticated: Welcome ${user.name}`);
+    spinner.succeed(`Authenticated: Welcome ${user.name}`);
     if (user.profileType === "anon") {
       // don't persist tokens for anonymous users
       setENVAccessToken(env, "");
@@ -131,15 +131,15 @@ export const preflight = async (env: env, suryaClient: SuryaClient) => {
         )
       );
     }
-    spinner.start("connecting..");
+    spinner.start("Connecting..");
     return suryaClient
       .establishSocket()
       .then(() => {
-        spinner.succeed("connected").clear();
+        spinner.succeed("Connected").clear();
         return user;
       })
       .catch((e) => {
-        spinner.fail("socket connection failure..");
+        spinner.fail("Socket connection failure..");
         throw e;
       });
   } catch (e) {
@@ -148,7 +148,7 @@ export const preflight = async (env: env, suryaClient: SuryaClient) => {
       spinner.fail("Your access token failed authentication, resetting...");
       process.exit(33);
     } else {
-      spinner.fail("something went wrong :(");
+      spinner.fail("Something went wrong :(");
     }
     throw e;
   }

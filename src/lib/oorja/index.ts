@@ -18,7 +18,6 @@ import {
   resumeSession,
   validateCliVersion,
 } from "./preflight";
-import { Unauthorized } from "../surya/errors";
 
 export class InvalidRoomLink extends Error {}
 
@@ -95,11 +94,10 @@ const init = async (env: env, options: { roomId?: string } = {}) => {
     let token: string = "";
     if (options.roomId) {
       token = await loginByRoomOTP(suryaClient, options.roomId);
-      console.log(token);
     } else {
       token = await promptAuth(suryaClient, linkForTokenGen(config));
       if (!token) {
-        console.log("token not provided :(");
+        console.log("Token not provided :(");
         process.exit(12);
       }
     }
@@ -124,7 +122,7 @@ export const getApp = async (
   const env = determineENV(undefined);
   if (oorja) {
     if (env !== currentEnv) {
-      return Promise.reject("attempt to run different env in same session");
+      return Promise.reject("Attempt to run different env in same session");
     }
     return Promise.resolve(oorja);
   }
