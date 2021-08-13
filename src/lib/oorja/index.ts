@@ -4,35 +4,34 @@ import {
   getoorjaConfig,
   oorjaConfig,
   INVALID_ROOM_LINK_MESSAGE,
+  setENVAccessToken,
 } from "../config";
 import { User, RoomKey } from "../surya/types";
 import { teletypeApp, TeletypeOptions } from "../teletype";
-import { preflightChecks } from "./preflight";
-import { createRoom, CreateRoomOptions } from "../surya";
+import { CreateRoomOptions, SuryaClient } from "../surya";
 import { URL } from "url";
 import { importKey, createRoomKey, exportKey } from "../encryption";
+import {
+  loginByRoomOTP,
+  preflight,
+  promptAuth,
+  resumeSession,
+  validateCliVersion,
+} from "./preflight";
+import { Unauthorized } from "../surya/errors";
 
 export class InvalidRoomLink extends Error {}
 
 class OORJA {
   // should capture domain related commands and queries
-  user: User | null = null;
-
-  private ready: boolean = false;
-  private config?: oorjaConfig;
-
-  initialize = (env: env) => {
-    if (this.ready) throw "cannot reinit";
-    this.config = getoorjaConfig(env);
-    return preflightChecks(env, this.linkForTokenGen()).then((user) => {
-      this.user = user;
-      this.ready = true;
-      return this;
-    });
-  };
+  constructor(
+    private config: oorjaConfig,
+    private suryaClient: SuryaClient,
+    public user: User
+  ) {}
 
   createRoom = async (options: CreateRoomOptions) => {
-    const room = await createRoom(options);
+    const room = await this.suryaClient.createRoom(options);
     const roomKey = createRoomKey(room.id);
     return {
       room,
@@ -41,7 +40,7 @@ class OORJA {
   };
 
   linkForRoom = (roomKey: RoomKey): string => {
-    return `${this.oorjaURL()}/rooms?id=${roomKey.roomId}#${exportKey(
+    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}#${exportKey(
       roomKey.key
     )}`;
   };
@@ -54,14 +53,12 @@ class OORJA {
     };
   }
 
-  linkForTokenGen = () => `${this.oorjaURL()}/access_token`;
-
-  teletype = (options: Omit<TeletypeOptions, "userId">) =>
-    teletypeApp({ userId: this.user!.id, ...options });
-
-  private oorjaURL = () => {
-    const { host, enableTLS } = this.config!;
-    return enableTLS ? `https://${host}` : `http://${host}`;
+  teletype = (options: Omit<TeletypeOptions, "userId" | "joinChannel">) => {
+    return teletypeApp({
+      userId: this.user!.id,
+      joinChannel: this.suryaClient.joinChannel,
+      ...options,
+    });
   };
 }
 
@@ -74,17 +71,62 @@ const parseRoomURL = (roomLink: string): URL => {
   return url;
 };
 
+const getRoomId = (roomURL: URL) => {
+  const id = roomURL.searchParams.get("id");
+  return id || undefined;
+};
+
+const oorjaURL = (config: oorjaConfig) => {
+  const { host, enableTLS } = config!;
+  return enableTLS ? `https://${host}` : `http://${host}`;
+};
+
+const linkForTokenGen = (config: oorjaConfig) =>
+  `${oorjaURL(config)}/access_token`;
+
+const init = async (env: env, options: { roomId?: string } = {}) => {
+  const config = getoorjaConfig(env);
+  let suryaClient = new SuryaClient(env);
+
+  await validateCliVersion(suryaClient);
+  let user = await resumeSession(env, suryaClient, options.roomId);
+
+  if (!user) {
+    let token: string = "";
+    if (options.roomId) {
+      token = await loginByRoomOTP(suryaClient, options.roomId);
+      console.log(token);
+    } else {
+      token = await promptAuth(suryaClient, linkForTokenGen(config));
+      if (!token) {
+        console.log("token not provided :(");
+        process.exit(12);
+      }
+    }
+    setENVAccessToken(env, token);
+  }
+
+  await suryaClient.destroy();
+  suryaClient = new SuryaClient(env);
+  user = await preflight(env, suryaClient);
+
+  return new OORJA(config, suryaClient, user);
+};
+
 let currentEnv: env;
 let oorja: OORJA;
 
-export const getApp = (roomLink?: string): Promise<OORJA> => {
-  const env = determineENV(roomLink ? parseRoomURL(roomLink) : undefined);
+export const getApp = async (
+  options: { roomLink?: string } = {}
+): Promise<OORJA> => {
+  const { roomLink } = options;
+  const roomURL = roomLink ? parseRoomURL(roomLink) : undefined;
+  const env = determineENV(undefined);
   if (oorja) {
     if (env !== currentEnv) {
       return Promise.reject("attempt to run different env in same session");
     }
     return Promise.resolve(oorja);
   }
-  oorja = new OORJA();
-  return oorja.initialize(env);
+  return await init(env, { roomId: roomURL ? getRoomId(roomURL) : undefined });
 };

@@ -4,19 +4,13 @@ const ora = require("ora");
 
 import {
   env,
-  getSuryaConfig,
-  getENVAccessToken,
   setENVAccessToken,
   CLI_VERSION,
+  getENVAccessToken,
 } from "../config";
-import {
-  fetchCliManifest,
-  initializeSurya,
-  fetchSessionUser,
-  establishSocket,
-  createAnonymousUser,
-} from "../surya";
-import { Unauthorized } from "../surya/errors";
+import { SuryaClient } from "../surya";
+import { BadRequest, Unauthorized } from "../surya/errors";
+import { User } from "../surya/types";
 
 const promptToken = (): Promise<string> =>
   new Input({
@@ -24,28 +18,34 @@ const promptToken = (): Promise<string> =>
     message: "Please enter your access token for authentication:",
   }).run();
 
-const promptAuth = async (
-  env: env,
+export const promptRoomParticipantOTP = (): Promise<string> =>
+  new Input({
+    name: "OTP prompt",
+    message: "Please enter your OTP for authentication:",
+  }).run();
+
+const OTP_HELP_MESSAGE =
+  "You can generate OTP from the room, it's in the instruction steps";
+
+export const promptAuth = async (
+  suryaClient: SuryaClient,
   generateTokenLink: string
 ): Promise<string> => {
-  const HAS_TOKEN = "I have a token with me";
   const ANON = "Proceed as an anonymous user";
   const SIGN_IN = "sign-in with oorja";
   console.log(
     `\n${chalk.bold(
       "PRO-TIP:"
-    )} if you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for all participants\n`
+    )} if you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for the other participants\n`
   );
   const answer = await new Select({
     message: "You need an access-token for authentication.\n ",
-    choices: [HAS_TOKEN, ANON, SIGN_IN],
+    choices: [ANON, SIGN_IN],
   }).run();
   switch (answer) {
-    case HAS_TOKEN:
-      return promptToken();
     case ANON:
       console.log("creating anonymous user...");
-      return createAnonymousUser(env);
+      return suryaClient.createAnonymousUser();
     case SIGN_IN:
       console.log(
         `You can sign-in and generate your token here: ${chalk.blue(
@@ -57,32 +57,70 @@ const promptAuth = async (
   throw Error("unexpected input");
 };
 
-export const preflightChecks = async (env: env, generateTokenLink: string) => {
-  const token =
-    getENVAccessToken(env) || (await promptAuth(env, generateTokenLink)).trim();
-  if (!token) {
-    console.log("token not provided :(");
-    process.exit(12);
+export const loginByRoomOTP = async (
+  suryaClient: SuryaClient,
+  roomId: string
+) => {
+  const otp = await promptRoomParticipantOTP();
+  if (!otp) {
+    console.log("OTP not provided :(");
+    console.log(OTP_HELP_MESSAGE);
+    process.exit(213);
   }
-  setENVAccessToken(env, token);
+  try {
+    return await suryaClient.accessTokenFromRoomParticipantOTP(roomId, otp);
+  } catch (e) {
+    if (e instanceof BadRequest) {
+      console.log(chalk.redBright("Invalid otp. It may have expired."));
+      console.log(OTP_HELP_MESSAGE);
+      process.exit();
+    }
+    throw e;
+  }
+};
+
+export const validateCliVersion = async (suryaClient: SuryaClient) => {
+  const manifest = await suryaClient.fetchCliManifest();
+  if (manifest.cliVersion > CLI_VERSION) {
+    console.log(
+      chalk.redBright(
+        "your oorja cli is outdated. please run: npm update -g oorja"
+      )
+    );
+    process.exit(1);
+  }
+};
+
+export const resumeSession = async (
+  env: env,
+  suryaClient: SuryaClient,
+  roomId?: string
+): Promise<User | null> => {
+  const token = getENVAccessToken(env);
+  if (!token) return null;
+  // try to validate authorization with existing token
+  try {
+    const user = await suryaClient.fetchSessionUser();
+    if (roomId) {
+      await suryaClient.fetchRoom(roomId);
+    }
+    return user;
+  } catch (e) {
+    if (e instanceof Unauthorized) {
+      setENVAccessToken(env, "");
+      return null;
+    }
+    throw e;
+  }
+};
+
+export const preflight = async (env: env, suryaClient: SuryaClient) => {
   const spinner = ora({
     text: "authenticating",
     discardStdin: false,
   }).start();
-  const suryaConfig = getSuryaConfig(env);
-  initializeSurya(suryaConfig);
-
   try {
-    const manifest = await fetchCliManifest();
-    if (manifest.cliVersion > CLI_VERSION) {
-      spinner.fail(
-        chalk.yellowBright(
-          "your oorja cli is outdated. please run: npm update -g oorja"
-        )
-      );
-      process.exit(1);
-    }
-    const user = await fetchSessionUser();
+    const user = await suryaClient.fetchSessionUser();
     spinner.succeed(`authenticated: Welcome ${user.name}`);
     if (user.profileType === "anon") {
       // don't persist tokens for anonymous users
@@ -94,7 +132,8 @@ export const preflightChecks = async (env: env, generateTokenLink: string) => {
       );
     }
     spinner.start("connecting..");
-    return establishSocket(suryaConfig)
+    return suryaClient
+      .establishSocket()
       .then(() => {
         spinner.succeed("connected").clear();
         return user;
