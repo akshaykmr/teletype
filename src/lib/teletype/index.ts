@@ -1,6 +1,5 @@
 import { spawn, IPty } from "node-pty";
 import * as os from "os";
-import { joinChannel } from "../surya";
 import { Hash, RoomKey } from "../surya/types";
 import {
   getDimensions,
@@ -12,6 +11,8 @@ import {
 import chalk = require("chalk");
 import { Unauthorized } from "../surya/errors";
 import { encrypt, decrypt } from "../encryption";
+import { JoinChannelOptions } from "../surya";
+import { Channel } from "../surya/vendor/phoenix";
 
 enum MessageType {
   IN = "i",
@@ -25,11 +26,12 @@ export type TeletypeOptions = {
   shell: string;
   multiplex: boolean;
   process: NodeJS.Process;
+  joinChannel: (options: JoinChannelOptions<any>) => Channel;
 };
 
 const SELF = "self";
 
-export const teletypeApp = (config: TeletypeOptions) => {
+export const teletypeApp = (options: TeletypeOptions) => {
   const username = os.userInfo().username;
   const hostname = os.hostname();
 
@@ -50,27 +52,27 @@ export const teletypeApp = (config: TeletypeOptions) => {
   };
 
   return new Promise((resolve, reject) => {
-    const channel = joinChannel({
-      channel: `teletype:${config.roomKey.roomId}`,
+    const channel = options.joinChannel({
+      channel: `teletype:${options.roomKey.roomId}`,
       params: {
         username,
         hostname,
-        multiplexed: config.multiplex,
+        multiplexed: options.multiplex,
       },
       onJoin: () => {
-        initScreen(username, hostname, config.shell, config.multiplex);
+        initScreen(username, hostname, options.shell, options.multiplex);
 
-        const stdin = config.process.stdin;
-        const stdout = config.process.stdout;
+        const stdin = options.process.stdin;
+        const stdout = options.process.stdout;
         const dimensions = userDimensions[SELF];
 
-        term = spawn(config.shell, [], {
+        term = spawn(options.shell, [], {
           name: "xterm-256color",
           cols: dimensions.cols,
           rows: dimensions.rows,
-          cwd: config.process.cwd(),
+          cwd: options.process.cwd(),
           // @ts-ignore
-          env: config.process.env,
+          env: options.process.env,
         });
 
         // track own dimensions and keep it up to date
@@ -83,7 +85,7 @@ export const teletypeApp = (config: TeletypeOptions) => {
           channel.push("new_msg", {
             t: MessageType.OUT,
             b: true,
-            d: encrypt(d, config.roomKey),
+            d: encrypt(d, options.roomKey),
           });
         });
         term.on("exit", () => {
@@ -117,13 +119,13 @@ export const teletypeApp = (config: TeletypeOptions) => {
             resizeBestFit(term, userDimensions);
             break;
           case MessageType.IN:
-            const data = decrypt(d, config.roomKey);
+            const data = decrypt(d, options.roomKey);
             const userId = session.split(":")[0];
-            if (config.multiplex) {
+            if (options.multiplex) {
               term.write(data);
               return;
             }
-            if (userId === config.userId) {
+            if (userId === options.userId) {
               term.write(data);
             } else {
               console.log(

@@ -85,7 +85,11 @@ Will also allow room participants to write to your terminal!
     roomLink?: string;
   }) {
     const roomLink = options.roomLink || (await promptRoomLink());
-    const app = await getApp(roomLink);
+    if (!roomLink) {
+      console.log(chalk.redBright("room link not provided :("));
+      process.exit();
+    }
+    const app = await getApp({ roomLink });
     const roomKey = app.getRoomKey(roomLink);
     this.clearstdin();
     await app.teletype({ roomKey, ...options, process });
