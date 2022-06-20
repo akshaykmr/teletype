@@ -24,8 +24,10 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-- Prerequisite: [nodejs `12.13.0` or later](https://nodejs.org/en/download/)
-
+- Currently cli is available via npm. <br />
+  <a href="https://nodejs.org/en/download/" target="_blank">
+  You can setup node/npm from here
+  </a>
 - **optional but highly recommended for successful install -> [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)**.
 - `npm install -g oorja`
 - `teletype`
