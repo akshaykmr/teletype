@@ -92,7 +92,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
           console.log(
             chalk.blueBright("terminated shell stream to oorja. byee!")
           );
-          resolve();
+          resolve(null);
         });
 
         stdin.setEncoding("utf8");
