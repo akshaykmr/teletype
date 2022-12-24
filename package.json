@@ -36,7 +36,8 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
     "tslint-react": "^4.2.0",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "aws-sdk": "2.1282"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -63,7 +64,13 @@
     "plugins": [
       "@oclif/plugin-help",
       "conf-cli"
-    ]
+    ],
+    "update": {
+      "s3": {
+        "host": "https://cli-dist-a327765.s3.amazonaws.com",
+        "bucket": "cli-dist-a327765"
+      }
+    }
   },
   "repository": "akshaykmr/TeleType",
   "scripts": {
