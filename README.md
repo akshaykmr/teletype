@@ -95,9 +95,6 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.6.1/src/commands/teletype/index.ts)_
-
-
 ## `oorja signout`
 
 sign-out and clear saved access token from any prior login. By default cli
@@ -123,5 +120,3 @@ ARGUMENTS
 OPTIONS
   --all  see all commands in CLI
 ```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
