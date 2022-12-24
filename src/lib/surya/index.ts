@@ -213,14 +213,16 @@ export class SuryaClient {
 const suryaBaseURL = (host: string, tlsEnabled: boolean) =>
   `${tlsEnabled ? "https" : "http"}://${host}/api/v1`;
 
-const handleError = (error: AxiosError) => {
-  const { response } = error;
-  if (response) {
-    switch (response.status) {
-      case 401:
-        throw new Unauthorized();
-      case 400:
-        throw new BadRequest();
+const handleError = (error: unknown) => {
+  if (error instanceof AxiosError) {
+    const { response } = error;
+    if (response) {
+      switch (response.status) {
+        case 401:
+          throw new Unauthorized();
+        case 400:
+          throw new BadRequest();
+      }
     }
   }
   throw error;

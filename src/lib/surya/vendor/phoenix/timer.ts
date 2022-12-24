@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  *
  * Creates a timer that accepts a `timerCalc` function to perform

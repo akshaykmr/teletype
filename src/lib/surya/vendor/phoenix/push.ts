@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Initializes the Push
  * @param {Channel} channel - The Channel

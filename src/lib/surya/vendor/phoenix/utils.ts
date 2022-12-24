@@ -1,3 +1,4 @@
+// @ts-nocheck
 // wraps value in closure or returns closure
 export let closure = (value) => {
   if(typeof value === "function"){

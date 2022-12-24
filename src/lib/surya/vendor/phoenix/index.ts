@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phoenix Channels JavaScript client
  *

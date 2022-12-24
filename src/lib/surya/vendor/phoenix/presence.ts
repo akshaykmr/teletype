@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Initializes the Presence
  * @param {Channel} channel - The Channel

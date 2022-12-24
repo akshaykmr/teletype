@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   global,
   XHR_STATES

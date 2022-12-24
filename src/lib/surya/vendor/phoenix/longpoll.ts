@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   SOCKET_STATES,
   TRANSPORTS

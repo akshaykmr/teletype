@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const globalSelf = typeof self !== "undefined" ? self : null
 export const phxWindow = typeof window !== "undefined" ? window : null
 export const global = globalSelf || phxWindow || {}

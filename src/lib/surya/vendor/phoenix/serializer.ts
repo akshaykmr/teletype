@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* The default serializer for encoding and decoding messages */
 import {
   CHANNEL_EVENTS

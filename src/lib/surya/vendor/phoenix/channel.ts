@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {closure} from "./utils"
 import {
   CHANNEL_EVENTS,
