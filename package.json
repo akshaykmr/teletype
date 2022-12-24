@@ -1,7 +1,7 @@
 {
   "name": "oorja",
   "description": "stream terminals to the web and more.",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/run",
