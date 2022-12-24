@@ -95,7 +95,7 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.6.0/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.6.1/src/commands/teletype/index.ts)_
 
 
 ## `oorja signout`
