@@ -43,6 +43,12 @@ Will also allow room participants to write to your terminal!
         "Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default",
       default: false,
     }),
+    new_room: flags.boolean({
+      char: "n",
+      description:
+        "Create new room",
+      default: false,
+    }),
   };
 
   static args = [{ name: "room" }];
@@ -50,11 +56,15 @@ Will also allow room participants to write to your terminal!
   async run() {
     const {
       args,
-      flags: { shell, multiplex },
+      flags: { shell, multiplex, new_room },
     } = this.parse(TeleTypeCommand);
 
     if (args.room) {
       await this.streamToLink({ shell, multiplex, roomLink: args.room });
+      process.exit(0);
+    }
+    if (new_room) {
+      await this.createRoomAndStream({ shell, multiplex });
       process.exit(0);
     }
 
