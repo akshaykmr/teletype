@@ -39,7 +39,7 @@ class OORJA {
   };
 
   linkForRoom = (roomKey: RoomKey): string => {
-    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}#${exportKey(
+    return `${oorjaURL(this.config)}/rooms/${roomKey.roomId}#${exportKey(
       roomKey.key
     )}`;
   };
@@ -48,7 +48,7 @@ class OORJA {
     const url = parseRoomURL(roomLink);
     return {
       key: importKey(url.hash),
-      roomId: url.searchParams.get("id") as string,
+      roomId: url.pathname.split("/")[2] as string,
     };
   }
 
@@ -63,7 +63,7 @@ class OORJA {
 
 const parseRoomURL = (roomLink: string): URL => {
   const url = new URL(roomLink);
-  if (!url.searchParams.get("id") || !url.hash) {
+  if (!url.hash || !getRoomId(url)) {
     console.log(INVALID_ROOM_LINK_MESSAGE);
     process.exit(3);
   }
@@ -71,8 +71,11 @@ const parseRoomURL = (roomLink: string): URL => {
 };
 
 const getRoomId = (roomURL: URL) => {
-  const id = roomURL.searchParams.get("id");
-  return id || undefined;
+  const fragments = roomURL.pathname.split("/");
+  if (fragments.length !== 3 || fragments[1] !== "rooms" || !fragments["2"]) {
+    return undefined;
+  }
+  return fragments["2"];
 };
 
 const oorjaURL = (config: oorjaConfig) => {

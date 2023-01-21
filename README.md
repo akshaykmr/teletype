@@ -87,11 +87,11 @@ EXAMPLES
   will prompt to choose streaming destination - existing room or create a new one.
 
 
-  $ teletype 'https://oorja.io/rooms?id=foo'
+  $ teletype 'https://oorja.io/rooms/foo#key'
   will stream to the room specified by secret link, you must have joined the room before streaming.
 
 
-  $ teletype -m 'https://oorja.io/rooms?id=foo'
+  $ teletype -m 'https://oorja.io/rooms/foo#key'
   Will also allow room participants to write to your terminal!
 ```
 

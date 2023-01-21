@@ -45,8 +45,7 @@ Will also allow room participants to write to your terminal!
     }),
     new_room: flags.boolean({
       char: "n",
-      description:
-        "Create new room",
+      description: "Create new room",
       default: false,
     }),
   };
