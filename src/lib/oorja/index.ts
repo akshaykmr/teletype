@@ -39,7 +39,7 @@ class OORJA {
   };
 
   linkForRoom = (roomKey: RoomKey): string => {
-    return `${oorjaURL(this.config)}/rooms/${roomKey.roomId}#${exportKey(
+    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}#${exportKey(
       roomKey.key
     )}`;
   };

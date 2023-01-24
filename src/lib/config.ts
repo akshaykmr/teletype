@@ -1,7 +1,7 @@
 import chalk = require("chalk");
 import { URL } from "url";
 
-export const CLI_VERSION = 1.7;
+export const CLI_VERSION = 1.71;
 
 const Conf = require("conf");
 
@@ -36,7 +36,7 @@ export const getSuryaConfig = (env: env): SuryaConfig => {
   };
 };
 
-export const ROOM_LINK_SAMPLE = "https://oorja.io/rooms/foo#key";
+export const ROOM_LINK_SAMPLE = "https://oorja.io/rooms?id=foo#key";
 
 export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
   "invalid url "
