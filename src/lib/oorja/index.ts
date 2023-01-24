@@ -9,7 +9,7 @@ import {
 import { User, RoomKey } from "../surya/types";
 import { teletypeApp, TeletypeOptions } from "../teletype";
 import { CreateRoomOptions, SuryaClient } from "../surya";
-import { URL } from "url";
+import { URL, URLSearchParams } from "url";
 import { importKey, createRoomKey, exportKey } from "../encryption";
 import {
   loginByRoomOTP,
@@ -72,10 +72,8 @@ const parseRoomURL = (roomLink: string): URL => {
 
 const getRoomId = (roomURL: URL) => {
   const fragments = roomURL.pathname.split("/");
-  if (fragments.length !== 3 || fragments[1] !== "rooms" || !fragments["2"]) {
-    return undefined;
-  }
-  return fragments["2"];
+  const params = new URLSearchParams(roomURL.search);
+  return params.get("id") || undefined;
 };
 
 const oorjaURL = (config: oorjaConfig) => {
