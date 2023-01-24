@@ -48,7 +48,7 @@ class OORJA {
     const url = parseRoomURL(roomLink);
     return {
       key: importKey(url.hash),
-      roomId: url.pathname.split("/")[2] as string,
+      roomId: getRoomId(url) as string,
     };
   }
 
@@ -71,7 +71,6 @@ const parseRoomURL = (roomLink: string): URL => {
 };
 
 const getRoomId = (roomURL: URL) => {
-  const fragments = roomURL.pathname.split("/");
   const params = new URLSearchParams(roomURL.search);
   return params.get("id") || undefined;
 };
@@ -104,11 +103,9 @@ const init = async (env: env, options: { roomId?: string } = {}) => {
     }
     setENVAccessToken(env, token);
   }
-
   await suryaClient.destroy();
   suryaClient = new SuryaClient(env);
   user = await preflight(env, suryaClient);
-
   return new OORJA(config, suryaClient, user);
 };
 

@@ -1,7 +1,7 @@
 import chalk = require("chalk");
 import { URL } from "url";
 
-export const CLI_VERSION = 1.72;
+export const CLI_VERSION = 1.73;
 
 const Conf = require("conf");
 
