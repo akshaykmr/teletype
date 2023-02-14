@@ -127,6 +127,8 @@ Will also allow room participants to write to your terminal!
             { appId: "31", config: {} },
             { appId: "40", config: {} },
             { appId: "100", config: {} },
+            { appId: "100", config: {} },
+            { appId: "102", config: {} },
           ],
         },
       })
