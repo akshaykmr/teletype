@@ -1,10 +1,10 @@
 {
   "name": "oorja",
   "description": "stream terminals to the web and more.",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
-    "oorja": "./bin/run",
+    "oorja": "./bin/oorja",
     "teletype": "./bin/teletype"
   },
   "bugs": "https://github.com/akshaykmr/TeleType/issues",
