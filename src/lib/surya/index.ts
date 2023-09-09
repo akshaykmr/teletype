@@ -124,6 +124,7 @@ export class SuryaClient {
         params: {
           access_token: this.config.token,
         },
+        heartbeatIntervalMs: 10000,
         binaryType: "arraybuffer",
         encode: encodeMessage,
         decode: decodeMessage,
