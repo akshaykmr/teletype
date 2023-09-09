@@ -24,11 +24,13 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-- You'll need Node 16. CLI is available via npm. <br />
+- You'll need Node 18.17.1 >. CLI is available via npm. <br />
   <a href="https://nodejs.org/en/download/" target="_blank">
   You can setup node/npm from here.
-  </a> **Only Node 16 is supported**
-- **optional but highly recommended for successful install -> [npm install without sudo](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)**.
+  </a> 
+- Package does fail on some systems because of node-pty compilation failures. I'm thinking it's better to package the whole thing
+as a binary in future releases (i.e. not available via npm but via a script or manual install).
+
 - `npm install -g oorja`
 - `teletype`
 - `teletype -m`  (for collaboration mode)
