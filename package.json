@@ -10,44 +10,45 @@
   "bugs": "https://github.com/akshaykmr/TeleType/issues",
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
-    "@oclif/command": "^1",
-    "@oclif/config": "^1",
-    "@oclif/plugin-help": "^3",
-    "axios": "^1.2",
+    "@oclif/core": "^2",
+    "@oclif/plugin-help": "^5",
+    "@oclif/plugin-plugins": "^3.4.0",
+    "axios": "^1.5.0",
     "camelcase-keys": "^6.2.2",
-    "chalk": "^4",
-    "conf-cli": "^0.1.9",
-    "enquirer": "^2.3.6",
-    "node-pty": "^0.10.1",
+
+    "chalk": "^4.1.2",
     "ora": "^4",
+
+    "conf-cli": "^0.1.9",
+    "enquirer": "^2.4.1",
+    "node-pty": "^1.0.0",
     "term-size": "^2.2.0",
-    "tslib": "^1",
-    "ws": "^8.11"
+    "tslib": "^2.6.2",
+    "ws": "^8.14.1"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "^1",
-    "@types/node": "^10",
-    "globby": "^10",
-    "prettier": "^2.0.5",
-    "ts-node": "^8",
-    "tslint": "^6.1.1",
-    "tslint-config-airbnb": "^5.11.2",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-plugin-prettier": "^2.3.0",
-    "tslint-react": "^4.2.0",
-    "typescript": "^4.9.4",
-    "aws-sdk": "2.1282"
+    "@types/node": "^16.18.50",
+    "chai": "^4",
+    "eslint": "^7.32.0",
+    "eslint-config-oclif": "^4",
+    "eslint-config-oclif-typescript": "^1.0.3",
+    "oclif": "^3.15.0",
+    "prettier": "^3.0.3",
+    "shx": "^0.3.3",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.6.2",
+    "typescript": "^4.9.5"
   },
   "engines": {
-    "node": ">=16.0.0 <17.0.0"
+    "node": ">=18.17.1"
   },
   "files": [
     "/bin",
-    "/lib",
+    "/dist",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://teletype.oorja.io",
+  "homepage": "https://oorja.io",
   "keywords": [
     "teletype",
     "terminal",
@@ -56,32 +57,27 @@
     "cli"
   ],
   "license": "SEE LICENSE IN license.txt",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "oclif": {
-    "commands": "./lib/commands",
+    "commands": "./dist/commands",
     "bin": "oorja",
     "plugins": [
       "@oclif/plugin-help",
+      "@oclif/plugin-plugins",
       "conf-cli"
-    ],
-    "update": {
-      "s3": {
-        "host": "https://cli-dist-a327765.s3.amazonaws.com",
-        "bucket": "cli-dist-a327765"
-      }
-    }
+    ]
   },
   "repository": "akshaykmr/TeleType",
   "scripts": {
-    "postpack": "rm -f oclif.manifest.json",
-    "prepack": "rm -rf lib && tsc --skipLibCheck true && oclif-dev manifest && oclif-dev readme",
-    "test": "echo NO TESTS",
-    "version": "oclif-dev readme && git add README.md",
-    "lint": "tslint -p ./tsconfig.json -t stylish",
-    "lint-fix": "tslint -p ./tsconfig.json -t stylish --fix",
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts --config .eslintrc",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "posttest": "yarn lint",
+    "prepack": "yarn build && oclif manifest && oclif readme",
+    "version": "oclif readme && git add README.md",
     "prettier": "prettier --write './**/*.{ts,tsx,js,css,html}'"
   },
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "optionalDependencies": {
     "bufferutil": "^4.0.1",
     "utf-8-validate": "^5.0.2"
