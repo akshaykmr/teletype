@@ -1,7 +1,7 @@
 {
   "name": "oorja",
   "description": "stream terminals to the web and more.",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/oorja",
@@ -15,10 +15,8 @@
     "@oclif/plugin-plugins": "^3.4.0",
     "axios": "^1.5.0",
     "camelcase-keys": "^6.2.2",
-
     "chalk": "^4.1.2",
     "ora": "^4",
-
     "conf-cli": "^0.1.9",
     "enquirer": "^2.4.1",
     "node-pty": "^1.0.0",
