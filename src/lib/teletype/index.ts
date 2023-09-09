@@ -8,7 +8,7 @@ import {
   areDimensionEqual,
   resizeBestFit,
 } from "./auxiliary";
-import chalk = require("chalk");
+const chalk = require("chalk");
 import { Unauthorized } from "../surya/errors";
 import { encrypt, decrypt } from "../encryption";
 import { JoinChannelOptions } from "../surya";
@@ -78,7 +78,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
         // track own dimensions and keep it up to date
         setInterval(reEvaluateOwnDimensions, 1000);
 
-        term.on("data", (d: string) => {
+        term.onData((d: string) => {
           stdout.write(d);
           // revisit: is it worth having one letter names, instead of something descriptive
           // does it really save bytes?
@@ -88,7 +88,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
             d: encrypt(d, options.roomKey),
           });
         });
-        term.on("exit", () => {
+        term.onExit(() => {
           console.log(
             chalk.blueBright("terminated shell stream to oorja. byee!")
           );
@@ -98,7 +98,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
         stdin.setEncoding("utf8");
         stdin.setRawMode!(true);
 
-        stdin.on("data", (d) => term.write(d));
+        stdin.on("data", (d) => term.write(d.toString("utf8")));
       },
       onClose: () => {
         console.log(chalk.redBright("connection closed, terminated stream."));

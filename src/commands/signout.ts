@@ -1,4 +1,4 @@
-import { Command } from "@oclif/command";
+import { Command } from "@oclif/core";
 import { determineENV, setENVAccessToken } from "../lib/config";
 export class SignOut extends Command {
   static description = `Sign-out of oorja. Clears saved auth-token`;

@@ -1,5 +1,5 @@
-import * as chalk from "chalk";
-import * as termSize from "term-size";
+const chalk = require("chalk");
+const termSize = require("term-size");
 import { IPty } from "node-pty";
 import { Hash } from "../surya/types";
 

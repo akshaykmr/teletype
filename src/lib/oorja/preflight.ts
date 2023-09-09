@@ -1,4 +1,4 @@
-import chalk = require("chalk");
+const chalk = require("chalk");
 const { Input, Select } = require("enquirer");
 const ora = require("ora");
 

@@ -1,9 +1,9 @@
 const { Select } = require("enquirer");
-import { Command, flags } from "@oclif/command";
+import { Command, Flags, Args } from "@oclif/core";
 const ora = require("ora");
 
 import * as os from "os";
-import * as chalk from "chalk";
+const chalk = require("chalk");
 import { ROOM_LINK_SAMPLE } from "../../lib/config";
 import { getApp } from "../../lib/oorja";
 import { promptRoomLink } from "../../lib/utils";
@@ -31,32 +31,34 @@ Will also allow room participants to write to your terminal!
   ];
 
   static flags = {
-    help: flags.help({ char: "h" }),
-    shell: flags.string({
+    help: Flags.help({ char: "h" }),
+    shell: Flags.string({
       char: "s",
       description: "shell to use. e.g. bash, fish",
       default: DEFAULT_SHELL,
     }),
-    multiplex: flags.boolean({
+    multiplex: Flags.boolean({
       char: "m",
       description:
         "Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default",
       default: false,
     }),
-    new_room: flags.boolean({
+    new_room: Flags.boolean({
       char: "n",
       description: "Create new room",
       default: false,
     }),
   };
 
-  static args = [{ name: "room" }];
+  static args = {
+    room: Args.string({})
+  }
 
   async run() {
     const {
       args,
       flags: { shell, multiplex, new_room },
-    } = this.parse(TeleTypeCommand);
+    } = await this.parse(TeleTypeCommand);
 
     if (args.room) {
       await this.streamToLink({ shell, multiplex, roomLink: args.room });

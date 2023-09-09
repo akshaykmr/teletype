@@ -1,4 +1,4 @@
-import chalk = require("chalk");
+const chalk = require("chalk");
 import { URL } from "url";
 
 export const CLI_VERSION = 1.73;
