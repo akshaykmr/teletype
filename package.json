@@ -1,7 +1,7 @@
 {
   "name": "oorja",
   "description": "stream terminals to the web and more.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "author": "Akshay Kumar @akshaykmr",
   "bin": {
     "oorja": "./bin/oorja",
@@ -16,16 +16,17 @@
     "axios": "^1.5.1",
     "camelcase-keys": "^6.2.2",
     "chalk": "^4.1.2",
-    "ora": "^4",
     "conf-cli": "^0.1.9",
     "enquirer": "^2.4.1",
     "node-pty": "^1.0.0",
+    "ora": "^4",
     "term-size": "^2.2.0",
     "tslib": "^2.6.2",
     "ws": "^8.14.2"
   },
   "devDependencies": {
     "@types/node": "^16.18.50",
+    "@types/sinon": "^10.0.20",
     "chai": "^4",
     "eslint": "^7.32.0",
     "eslint-config-oclif": "^4",
@@ -33,6 +34,7 @@
     "oclif": "^4.0.3",
     "prettier": "^3.0.3",
     "shx": "^0.3.3",
+    "sinon": "^17.0.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
     "typescript": "^4.9.5"
