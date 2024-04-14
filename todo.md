@@ -1,0 +1,2 @@
+- remove relative imports from the project.
+- remove axios and use native fetch
