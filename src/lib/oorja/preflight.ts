@@ -26,7 +26,7 @@ export const promptRoomParticipantOTP = (): Promise<string> =>
     {
       type: 'input',
       name: 'otp',
-      message: 'Please enter your OTP for authentication:',
+      message: 'Please enter your OTP for authentication (switch to teletype app in the room and click on blue "Generate OTP" button):',
     }
   ]).then(answers => answers.otp);
 
