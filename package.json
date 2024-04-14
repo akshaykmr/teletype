@@ -1,0 +1,74 @@
+{
+  "name": "oorja",
+  "version": "0.0.0",
+  "description": "oclif example Hello World CLI (ESM)",
+  "keywords": [
+    "oclif"
+  ],
+  "homepage": "https://github.com/akshaykmr/teletype",
+  "bugs": "https://github.com/akshaykmr/teletype/issues",
+  "repository": "akshaykmr/teletype",
+  "license": "see license",
+  "author": "Akshay Kumar",
+  "type": "module",
+  "exports": "./lib/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "oorja": "./bin/run.js"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts",
+    "prepack": "yarn build && oclif manifest && oclif readme",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "prepare": "yarn build",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "posttest": "yarn lint",
+    "version": "oclif readme && git add README.md"
+  },
+  "oclif": {
+    "bin": "oorja",
+    "commands": "./dist/commands",
+    "dirname": "oorja",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " ",
+    "topics": {
+      "hello": {
+        "description": "Say hello to the world and others"
+      }
+    }
+  },
+  "dependencies": {
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-plugins": "^5"
+  },
+  "devDependencies": {
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^3",
+    "@types/chai": "^4",
+    "@types/mocha": "^10",
+    "@types/node": "^18",
+    "chai": "^4",
+    "eslint": "^8",
+    "eslint-config-oclif": "^5",
+    "eslint-config-oclif-typescript": "^3",
+    "eslint-config-prettier": "^9.1.0",
+    "mocha": "^10",
+    "oclif": "^4.8.2",
+    "shx": "^0.3.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
