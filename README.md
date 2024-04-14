@@ -28,6 +28,9 @@ USAGE
 <!-- commands -->
 * [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
 * [`oorja help [COMMAND]`](#oorja-help-command)
+* [`oorja signout`](#oorja-signout)
+* [`oorja teletype [ROOM]`](#oorja-teletype-room)
+* [`oorja tty [ROOM]`](#oorja-tty-room)
 
 ## `oorja conf [KEY] [VALUE]`
 
@@ -75,4 +78,84 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.21/src/commands/help.ts)_
+
+## `oorja signout`
+
+Sign-out of oorja. Clears saved auth-token
+
+```
+USAGE
+  $ oorja signout
+
+DESCRIPTION
+  Sign-out of oorja. Clears saved auth-token
+```
+
+_See code: [src/commands/signout.ts](https://github.com/akshaykmr/teletype/blob/v1.11.0/src/commands/signout.ts)_
+
+## `oorja teletype [ROOM]`
+
+Launch a terminal streaming session in oorja.
+
+```
+USAGE
+  $ oorja teletype [ROOM] [-h] [-s <value>] [-m] [-n]
+
+FLAGS
+  -h, --help           Show CLI help.
+  -m, --multiplex      Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room
+                       participants. Off by default
+  -n, --new_room       Create new room
+  -s, --shell=<value>  [default: /usr/bin/zsh] shell to use. e.g. bash, fish
+
+DESCRIPTION
+  Launch a terminal streaming session in oorja.
+
+ALIASES
+  $ oorja tty
+
+EXAMPLES
+  $ teletype
+  Will prompt to choose streaming destination - existing room or create a new one.
+
+  $ teletype 'https://oorja.io/rooms?id=foo#key'
+  Will stream to the room specified by secret link, you must have joined the room before streaming.
+
+  $ teletype -m
+  Will also allow room participants to write to your terminal!
+```
+
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.11.0/src/commands/teletype/index.ts)_
+
+## `oorja tty [ROOM]`
+
+Launch a terminal streaming session in oorja.
+
+```
+USAGE
+  $ oorja tty [ROOM] [-h] [-s <value>] [-m] [-n]
+
+FLAGS
+  -h, --help           Show CLI help.
+  -m, --multiplex      Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room
+                       participants. Off by default
+  -n, --new_room       Create new room
+  -s, --shell=<value>  [default: /usr/bin/zsh] shell to use. e.g. bash, fish
+
+DESCRIPTION
+  Launch a terminal streaming session in oorja.
+
+ALIASES
+  $ oorja tty
+
+EXAMPLES
+  $ teletype
+  Will prompt to choose streaming destination - existing room or create a new one.
+
+  $ teletype 'https://oorja.io/rooms?id=foo#key'
+  Will stream to the room specified by secret link, you must have joined the room before streaming.
+
+  $ teletype -m
+  Will also allow room participants to write to your terminal!
+```
 <!-- commandsstop -->
