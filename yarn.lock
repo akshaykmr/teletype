@@ -2493,7 +2493,7 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
 
-conf-cli@^0.1.9:
+conf-cli@0.1.9:
   version "0.1.9"
   resolved "https://registry.yarnpkg.com/conf-cli/-/conf-cli-0.1.9.tgz#4df909d7056f67153253fc90f88f8f7b495756e4"
   integrity sha512-hLvOjh0Tna9PhZ3g0g6mLRIVtAgBu423jPv8w6znLLb20BotUINQStt60vHAUob8UngymPHr19V/+ETMpararQ==
