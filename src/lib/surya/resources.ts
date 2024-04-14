@@ -1,4 +1,4 @@
-const camelcaseKeys = require("camelcase-keys");
+import camelcaseKeys from "camelcase-keys";
 
 const parseDateFields = (
   resource: any,

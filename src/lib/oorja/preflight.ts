@@ -1,28 +1,34 @@
-const chalk = require("chalk");
-const { Input, Select } = require("enquirer");
-const ora = require("ora");
+import chalk from "chalk";
+import inquirer from 'inquirer';
+import ora from "ora";
 
 import {
   env,
   setENVAccessToken,
   CLI_VERSION,
   getENVAccessToken,
-} from "../config";
-import { SuryaClient } from "../surya";
-import { BadRequest, Unauthorized } from "../surya/errors";
-import { User } from "../surya/types";
+} from "../config.js";
+import { SuryaClient } from "../surya/index.js";
+import { BadRequest, Unauthorized } from "../surya/errors.js";
+import { User } from "../surya/types.js";
 
 const promptToken = (): Promise<string> =>
-  new Input({
-    name: "Access Token",
-    message: "Please enter your access token for authentication:",
-  }).run();
+  inquirer.prompt([
+    {
+      type: 'input',
+      name: 'accessToken',
+      message: 'Please enter your access token for authentication:',
+    }
+  ]).then(answers => answers.accessToken);
 
 export const promptRoomParticipantOTP = (): Promise<string> =>
-  new Input({
-    name: "OTP prompt",
-    message: "Please enter your OTP for authentication:",
-  }).run();
+  inquirer.prompt([
+    {
+      type: 'input',
+      name: 'otp',
+      message: 'Please enter your OTP for authentication:',
+    }
+  ]).then(answers => answers.otp);
 
 const OTP_HELP_MESSAGE =
   "You can generate OTP from the room, it's in the instruction steps";
@@ -38,10 +44,14 @@ export const promptAuth = async (
       "PRO-TIP:"
     )} If you sign-in, you can control your shell from the web-ui as well, without enabling collaboration mode for the other participants\n`
   );
-  const answer = await new Select({
-    message: "You need an access-token for authentication.\n ",
-    choices: [ANON, SIGN_IN],
-  }).run();
+  const {answer} = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'answer',
+      message: 'You need an access-token for authentication.\n ',
+      choices: [ANON, SIGN_IN],
+    }
+  ]);
   switch (answer) {
     case ANON:
       console.log("Creating anonymous user...");

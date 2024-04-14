@@ -1,13 +1,29 @@
-const chalk = require("chalk");
+import chalk from "chalk";
 import { URL } from "url";
 
 export const CLI_VERSION = 1.90;
 
-const Conf = require("conf");
+import Conf from "conf";
 
-export const config = new Conf({
+export const config = new Conf<string>({
   projectName: "oorja",
-  projectVersion: CLI_VERSION,
+  schema: {
+    "env": {
+      type: 'string'
+    },
+    "staging-access-token": {
+      type: 'string'
+    },
+    "local-access-token": {
+      type: 'string'
+    },
+    "prod-access-token": {
+      type: 'string'
+    },
+    "prod-teletype-access-token": {
+      type: 'string'
+    },    
+  }
 });
 
 export type env = "staging" | "local" | "prod" | "prod-teletype";
@@ -44,7 +60,7 @@ export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
 )}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`;
 
 export const determineENV = (roomURL?: URL): env => {
-  if (!roomURL) return config.get("env") || "prod-teletype";
+  if (!roomURL) return config.get("env") as env || "prod-teletype";
   switch (roomURL.host) {
     case "oorja.io":
       return "prod";
@@ -60,8 +76,8 @@ export const determineENV = (roomURL?: URL): env => {
   }
 };
 
-export const getENVAccessToken = (env: env): string => {
-  return config.get(`${env}-access-token`);
+export const getENVAccessToken = (env: env) => {
+  return config.get(`${env}-access-token`) as string || "";
 };
 
 export const setENVAccessToken = (env: env, token: string) => {

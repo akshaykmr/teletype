@@ -1,12 +1,12 @@
-const { Select } = require("enquirer");
+import inquirer from 'inquirer';
 import { Command, Flags, Args } from "@oclif/core";
-const ora = require("ora");
+import ora from "ora";
 
 import * as os from "os";
-const chalk = require("chalk");
-import { ROOM_LINK_SAMPLE } from "../../lib/config";
-import { getApp } from "../../lib/oorja";
-import { promptRoomLink } from "../../lib/utils";
+import chalk from "chalk";
+import { ROOM_LINK_SAMPLE } from "../../lib/config.js";
+import { getApp } from "../../lib/oorja/index.js";
+import { promptRoomLink } from "../../lib/utils.js";
 
 const DEFAULT_SHELL =
   os.platform() === "win32" ? "powershell.exe" : process.env.SHELL || "bash";
@@ -74,11 +74,14 @@ Will also allow room participants to write to your terminal!
     // room not known, prompt
     const ROOM = "To an existing room (you have the room link)";
     const NEW = "New room";
-    const answer = await new Select({
-      name: "",
-      message: "Choose streaming destination",
-      choices: [NEW, ROOM],
-    }).run();
+    const { answer } =  await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'answer',
+        message: 'Choose streaming destination',
+        choices: [NEW, ROOM],
+      }
+    ]);
     switch (answer) {
       case ROOM:
         await this.streamToLink({ shell, multiplex });

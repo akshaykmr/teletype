@@ -1,8 +1,12 @@
-const { Input } = require("enquirer");
+import inquirer from 'inquirer';
 
-export const promptRoomLink = async (): Promise<string> => {
-  return await new Input({
-    name: "room secret link",
-    message: "Enter the room secret link. (click the share button in the room)",
-  }).run();
+export const promptRoomLink = async () => {
+  const { roomLink } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'roomLink',
+      message: 'Enter the room secret link. (click the share button in the room)',
+    }
+  ]);
+  return roomLink;
 };

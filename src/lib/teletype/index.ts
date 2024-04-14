@@ -8,7 +8,7 @@ import {
   areDimensionEqual,
   resizeBestFit,
 } from "./auxiliary.js";
-const chalk = require("chalk");
+import  chalk from "chalk";
 import { Unauthorized } from "../surya/errors.js";
 import { encrypt, decrypt } from "../encryption.js";
 import { JoinChannelOptions } from "../surya/index.js";

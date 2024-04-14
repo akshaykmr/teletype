@@ -5,19 +5,19 @@ import {
   oorjaConfig,
   INVALID_ROOM_LINK_MESSAGE,
   setENVAccessToken,
-} from "../config";
-import { User, RoomKey } from "../surya/types";
-import { teletypeApp, TeletypeOptions } from "../teletype";
-import { CreateRoomOptions, SuryaClient } from "../surya";
+} from "../config.js";
+import { User, RoomKey } from "../surya/types.js";
+import { teletypeApp, TeletypeOptions } from "../teletype/index.js";
+import { CreateRoomOptions, SuryaClient } from "../surya/index.js";
 import { URL, URLSearchParams } from "url";
-import { importKey, createRoomKey, exportKey } from "../encryption";
+import { importKey, createRoomKey, exportKey } from "../encryption.js";
 import {
   loginByRoomOTP,
   preflight,
   promptAuth,
   resumeSession,
   validateCliVersion,
-} from "./preflight";
+} from "./preflight.js";
 
 export class InvalidRoomLink extends Error {}
 

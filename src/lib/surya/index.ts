@@ -1,5 +1,5 @@
 // backend api client
-const https = require("https");
+import https from "https";
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { encode, decode } from "@msgpack/msgpack";
 
@@ -9,7 +9,7 @@ import { SuryaConfig, env, getSuryaConfig } from "../config.js";
 import { Unauthorized, BadRequest } from "./errors.js";
 import { Socket, Channel, Presence } from "./vendor/phoenix/index.js";
 
-const camelcaseKeys = require("camelcase-keys");
+import camelcaseKeys from "camelcase-keys";
 
 export class SuryaError extends Error {}
 

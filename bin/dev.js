@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --loader ts-node/esm --no-warnings=ExperimentalWarning
+#!/usr/bin/env -S node --trace-warnings --loader ts-node/esm --no-warnings=ExperimentalWarning
 
 import {execute} from '@oclif/core'
 
