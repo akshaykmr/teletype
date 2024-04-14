@@ -129,7 +129,7 @@ DESCRIPTION
   Sign-out of oorja. Clears saved auth-token
 ```
 
-_See code: [src/commands/signout.ts](https://github.com/akshaykmr/teletype/blob/v1.11.1/src/commands/signout.ts)_
+_See code: [src/commands/signout.ts](https://github.com/akshaykmr/teletype/blob/v1.11.2/src/commands/signout.ts)_
 
 ## `oorja teletype [ROOM]`
 
@@ -163,7 +163,7 @@ EXAMPLES
   Will also allow room participants to write to your terminal!
 ```
 
-_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.11.1/src/commands/teletype/index.ts)_
+_See code: [src/commands/teletype/index.ts](https://github.com/akshaykmr/teletype/blob/v1.11.2/src/commands/teletype/index.ts)_
 
 ## `oorja tty [ROOM]`
 
