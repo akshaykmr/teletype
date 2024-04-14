@@ -1,29 +1,67 @@
-oclif-hello-world
-=================
+TeleType
+=====
 
-oclif example Hello World CLI
+cli tool that allows you to share your terminal online conveniently. Check out [oorja.io](https://oorja.io) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![GitHub license](https://img.shields.io/github/license/oclif/hello-world)](https://github.com/oclif/hello-world/blob/main/LICENSE)
+[![Version](https://img.shields.io/npm/v/oorja.svg)](https://npmjs.org/package/oorja)
+[![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
+[![Follow](https://img.shields.io/twitter/follow/oorja_app?style=social)](https://twitter.com/oorja_app)
+
+
+<p align="center">
+  <img width="600" src="https://teletype.oorja.io/images/cli-demo.svg">
+</p>
+
+<p align="center">
+  <img src="https://teletype.oorja.io/images/teletype-session.png">
+</p>
+
+Your stream can be view-only or collaboration enabled (command-line flag).
+
+
 
 <!-- toc -->
-* [Usage](#usage)
+* [Install and stream!](#install-and-stream)
 * [Commands](#commands)
 <!-- tocstop -->
-# Usage
-<!-- usage -->
-```sh-session
-$ npm install -g oorja
-$ oorja COMMAND
-running command...
-$ oorja (--version)
-oorja/1.11.1 linux-x64 node-v18.18.0
-$ oorja --help [COMMAND]
-USAGE
-  $ oorja COMMAND
-...
-```
-<!-- usagestop -->
+
+# Install and stream!
+
+- You'll need Node 18.18.0 >. CLI is available via npm. <br />
+  <a href="https://nodejs.org/en/download/" target="_blank">
+  You can setup node/npm from here.
+  </a> 
+- Package does fail on some systems because of node-pty compilation failures. I'm thinking it's better to package the whole thing
+as a binary in future releases (i.e. not available via npm but via a script or manual install).
+
+- `npm install -g oorja`
+- `teletype`
+- `teletype -m`  (for collaboration mode)
+
+Misc: If you have issues installing on apple M1 or similar systems:
+- `sudo xcode-select --install`
+- `CXXFLAGS="--std=c++17" npm install -g oorja`
+
+**your stream is end-to-end encrypted**
+
+**PRO TIP:**
+Any participant in the room can stream their terminal(s) i.e there can be multiple streams at the same time, and you can switch between them like terminal tabs!
+
+For options: `teletype -h` 
+
+**Note**
+This is the cli companion for [oorja.io](https://oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://oorja.io/privacy_policy).
+TLDR: Nothing stored on servers. Your data is end-to-end encrypted, synced between browsers (and cli) 🍻. No prying eyes. 
+
+Like it ? [follow or tweet, tell your colleagues](https://twitter.com/oorja_app) 👩🏻‍💻
+
+Love it ? [please subscribe](https://oorja.io/pricing) 🖖
+
+Feel free to open [issues](https://github.com/akshaykmr/TeleType/issues) for bugs, improvements, app-discussions, and anything else really.
+
+More ways to [contact](https://oorja.io/contact).
+
+
 # Commands
 <!-- commands -->
 * [`oorja conf [KEY] [VALUE]`](#oorja-conf-key-value)
