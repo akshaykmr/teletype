@@ -1,12 +1,12 @@
 // @ts-nocheck
-import {closure} from "./utils"
+import {closure} from "./utils.js"
 import {
   CHANNEL_EVENTS,
   CHANNEL_STATES,
-} from "./constants"
+} from "./constants.js"
 
-import Push from "./push"
-import Timer from "./timer"
+import Push from "./push.js"
+import Timer from "./timer.js"
 
 /**
  *

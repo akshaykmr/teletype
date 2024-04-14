@@ -8,17 +8,17 @@ import {
   SOCKET_STATES,
   TRANSPORTS,
   WS_CLOSE_NORMAL
-} from "./constants"
+} from "./constants.js"
 
 import {
   closure
-} from "./utils"
+} from "./utils.js"
 
-import Ajax from "./ajax"
-import Channel from "./channel"
-import LongPoll from "./longpoll"
-import Serializer from "./serializer"
-import Timer from "./timer"
+import Ajax from "./ajax.js"
+import Channel from "./channel.js"
+import LongPoll from "./longpoll.js"
+import Serializer from "./serializer.js"
+import Timer from "./timer.js"
 import { WebSocket } from 'ws';
 
 /** Initializes the Socket *

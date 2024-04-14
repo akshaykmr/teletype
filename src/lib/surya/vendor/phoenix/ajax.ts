@@ -2,7 +2,7 @@
 import {
   global,
   XHR_STATES
-} from "./constants"
+} from "./constants.js"
 
 export default class Ajax {
 

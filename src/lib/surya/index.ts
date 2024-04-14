@@ -3,11 +3,11 @@ const https = require("https");
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { encode, decode } from "@msgpack/msgpack";
 
-import { defaultParser } from "./resources";
-import { User, RoomApps, Room, CliManifest } from "./types";
-import { SuryaConfig, env, getSuryaConfig } from "../config";
-import { Unauthorized, BadRequest } from "./errors";
-import { Socket, Channel, Presence } from "./vendor/phoenix";
+import { defaultParser } from "./resources.js";
+import { User, RoomApps, Room, CliManifest } from "./types.js";
+import { SuryaConfig, env, getSuryaConfig } from "../config.js";
+import { Unauthorized, BadRequest } from "./errors.js";
+import { Socket, Channel, Presence } from "./vendor/phoenix/index.js";
 
 const camelcaseKeys = require("camelcase-keys");
 

@@ -1,18 +1,18 @@
 import { spawn, IPty } from "node-pty";
 import * as os from "os";
-import { Hash, RoomKey } from "../surya/types";
+import { Hash, RoomKey } from "../surya/types.js";
 import {
   getDimensions,
   dimensions,
   initScreen,
   areDimensionEqual,
   resizeBestFit,
-} from "./auxiliary";
+} from "./auxiliary.js";
 const chalk = require("chalk");
-import { Unauthorized } from "../surya/errors";
-import { encrypt, decrypt } from "../encryption";
-import { JoinChannelOptions } from "../surya";
-import { Channel } from "../surya/vendor/phoenix";
+import { Unauthorized } from "../surya/errors.js";
+import { encrypt, decrypt } from "../encryption.js";
+import { JoinChannelOptions } from "../surya/index.js";
+import { Channel } from "../surya/vendor/phoenix/index.js";
 
 enum MessageType {
   IN = "i",

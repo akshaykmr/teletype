@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 const termSize = require("term-size");
 import { IPty } from "node-pty";
-import { Hash } from "../surya/types";
+import { Hash } from "../surya/types.js";
 
 export const initScreen = (
   username: string,

@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { RoomKey } from "./surya/types";
+import { RoomKey } from "./surya/types.js";
 import { encode, decode } from "@msgpack/msgpack";
 
 export type EncryptedPayload = {
