@@ -5,7 +5,7 @@ export const promptRoomLink = async () => {
     {
       type: 'input',
       name: 'roomLink',
-      message: 'Enter the room secret link. (click the share button in the room)',
+      message: 'Enter the room secret link (copy URL from address bar in your browser):',
     }
   ]);
   return roomLink;
