@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import termSize from "term-size";
+import termSize from "terminal-size";
 import { IPty } from "node-pty";
 import { Hash } from "../surya/types.js";
 
