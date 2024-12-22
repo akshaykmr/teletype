@@ -193,16 +193,10 @@
  * @module phoenix
  */
 
-import Channel from "./channel.js"
-import LongPoll from "./longpoll.js"
-import Presence from "./presence.js"
-import Serializer from "./serializer.js"
-import Socket from "./socket.js"
+import Channel from './channel.js'
+import LongPoll from './longpoll.js'
+import Presence from './presence.js'
+import Serializer from './serializer.js'
+import Socket from './socket.js'
 
-export {
-  Channel,
-  LongPoll,
-  Presence,
-  Serializer,
-  Socket
-}
+export {Channel, LongPoll, Presence, Serializer, Socket}

@@ -1,16 +1,14 @@
 // @ts-nocheck
 /* The default serializer for encoding and decoding messages */
-import {
-  CHANNEL_EVENTS
-} from "./constants.js"
+import {CHANNEL_EVENTS} from './constants.js'
 
 export default {
   HEADER_LENGTH: 1,
   META_LENGTH: 4,
   KINDS: {push: 0, reply: 1, broadcast: 2},
 
-  encode(msg, callback){
-    if(msg.payload.constructor === ArrayBuffer){
+  encode(msg, callback) {
+    if (msg.payload.constructor === ArrayBuffer) {
       return callback(this.binaryEncode(msg))
     } else {
       let payload = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload]
@@ -18,8 +16,8 @@ export default {
     }
   },
 
-  decode(rawPayload, callback){
-    if(rawPayload.constructor === ArrayBuffer){
+  decode(rawPayload, callback) {
+    if (rawPayload.constructor === ArrayBuffer) {
       return callback(this.binaryDecode(rawPayload))
     } else {
       let [join_ref, ref, topic, event, payload] = JSON.parse(rawPayload)
@@ -29,7 +27,7 @@ export default {
 
   // private
 
-  binaryEncode(message){
+  binaryEncode(message) {
     let {join_ref, ref, event, topic, payload} = message
     let metaLength = this.META_LENGTH + join_ref.length + ref.length + topic.length + event.length
     let header = new ArrayBuffer(this.HEADER_LENGTH + metaLength)
@@ -41,10 +39,10 @@ export default {
     view.setUint8(offset++, ref.length)
     view.setUint8(offset++, topic.length)
     view.setUint8(offset++, event.length)
-    Array.from(join_ref, char => view.setUint8(offset++, char.charCodeAt(0)))
-    Array.from(ref, char => view.setUint8(offset++, char.charCodeAt(0)))
-    Array.from(topic, char => view.setUint8(offset++, char.charCodeAt(0)))
-    Array.from(event, char => view.setUint8(offset++, char.charCodeAt(0)))
+    Array.from(join_ref, (char) => view.setUint8(offset++, char.charCodeAt(0)))
+    Array.from(ref, (char) => view.setUint8(offset++, char.charCodeAt(0)))
+    Array.from(topic, (char) => view.setUint8(offset++, char.charCodeAt(0)))
+    Array.from(event, (char) => view.setUint8(offset++, char.charCodeAt(0)))
 
     var combined = new Uint8Array(header.byteLength + payload.byteLength)
     combined.set(new Uint8Array(header), 0)
@@ -53,18 +51,21 @@ export default {
     return combined.buffer
   },
 
-  binaryDecode(buffer){
+  binaryDecode(buffer) {
     let view = new DataView(buffer)
     let kind = view.getUint8(0)
     let decoder = new TextDecoder()
-    switch(kind){
-      case this.KINDS.push: return this.decodePush(buffer, view, decoder)
-      case this.KINDS.reply: return this.decodeReply(buffer, view, decoder)
-      case this.KINDS.broadcast: return this.decodeBroadcast(buffer, view, decoder)
+    switch (kind) {
+      case this.KINDS.push:
+        return this.decodePush(buffer, view, decoder)
+      case this.KINDS.reply:
+        return this.decodeReply(buffer, view, decoder)
+      case this.KINDS.broadcast:
+        return this.decodeBroadcast(buffer, view, decoder)
     }
   },
 
-  decodePush(buffer, view, decoder){
+  decodePush(buffer, view, decoder) {
     let joinRefSize = view.getUint8(1)
     let topicSize = view.getUint8(2)
     let eventSize = view.getUint8(3)
@@ -79,7 +80,7 @@ export default {
     return {join_ref: joinRef, ref: null, topic: topic, event: event, payload: data}
   },
 
-  decodeReply(buffer, view, decoder){
+  decodeReply(buffer, view, decoder) {
     let joinRefSize = view.getUint8(1)
     let refSize = view.getUint8(2)
     let topicSize = view.getUint8(3)
@@ -98,7 +99,7 @@ export default {
     return {join_ref: joinRef, ref: ref, topic: topic, event: CHANNEL_EVENTS.reply, payload: payload}
   },
 
-  decodeBroadcast(buffer, view, decoder){
+  decodeBroadcast(buffer, view, decoder) {
     let topicSize = view.getUint8(1)
     let eventSize = view.getUint8(2)
     let offset = this.HEADER_LENGTH + 2
@@ -109,5 +110,5 @@ export default {
     let data = buffer.slice(offset, buffer.byteLength)
 
     return {join_ref: null, ref: null, topic: topic, event: event, payload: data}
-  }
+  },
 }

@@ -1,49 +1,49 @@
-type ProfileType = "GitHub" | "Google" | "anon";
+type ProfileType = 'GitHub' | 'Google' | 'anon'
 
 export type RoomApp = {
-  appId: string;
-  config: any;
-};
+  appId: string
+  config: any
+}
 
 export type RoomApps = {
-  defaultFocus?: string;
-  appList: RoomApp[];
-};
+  defaultFocus?: string
+  appList: RoomApp[]
+}
 
 export type UserProfile = {
-  id: string;
-  name: string;
-  nickname: string;
-  picture: string;
-  profileType: ProfileType;
-};
+  id: string
+  name: string
+  nickname: string
+  picture: string
+  profileType: ProfileType
+}
 
 type ResourceTimestamps = {
-  createdAt: Date;
-  updatedAt: Date;
-};
+  createdAt: Date
+  updatedAt: Date
+}
 
 export type CliManifest = {
-  cliVersion: number;
-  suryaHosts: string[];
-};
+  cliVersion: number
+  suryaHosts: string[]
+}
 
-export type User = UserProfile & ResourceTimestamps;
+export type User = UserProfile & ResourceTimestamps
 
 export type Room = {
-  id: string;
-  creator_id: string;
-  locked: boolean;
-  name: string;
-  participants: UserProfile[];
-  apps: RoomApps;
-};
+  id: string
+  creator_id: string
+  locked: boolean
+  name: string
+  participants: UserProfile[]
+  apps: RoomApps
+}
 
 export type RoomKey = {
-  roomId: string;
-  key: Buffer;
-};
+  roomId: string
+  key: Buffer
+}
 
 export type Hash<T> = {
-  [key: string]: T;
-};
+  [key: string]: T
+}
