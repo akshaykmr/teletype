@@ -110,7 +110,7 @@ const init = async (env: env, options: { roomId?: string } = {}) => {
 };
 
 let currentEnv: env;
-let oorja: OORJA;
+let oorja: OORJA | null = null;
 
 export const getApp = async (
   options: { roomLink?: string } = {}
@@ -124,5 +124,8 @@ export const getApp = async (
     }
     return Promise.resolve(oorja);
   }
-  return await init(env, { roomId: roomURL ? getRoomId(roomURL) : undefined });
+  const app = await init(env, { roomId: roomURL ? getRoomId(roomURL) : undefined });
+  currentEnv = env;
+  oorja = app;
+  return app;
 };

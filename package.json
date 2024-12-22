@@ -27,6 +27,13 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts",
+    "prepack": "yarn build && oclif manifest && oclif readme",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "prepare": "yarn build",
+    "version": "oclif readme && git add README.md",
+    "format": "prettier --write ."
   },
   "oclif": {
     "bin": "oorja",
@@ -54,7 +61,7 @@
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
     "@types/inquirer": "^9.0.7",
-    "@types/node": "^18",
+    "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
     "eslint-config-oclif": "^5.2.2",
     "eslint-config-oclif-typescript": "^3.1.13",
@@ -62,9 +69,10 @@
     "oclif": "^4.17.3",
     "shx": "^0.3.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "prettier": "^3.3.3"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.10.0"
   }
 }
