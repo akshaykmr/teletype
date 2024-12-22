@@ -56,11 +56,12 @@
     "node-pty": "^1.0.0",
     "ora": "^8.1.1",
     "terminal-size": "^4.0.0",
-    "ws": "^8.18.0"
+    "phoenix": "1.7.18"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
     "@types/inquirer": "^9.0.7",
+    "@types/phoenix": "^1.6.6",
     "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
     "eslint-config-oclif": "^5.2.2",

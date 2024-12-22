@@ -7,7 +7,7 @@ import {defaultParser} from './resources.js'
 import {User, RoomApps, Room, CliManifest} from './types.js'
 import {SuryaConfig, env, getSuryaConfig} from '../config.js'
 import {Unauthorized, BadRequest} from './errors.js'
-import {Socket, Channel, Presence} from './vendor/phoenix/index.js'
+import {Socket, Channel, Presence} from 'phoenix';
 
 import camelcaseKeys from 'camelcase-keys'
 
@@ -118,6 +118,7 @@ export class SuryaClient {
         params: {
           access_token: this.config.token,
         },
+        transport: WebSocket,
         heartbeatIntervalMs: 10000,
         binaryType: 'arraybuffer',
         encode: encodeMessage,
@@ -188,7 +189,7 @@ export class SuryaClient {
   destroy = async () => {
     return new Promise((resolve) => {
       if (this.socket) {
-        this.socket.disconnect(resolve, 1000, 'disconnecting surya client')
+        this.socket.disconnect(() => {resolve(undefined)}, 1000, 'disconnecting surya client')
       } else {
         resolve(undefined)
       }
@@ -227,6 +228,10 @@ export type JoinChannelOptions<T> = {
   onError?: (reason: any) => void
   onClose?: (payload: any, ref: any, joinRef: any) => void
   onMessage: (payload: any) => void
-  handleSessionJoin: (session: string) => void
-  handleSessionLeave: (session: string) => void
+  handleSessionJoin: (
+    session: string | undefined,
+    _ignore: any,
+    metas: any,
+  ) => void;
+  handleSessionLeave: (session: string | undefined) => void;
 }

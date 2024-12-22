@@ -6,7 +6,7 @@ import chalk from 'chalk'
 import {Unauthorized} from '../surya/errors.js'
 import {encrypt, decrypt} from '../encryption.js'
 import {JoinChannelOptions} from '../surya/index.js'
-import {Channel} from '../surya/vendor/phoenix/index.js'
+import {Channel} from 'phoenix'
 
 enum MessageType {
   IN = 'i',
@@ -131,7 +131,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
       },
       handleSessionJoin: (s) => {},
       handleSessionLeave: (s) => {
-        delete userDimensions[s]
+        s && delete userDimensions[s]
         resizeBestFit(term, userDimensions)
       },
     })

@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "module": "Node16",
+    "module": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
-    "target": "es2022",
-    "moduleResolution": "node16"
+    "target": "es2023",
+    "moduleResolution": "NodeNext"
   },
   "include": ["./src/**/*"],
   "ts-node": {
-    "esm": true
+    "esm": true,
+    "experimentalSpecifiers": true
   }
 }
