@@ -28,22 +28,22 @@ export const config = new Conf<string>({
 
 export type env = 'staging' | 'local' | 'prod' | 'prod-teletype'
 
-export type SuryaConfig = {
+export type ConnectConfig = {
   host: string
   enableTLS: boolean
   token: string
 }
 
-export const getSuryaConfig = (env: env): SuryaConfig => {
+export const getConnectConfig = (env: env): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
         return 'localhost:4000'
       case 'staging':
-        return 'surya-staging.oorja.io'
+        return 'connect-staging.oorja.io'
       case 'prod':
       case 'prod-teletype':
-        return 'surya.oorja.io'
+        return 'connect.oorja.io'
     }
   }
   return {

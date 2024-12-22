@@ -8,7 +8,7 @@ import {
 } from '../config.js'
 import {User, RoomKey} from '../surya/types.js'
 import {teletypeApp, TeletypeOptions} from '../teletype/index.js'
-import {CreateRoomOptions, SuryaClient} from '../surya/index.js'
+import {CreateRoomOptions, ConnectClient} from '../surya/index.js'
 import {URL, URLSearchParams} from 'url'
 import {importKey, createRoomKey, exportKey} from '../encryption.js'
 import {loginByRoomOTP, preflight, promptAuth, resumeSession, validateCliVersion} from './preflight.js'
@@ -19,12 +19,12 @@ class OORJA {
   // should capture domain related commands and queries
   constructor(
     private config: oorjaConfig,
-    private suryaClient: SuryaClient,
+    private connectClient: ConnectClient,
     public user: User,
   ) {}
 
   createRoom = async (options: CreateRoomOptions) => {
-    const room = await this.suryaClient.createRoom(options)
+    const room = await this.connectClient.createRoom(options)
     const roomKey = createRoomKey(room.id)
     return {
       room,
@@ -47,7 +47,7 @@ class OORJA {
   teletype = (options: Omit<TeletypeOptions, 'userId' | 'joinChannel'>) => {
     return teletypeApp({
       userId: this.user!.id,
-      joinChannel: this.suryaClient.joinChannel,
+      joinChannel: this.connectClient.joinChannel,
       ...options,
     })
   }
@@ -76,17 +76,17 @@ const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_tok
 
 const init = async (env: env, options: {roomId?: string} = {}) => {
   const config = getoorjaConfig(env)
-  let suryaClient = new SuryaClient(env)
+  let connectClient = new ConnectClient(env)
 
-  await validateCliVersion(suryaClient)
-  let user = await resumeSession(env, suryaClient, options.roomId)
+  await validateCliVersion(connectClient)
+  let user = await resumeSession(env, connectClient, options.roomId)
 
   if (!user) {
     let token: string = ''
     if (options.roomId) {
-      token = await loginByRoomOTP(suryaClient, options.roomId)
+      token = await loginByRoomOTP(connectClient, options.roomId)
     } else {
-      token = await promptAuth(suryaClient, linkForTokenGen(config))
+      token = await promptAuth(connectClient, linkForTokenGen(config))
       if (!token) {
         console.log('Token not provided :(')
         process.exit(12)
@@ -94,10 +94,10 @@ const init = async (env: env, options: {roomId?: string} = {}) => {
     }
     setENVAccessToken(env, token)
   }
-  await suryaClient.destroy()
-  suryaClient = new SuryaClient(env)
-  user = await preflight(env, suryaClient)
-  return new OORJA(config, suryaClient, user)
+  await connectClient.destroy()
+  connectClient = new ConnectClient(env)
+  user = await preflight(env, connectClient)
+  return new OORJA(config, connectClient, user)
 }
 
 let currentEnv: env

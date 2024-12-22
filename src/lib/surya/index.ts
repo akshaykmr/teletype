@@ -5,27 +5,27 @@ import {encode, decode} from '@msgpack/msgpack'
 
 import {defaultParser} from './resources.js'
 import {User, RoomApps, Room, CliManifest} from './types.js'
-import {SuryaConfig, env, getSuryaConfig} from '../config.js'
+import {ConnectConfig, env, getConnectConfig} from '../config.js'
 import {Unauthorized, BadRequest} from './errors.js'
 import {Socket, Channel, Presence} from 'phoenix';
 
 import camelcaseKeys from 'camelcase-keys'
 
-export class SuryaError extends Error {}
+export class ApiClientError extends Error {}
 
-export class SuryaClient {
-  private config: SuryaConfig
+export class ConnectClient {
+  private config: ConnectConfig
   private client: AxiosInstance
   private socket?: Socket
 
   constructor(env: env) {
-    const config = getSuryaConfig(env)
+    const config = getConnectConfig(env)
     this.client = axios.create({
       httpsAgent: new https.Agent({
         minVersion: 'TLSv1.2',
         maxVersion: 'TLSv1.2',
       }),
-      baseURL: suryaBaseURL(config.host, config.enableTLS),
+      baseURL: connectBaseURL(config.host, config.enableTLS),
       timeout: 5000,
       responseType: 'json',
       headers: {
@@ -189,7 +189,7 @@ export class SuryaClient {
   destroy = async () => {
     return new Promise((resolve) => {
       if (this.socket) {
-        this.socket.disconnect(() => {resolve(undefined)}, 1000, 'disconnecting surya client')
+        this.socket.disconnect(() => {resolve(undefined)}, 1000, 'disconnecting connect client')
       } else {
         resolve(undefined)
       }
@@ -197,7 +197,7 @@ export class SuryaClient {
   }
 }
 
-const suryaBaseURL = (host: string, tlsEnabled: boolean) => `${tlsEnabled ? 'https' : 'http'}://${host}/api/v1`
+const connectBaseURL = (host: string, tlsEnabled: boolean) => `${tlsEnabled ? 'https' : 'http'}://${host}/api/v1`
 
 const handleError = (error: unknown) => {
   if (error instanceof AxiosError) {
