@@ -1,11 +1,11 @@
 import {spawn, IPty} from 'node-pty'
 import * as os from 'os'
-import {Hash, RoomKey} from '../surya/types.js'
+import {Hash, RoomKey} from '../connect/types.js'
 import {getDimensions, dimensions, initScreen, areDimensionEqual, resizeBestFit} from './auxiliary.js'
 import chalk from 'chalk'
-import {Unauthorized} from '../surya/errors.js'
+import {Unauthorized} from '../connect/errors.js'
 import {encrypt, decrypt} from '../encryption.js'
-import {JoinChannelOptions} from '../surya/index.js'
+import {JoinChannelOptions} from '../connect/index.js'
 import {Channel} from 'phoenix'
 
 enum MessageType {

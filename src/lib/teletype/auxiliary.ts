@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
-import {Hash} from '../surya/types.js'
+import {Hash} from '../connect/types.js'
 
 export const initScreen = (username: string, hostname: string, shell: string, multiplexed: boolean) => {
   console.log(chalk.bold(chalk.blueBright('TeleType')))

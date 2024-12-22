@@ -6,9 +6,9 @@ import {
   INVALID_ROOM_LINK_MESSAGE,
   setENVAccessToken,
 } from '../config.js'
-import {User, RoomKey} from '../surya/types.js'
+import {User, RoomKey} from '../connect/types.js'
 import {teletypeApp, TeletypeOptions} from '../teletype/index.js'
-import {CreateRoomOptions, ConnectClient} from '../surya/index.js'
+import {CreateRoomOptions, ConnectClient} from '../connect/index.js'
 import {URL, URLSearchParams} from 'url'
 import {importKey, createRoomKey, exportKey} from '../encryption.js'
 import {loginByRoomOTP, preflight, promptAuth, resumeSession, validateCliVersion} from './preflight.js'

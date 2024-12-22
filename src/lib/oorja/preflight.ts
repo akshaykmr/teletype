@@ -3,9 +3,9 @@ import inquirer from 'inquirer'
 import ora from 'ora'
 
 import {env, setENVAccessToken, CLI_VERSION, getENVAccessToken} from '../config.js'
-import {ConnectClient} from '../surya/index.js'
-import {BadRequest, Unauthorized} from '../surya/errors.js'
-import {User} from '../surya/types.js'
+import {ConnectClient} from '../connect/index.js'
+import {BadRequest, Unauthorized} from '../connect/errors.js'
+import {User} from '../connect/types.js'
 
 const promptToken = (): Promise<string> =>
   inquirer
