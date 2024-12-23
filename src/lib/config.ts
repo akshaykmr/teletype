@@ -27,13 +27,13 @@ export type ConnectConfig = {
   token: string
 }
 
-export const getConnectConfig = (env: env): ConnectConfig => {
+export const getConnectConfig = (env: env, region: string): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
         return 'connect-staging.oorja.io'
       case 'prod':
-        return 'connect.oorja.io'
+        return region ? `${region}.connect.oorja.io` : 'connect.oorja.io'
     }
   }
   return {

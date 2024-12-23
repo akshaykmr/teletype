@@ -1,2 +1,3 @@
 - Remove relative imports from the project. ts-node doesn't like tsconfig lib paths though, maybe drop using oclif altogether?
 - remove axios and use native fetch
+- OTP flow is a lot of back and forth (confusing for first time user).

@@ -18,8 +18,8 @@ export class ConnectClient {
   private client: AxiosInstance
   private socket?: Socket
 
-  constructor(env: env) {
-    const config = getConnectConfig(env)
+  constructor(env: env, region: string) {
+    const config = getConnectConfig(env, region)
     this.client = axios.create({
       httpsAgent: new https.Agent({
         minVersion: 'TLSv1.2',

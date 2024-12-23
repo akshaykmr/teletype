@@ -12,6 +12,8 @@ import {CreateRoomOptions, ConnectClient} from '../connect/index.js'
 import {URL, URLSearchParams} from 'url'
 import {importKey, createRoomKey, exportKey} from '../encryption.js'
 import {loginByRoomOTP, preflight, promptAuth, resumeSession, validateCliVersion} from './preflight.js'
+import {getRegion} from './client.js'
+import ora from 'ora'
 
 export class InvalidRoomLink extends Error {}
 
@@ -76,8 +78,13 @@ const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_tok
 
 const init = async (env: env, options: {roomId?: string} = {}) => {
   const config = getoorjaConfig(env)
-  let connectClient = new ConnectClient(env)
-
+  const spinner = ora({
+    text: 'Connecting...',
+    discardStdin: true,
+  }).start()
+  const region = await getRegion()
+  spinner.succeed('Online')
+  let connectClient = new ConnectClient(env, region)
   await validateCliVersion(connectClient)
   let user = await resumeSession(env, connectClient, options.roomId)
 
@@ -95,7 +102,7 @@ const init = async (env: env, options: {roomId?: string} = {}) => {
     setENVAccessToken(env, token)
   }
   await connectClient.destroy()
-  connectClient = new ConnectClient(env)
+  connectClient = new ConnectClient(env, region)
   user = await preflight(env, connectClient)
   return new OORJA(config, connectClient, user)
 }
@@ -106,7 +113,7 @@ let oorja: OORJA | null = null
 export const getApp = async (options: {roomLink?: string} = {}): Promise<OORJA> => {
   const {roomLink} = options
   const roomURL = roomLink ? parseRoomURL(roomLink) : undefined
-  const env = determineENV(undefined)
+  const env = determineENV(roomURL)
   if (oorja) {
     if (env !== currentEnv) {
       return Promise.reject('Attempt to run different env in same session')

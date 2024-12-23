@@ -3441,6 +3441,11 @@ hasown@^2.0.0, hasown@^2.0.1, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
+haversine-distance@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/haversine-distance/-/haversine-distance-1.2.3.tgz#8414ab56a9fb85ecd5733c420d31294779f0f284"
+  integrity sha512-cRKtuukt+/fVprlLueX30mytMNtiQ4tff93FDW9yrBx3BYrq6gujiw1+hEaaxssKlOZTm8R3BPtMbNM+n0+bqQ==
+
 header-case@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/header-case/-/header-case-2.0.4.tgz#5a42e63b55177349cf405beb8d775acabb92c063"
