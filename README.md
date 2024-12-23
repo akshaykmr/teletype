@@ -27,7 +27,7 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-- You'll need Node 18.18.0 >. CLI is available via npm. <br />
+- You'll need Node 22.10.0 >. CLI is available via npm. <br />
   <a href="https://nodejs.org/en/download/" target="_blank">
   You can setup node/npm from here.
   </a> 
