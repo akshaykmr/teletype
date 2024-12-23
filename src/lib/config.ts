@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import {URL} from 'url'
 
-export const CLI_VERSION = 1.91
+export const CLI_VERSION = 2.0
 
 import Conf from 'conf'
 
