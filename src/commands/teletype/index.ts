@@ -16,15 +16,15 @@ export default class TeleTypeCommand extends Command {
 
   static examples = [
     `${chalk.blueBright('$ teletype')}
-Will prompt to choose streaming destination - existing room or create a new one.
+Will prompt to choose streaming destination - existing space or create a new one.
 
 `,
     `${chalk.blueBright(`$ teletype '${ROOM_LINK_SAMPLE}'`)}
-Will stream to the room specified by secret link, you must have joined the room before streaming.
+Will stream to the space specified by secret link, you must have joined the space before streaming.
 
 `,
     `${chalk.blueBright('$ teletype -m')}
-Will also allow room participants to write to your terminal!
+Will also allow participants to write to your terminal!
 
 `,
   ]
@@ -39,18 +39,18 @@ Will also allow room participants to write to your terminal!
     multiplex: Flags.boolean({
       char: 'm',
       description:
-        'Allows room users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust room participants. Off by default',
+        'Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space participants. Off by default',
       default: false,
     }),
     new_room: Flags.boolean({
       char: 'n',
-      description: 'Create new room',
+      description: 'Create new space',
       default: false,
     }),
   }
 
   static args = {
-    room: Args.string({}),
+    space: Args.string({}),
   }
 
   async run() {
@@ -59,8 +59,8 @@ Will also allow room participants to write to your terminal!
       flags: {shell, multiplex, new_room},
     } = await this.parse(TeleTypeCommand)
 
-    if (args.room) {
-      await this.streamToLink({shell, multiplex, roomLink: args.room})
+    if (args.space) {
+      await this.streamToLink({shell, multiplex, roomLink: args.space})
       process.exit(0)
     }
     if (new_room) {
@@ -71,18 +71,18 @@ Will also allow room participants to write to your terminal!
     console.log('(use -h for description and options) \n')
 
     // room not known, prompt
-    const ROOM = 'To an existing room (you have the room link)'
-    const NEW = 'New room'
+    const SPACE = 'To an existing space (you have the link)'
+    const NEW = 'New space'
     const {answer} = await inquirer.prompt([
       {
         type: 'list',
         name: 'answer',
         message: 'Choose streaming destination',
-        choices: [NEW, ROOM],
+        choices: [NEW, SPACE],
       },
     ])
     switch (answer) {
-      case ROOM:
+      case SPACE:
         await this.streamToLink({shell, multiplex})
         break
       case NEW:
@@ -95,7 +95,7 @@ Will also allow room participants to write to your terminal!
   private async streamToLink(options: {shell: string; multiplex: boolean; roomLink?: string}) {
     const roomLink = options.roomLink || (await promptRoomLink())
     if (!roomLink) {
-      console.log(chalk.redBright('Room link not provided :('))
+      console.log(chalk.redBright('Space link not provided :('))
       process.exit()
     }
     const app = await getApp({roomLink})
@@ -108,12 +108,12 @@ Will also allow room participants to write to your terminal!
     const app = await getApp()
 
     const spinner = ora({
-      text: chalk.bold('Creating room with TeleType app'),
+      text: chalk.bold('Creating space with TeleType app'),
       discardStdin: false,
     }).start()
     const {roomKey} = await app
       .createRoom({
-        roomName: '-',
+        roomName: 'Untitled Space',
         apps: {
           defaultFocus: '39',
           appList: [
@@ -127,14 +127,14 @@ Will also allow room participants to write to your terminal!
         },
       })
       .catch((e) => {
-        console.log('Failed to create room.')
+        console.log('Failed to create space.')
         process.exit(9)
       })
-    spinner.succeed(chalk.bold('Room created')).clear()
+    spinner.succeed(chalk.bold('Space created')).clear()
 
     const link = app.linkForRoom(roomKey)
     console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`)
-    console.log(chalk.bold("^^ You'll be streaming here, share this link with your friends."))
+    console.log(chalk.bold("^^ You'll be streaming here ^^"))
     this.clearstdin()
     return await app.teletype({roomKey, shell, multiplex, process})
   }
