@@ -1,2 +1,2 @@
-- remove relative imports from the project.
+- Remove relative imports from the project. ts-node doesn't like tsconfig lib paths though, maybe drop using oclif altogether?
 - remove axios and use native fetch

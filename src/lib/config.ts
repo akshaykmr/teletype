@@ -14,23 +14,16 @@ export const config = new Conf<string>({
     'staging-access-token': {
       type: 'string',
     },
-    'local-access-token': {
-      type: 'string',
-    },
     'prod-access-token': {
-      type: 'string',
-    },
-    'prod-teletype-access-token': {
       type: 'string',
     },
   },
 })
 
-export type env = 'staging' | 'local' | 'prod' | 'prod-teletype'
+export type env = 'local' | 'prod'
 
 export type ConnectConfig = {
   host: string
-  enableTLS: boolean
   token: string
 }
 
@@ -38,18 +31,14 @@ export const getConnectConfig = (env: env): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
-        return 'localhost:4000'
-      case 'staging':
         return 'connect-staging.oorja.io'
       case 'prod':
-      case 'prod-teletype':
         return 'connect.oorja.io'
     }
   }
   return {
     host: getHost(env),
     token: getENVAccessToken(env),
-    enableTLS: env !== 'local',
   }
 }
 
@@ -60,14 +49,11 @@ export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
 )}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`
 
 export const determineENV = (roomURL?: URL): env => {
-  if (!roomURL) return (config.get('env') as env) || 'prod-teletype'
+  if (!roomURL) return (config.get('env') as env) || 'prod'
   switch (roomURL.host) {
     case 'oorja.io':
-      return 'prod'
     case 'teletype.oorja.io':
-      return 'prod-teletype'
-    case 'staging.oorja.io':
-      return 'staging'
+      return 'prod'
     case 'localhost:3000':
       return 'local'
     default:
@@ -86,7 +72,6 @@ export const setENVAccessToken = (env: env, token: string) => {
 
 export type oorjaConfig = {
   host: string
-  enableTLS: boolean
 }
 
 export const getoorjaConfig = (env: env): oorjaConfig => {
@@ -95,18 +80,11 @@ export const getoorjaConfig = (env: env): oorjaConfig => {
     case 'local':
       host = 'localhost:3000'
       break
-    case 'staging':
-      host = 'staging.oorja.io'
-      break
     case 'prod':
       host = 'oorja.io'
-      break
-    case 'prod-teletype':
-      host = 'teletype.oorja.io'
       break
   }
   return {
     host,
-    enableTLS: env !== 'local',
   }
 }

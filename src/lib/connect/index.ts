@@ -7,7 +7,7 @@ import {defaultParser} from './resources.js'
 import {User, RoomApps, Room, CliManifest} from './types.js'
 import {ConnectConfig, env, getConnectConfig} from '../config.js'
 import {Unauthorized, BadRequest} from './errors.js'
-import {Socket, Channel, Presence} from 'phoenix';
+import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
 
@@ -25,7 +25,7 @@ export class ConnectClient {
         minVersion: 'TLSv1.2',
         maxVersion: 'TLSv1.2',
       }),
-      baseURL: connectBaseURL(config.host, config.enableTLS),
+      baseURL: connectBaseURL(config.host),
       timeout: 5000,
       responseType: 'json',
       headers: {
@@ -100,7 +100,7 @@ export class ConnectClient {
   }
 
   establishSocket = async (): Promise<void> => {
-    const protocolPrefix = this.config.enableTLS ? `wss://` : `ws://`
+    const protocolPrefix = `wss://`
     const host = this.config.host
     let encodeMessage = (rawdata: any, callback: any) => {
       if (!rawdata) return
@@ -189,7 +189,13 @@ export class ConnectClient {
   destroy = async () => {
     return new Promise((resolve) => {
       if (this.socket) {
-        this.socket.disconnect(() => {resolve(undefined)}, 1000, 'disconnecting connect client')
+        this.socket.disconnect(
+          () => {
+            resolve(undefined)
+          },
+          1000,
+          'disconnecting connect client',
+        )
       } else {
         resolve(undefined)
       }
@@ -197,7 +203,7 @@ export class ConnectClient {
   }
 }
 
-const connectBaseURL = (host: string, tlsEnabled: boolean) => `${tlsEnabled ? 'https' : 'http'}://${host}/api/v1`
+const connectBaseURL = (host: string) => `https://${host}/api/v1`
 
 const handleError = (error: unknown) => {
   if (error instanceof AxiosError) {
@@ -228,10 +234,6 @@ export type JoinChannelOptions<T> = {
   onError?: (reason: any) => void
   onClose?: (payload: any, ref: any, joinRef: any) => void
   onMessage: (payload: any) => void
-  handleSessionJoin: (
-    session: string | undefined,
-    _ignore: any,
-    metas: any,
-  ) => void;
-  handleSessionLeave: (session: string | undefined) => void;
+  handleSessionJoin: (session: string | undefined, _ignore: any, metas: any) => void
+  handleSessionLeave: (session: string | undefined) => void
 }

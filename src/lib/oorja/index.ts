@@ -68,8 +68,8 @@ const getRoomId = (roomURL: URL) => {
 }
 
 const oorjaURL = (config: oorjaConfig) => {
-  const {host, enableTLS} = config!
-  return enableTLS ? `https://${host}` : `http://${host}`
+  const {host} = config!
+  return `https://${host}`
 }
 
 const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_token`
