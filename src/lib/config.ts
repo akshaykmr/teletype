@@ -42,7 +42,7 @@ export const getConnectConfig = (env: env, region: string): ConnectConfig => {
   }
 }
 
-export const ROOM_LINK_SAMPLE = 'https://oorja.io/rooms?id=foo#key'
+export const ROOM_LINK_SAMPLE = 'https://oorja.io/spaces?id=foo#key'
 
 export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
   'invalid url ',

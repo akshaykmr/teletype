@@ -11,6 +11,7 @@ import {promptRoomLink} from '../../lib/utils.js'
 const DEFAULT_SHELL = os.platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || 'bash'
 
 export default class TeleTypeCommand extends Command {
+  static order = 1
   static aliases = ['tty']
   static description = `Launch a terminal streaming session in oorja.`
 
@@ -56,14 +57,14 @@ Will also allow participants to write to your terminal!
   async run() {
     const {
       args,
-      flags: {shell, multiplex, new_room},
+      flags: {shell, multiplex, new_space},
     } = await this.parse(TeleTypeCommand)
 
     if (args.space) {
       await this.streamToLink({shell, multiplex, roomLink: args.space})
       process.exit(0)
     }
-    if (new_room) {
+    if (new_space) {
       await this.createRoomAndStream({shell, multiplex})
       process.exit(0)
     }
