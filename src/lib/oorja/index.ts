@@ -83,10 +83,10 @@ const init = async (env: env, options: {roomId?: string} = {}) => {
     discardStdin: true,
   }).start()
   const region = await getRegion()
-  spinner.succeed('Online')
   let connectClient = new ConnectClient(env, region)
   await validateCliVersion(connectClient)
   let user = await resumeSession(env, connectClient, options.roomId)
+  spinner.succeed('Online')
 
   if (!user) {
     let token: string = ''
