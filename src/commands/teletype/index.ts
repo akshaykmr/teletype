@@ -42,7 +42,7 @@ Will also allow participants to write to your terminal!
         'Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space participants. Off by default',
       default: false,
     }),
-    new_room: Flags.boolean({
+    new_space: Flags.boolean({
       char: 'n',
       description: 'Create new space',
       default: false,
