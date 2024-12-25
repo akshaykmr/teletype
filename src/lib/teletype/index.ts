@@ -59,7 +59,6 @@ export const teletypeApp = (options: TeletypeOptions) => {
         const stdin = options.process.stdin
         const stdout = options.process.stdout
         const dimensions = userDimensions[SELF]
-
         term = spawn(options.shell, [], {
           name: 'xterm-256color',
           cols: dimensions.cols,
