@@ -38,4 +38,5 @@ export const resizeBestFit = (term: IPty, userDimensions: Hash<dimensions>) => {
   const minrows = Math.min(...allViewports.map((d) => d.rows))
   const mincols = Math.min(...allViewports.map((d) => d.cols))
   term.resize(mincols, minrows)
+  term.write("\x0c"); // clear screen
 }
