@@ -1,10 +1,10 @@
 // backend api client
 import https from 'https'
 import axios, {AxiosError, AxiosInstance} from 'axios'
-import { Encoder, Decoder } from "@msgpack/msgpack";
+import {Encoder, Decoder} from '@msgpack/msgpack'
 
-const encoder = new Encoder({ ignoreUndefined: true });
-const decoder = new Decoder();
+const encoder = new Encoder({ignoreUndefined: true})
+const decoder = new Decoder()
 
 import {defaultParser} from './resources.js'
 import {User, RoomApps, Room, CliManifest} from './types.js'
@@ -106,12 +106,12 @@ export class ConnectClient {
     const protocolPrefix = `wss://`
     const host = this.config.host
     const encodeMessage = function (rawdata: any, callback: any) {
-      return callback(encoder.encode(rawdata));
-    };
+      return callback(encoder.encode(rawdata))
+    }
 
     const decodeMessage = function (rawdata: any, callback: any) {
-      return callback(decoder.decode(rawdata));
-    };
+      return callback(decoder.decode(rawdata))
+    }
     return new Promise((resolve, reject) => {
       let initialConnection = false
       this.socket = new Socket(`${protocolPrefix}${host}/socket`, {

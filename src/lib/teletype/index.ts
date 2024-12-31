@@ -107,7 +107,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
         switch (t) {
           case MessageType.DIMENSIONS:
             userDimensions[session] = d
-            resizeBestFit(term, userDimensions)
+            resizeBestFit(term, userDimensions, d.initial)
             break
           case MessageType.IN:
             const data = decrypt(d, options.roomKey)
