@@ -46,7 +46,7 @@ type _Settings = {
 }
 
 export const getRegion = async (): Promise<string> => {
-  const response = await _client.get('https://oorja.io/nudge', {
+  const response = await _client.get('https://static.oorja.io/nudge', {
     method: 'GET',
   })
   if (response.status !== 200) {
