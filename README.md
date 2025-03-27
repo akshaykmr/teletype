@@ -9,11 +9,11 @@ cli tool that allows you to share your terminal online conveniently. Check out [
 
 
 <p align="center">
-  <img width="600" src="https://teletype.oorja.io/images/cli-demo.svg">
+  <img width="600" src="https://oorja.io/images/cli-demo.svg">
 </p>
 
 <p align="center">
-  <img src="https://teletype.oorja.io/images/teletype-session.png">
+  <img src="https://oorja.io/images/teletype-session.png">
 </p>
 
 Your stream can be view-only or collaboration enabled (command-line flag).
