@@ -74,13 +74,15 @@ export const teletypeApp = (options: TeletypeOptions) => {
             term.write("export PS1='📡 [streaming] '$PS1\n")
           }
           if (options.shell.includes('zsh')) {
-            stdout.write('Adjusting zsh prompt\n')
+            stdout.write('Adjusting shell prompt to show streaming indicator\n')
             term.write("PROMPT='📡 [streaming] '$PROMPT\n")
           }
           if (options.shell.includes('fish')) {
-            stdout.write('Adjusting fish prompt\n')
-            // FIXME: don't know how to retain original with fish
-            term.write("function fish_prompt; echo '📡 [streaming] ' (basename $PWD)' $ '; end\n")
+            stdout.write('Adjusting shell prompt to show streaming indicator\n')
+            term.write(
+              'functions -c fish_prompt __orig_fish_prompt; ' +
+                "function fish_prompt; echo -n '📡 [streaming] '; __orig_fish_prompt; end\n",
+            )
           }
         }, 100) // wait for shell to be ready
         // track own dimensions and keep it up to date
