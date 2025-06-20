@@ -1,4 +1,5 @@
 - Remove relative imports from the project. ts-node doesn't like tsconfig lib paths though, maybe drop using oclif altogether?
 - OTP flow is a lot of back and forth (confusing for first time user).
-- need streaming indicator.
+- fix streaming indicator for powerlevel10k.
+- speed: init app early (connection and auth checks), rather than waiting till user has filled in space url.
 - bun js would be cool, fast start. but node-pty doesn't work with it.
