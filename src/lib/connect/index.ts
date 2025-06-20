@@ -1,6 +1,4 @@
 // backend api client
-import https from 'https'
-import axios, {AxiosError, AxiosInstance} from 'axios'
 import {Encoder, Decoder} from '@msgpack/msgpack'
 
 const encoder = new Encoder()
@@ -18,30 +16,55 @@ export class ApiClientError extends Error {}
 
 export class ConnectClient {
   private config: ConnectConfig
-  private client: AxiosInstance
+  private baseURL: string
+  private headers: HeadersInit
+  private timeout: number
   private socket?: Socket
 
   constructor(env: env, region: string) {
     const config = getConnectConfig(env, region)
-    this.client = axios.create({
-      httpsAgent: new https.Agent({
-        minVersion: 'TLSv1.2',
-        maxVersion: 'TLSv1.2',
-      }),
-      baseURL: connectBaseURL(config.host),
-      timeout: 5000,
-      responseType: 'json',
-      headers: {
-        'x-access-token': config.token || '',
-      },
-    })
+    this.baseURL = connectBaseURL(config.host)
+    this.headers = {
+      'x-access-token': config.token || '',
+      'Content-Type': 'application/json',
+    }
+    this.timeout = 5000
     this.config = config
+  }
+
+  // Private helper to encapsulate fetch with timeout and consistent error handling.
+  private async _fetch(path: string, options: RequestInit = {}) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout)
+
+    try {
+      const response = await fetch(`${this.baseURL}${path}`, {
+        ...options,
+        headers: this.headers,
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        // Throw an object that mimics the AxiosError structure for the handleError function.
+        throw {response}
+      }
+
+      return response
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out')
+      }
+      throw error // Re-throw other errors (like the custom {response} or network errors)
+    } finally {
+      clearTimeout(timeoutId)
+    }
   }
 
   fetchCliManifest = async (): Promise<CliManifest> => {
     try {
-      const response = await this.client.get('/cli')
-      return camelcaseKeys(response.data) as CliManifest
+      const response = await this._fetch('/cli')
+      const data = await response.json()
+      return camelcaseKeys(data) as CliManifest
     } catch (error) {
       return handleError(error)
     }
@@ -49,8 +72,9 @@ export class ConnectClient {
 
   fetchSessionUser = async (): Promise<User> => {
     try {
-      const response = await this.client.get('/session/user')
-      return defaultParser(response.data.data) as User
+      const response = await this._fetch('/session/user')
+      const data = await response.json()
+      return defaultParser(data.data) as User
     } catch (error) {
       return handleError(error)
     }
@@ -65,8 +89,12 @@ export class ConnectClient {
       },
     }
     try {
-      const response = await this.client.post('/rooms', body)
-      return defaultParser(response.data.data) as Room
+      const response = await this._fetch('/rooms', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      const data = await response.json()
+      return defaultParser(data.data) as Room
     } catch (error) {
       return handleError(error)
     }
@@ -74,8 +102,9 @@ export class ConnectClient {
 
   createAnonymousUser = async (): Promise<string> => {
     try {
-      const response = await this.client.post('/session/anon')
-      return response.data.access_token
+      const response = await this._fetch('/session/anon', {method: 'POST'})
+      const data = await response.json()
+      return data.access_token
     } catch (error) {
       return handleError(error)
     }
@@ -83,11 +112,15 @@ export class ConnectClient {
 
   accessTokenFromRoomParticipantOTP = async (roomId: string, otp: string): Promise<string> => {
     try {
-      const response = await this.client.post('/access_tokens/from_room_participant_otp', {
-        room_id: roomId,
-        otp: otp,
+      const response = await this._fetch('/access_tokens/from_room_participant_otp', {
+        method: 'POST',
+        body: JSON.stringify({
+          room_id: roomId,
+          otp: otp,
+        }),
       })
-      return response.data.data.token
+      const data = await response.json()
+      return data.data.token
     } catch (error) {
       return handleError(error)
     }
@@ -95,8 +128,9 @@ export class ConnectClient {
 
   fetchRoom = async (roomId: string): Promise<Room> => {
     try {
-      const response = await this.client.get(`/rooms/${roomId}`)
-      return defaultParser(response.data.data) as Room
+      const response = await this._fetch(`/rooms/${roomId}`)
+      const data = await response.json()
+      return defaultParser(data.data) as Room
     } catch (error) {
       return handleError(error)
     }
@@ -205,8 +239,11 @@ export class ConnectClient {
 
 const connectBaseURL = (host: string) => `https://${host}/api/v1`
 
-const handleError = (error: unknown) => {
-  if (error instanceof AxiosError) {
+const handleError = (error: any) => {
+  // This function was originally designed for AxiosError.
+  // The custom _fetch method now throws an object with a `response` key
+  // for HTTP errors (`{ response }`), allowing this logic to remain unchanged.
+  if (error?.response) {
     const {response} = error
     if (response) {
       switch (response.status) {
