@@ -80,13 +80,8 @@ export const teletypeApp = (options: TeletypeOptions) => {
           }
           if (options.shell.endsWith('zsh')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            const zshFunc =
-              ' _streaming_prompt_precmd() { if [[ "$PROMPT" != *\'📡 [streaming] \'* ]]; then PROMPT="📡 [streaming] $PROMPT"; fi; }\n'
-
-            const zshHook = ' precmd_functions+=(_streaming_prompt_precmd)\n'
-
-            term.write(zshFunc)
-            term.write(zshHook)
+            // FIXME: this doesnt work on macos (or its probably due to some conflict with powerlevel10k)
+            term.write("PROMPT='📡 [streaming] '$PROMPT\n")
           }
           if (options.shell.endsWith('fish')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
@@ -101,11 +96,14 @@ export const teletypeApp = (options: TeletypeOptions) => {
         setInterval(reEvaluateOwnDimensions, 1000)
 
         term.onData((d: string) => {
+          stdout.write(d)
+
           if (!ptyReady) {
             ptyReady = true
-            ptyFuture.resolve!(true)
+            setTimeout(() => {
+              ptyFuture.resolve!(true)
+            }, 100)
           }
-          stdout.write(d)
 
           if (sessionCount < 2) {
             // 1 sub for own channel session
