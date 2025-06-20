@@ -65,16 +65,24 @@ export const teletypeApp = (options: TeletypeOptions) => {
           cols: dimensions.cols,
           rows: dimensions.rows,
           cwd: options.process.cwd(),
-          // @ts-ignore
           env: options.process.env,
         })
 
-        if (options.shell.includes('bash')) {
-          setTimeout(() => {
+        setTimeout(() => {
+          if (options.shell.includes('bash')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            term.write("export PS1='📡 '$PS1\n")
-          }, 100) // wait for shell to be ready
-        }
+            term.write("export PS1='📡 [streaming] '$PS1\n")
+          }
+          if (options.shell.includes('zsh')) {
+            stdout.write('Adjusting zsh prompt\n')
+            term.write("PROMPT='📡 [streaming] '$PROMPT\n")
+          }
+          if (options.shell.includes('fish')) {
+            stdout.write('Adjusting fish prompt\n')
+            // FIXME: don't know how to retain original with fish
+            term.write("function fish_prompt; echo '📡 [streaming] ' (basename $PWD)' $ '; end\n")
+          }
+        }, 100) // wait for shell to be ready
         // track own dimensions and keep it up to date
         setInterval(reEvaluateOwnDimensions, 1000)
 
