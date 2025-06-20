@@ -3,7 +3,7 @@ import https from 'https'
 import axios, {AxiosError, AxiosInstance} from 'axios'
 import {Encoder, Decoder} from '@msgpack/msgpack'
 
-const encoder = new Encoder({ignoreUndefined: true})
+const encoder = new Encoder()
 const decoder = new Decoder()
 
 import {defaultParser} from './resources.js'
