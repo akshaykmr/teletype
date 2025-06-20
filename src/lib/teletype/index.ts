@@ -7,6 +7,7 @@ import {Unauthorized} from '../connect/errors.js'
 import {encrypt, decrypt} from '../encryption.js'
 import {JoinChannelOptions} from '../connect/index.js'
 import {Channel} from 'phoenix'
+import {Future} from '../utils.js'
 
 enum MessageType {
   IN = 'i',
@@ -47,6 +48,9 @@ export const teletypeApp = (options: TeletypeOptions) => {
 
   return new Promise((resolve, reject) => {
     let sessionCount = 0
+    let ptyReady = false
+    const ptyFuture: Future<boolean> = new Future()
+
     const channel = options.joinChannel({
       channel: `teletype:${options.roomKey.roomId}`,
       params: {
@@ -60,6 +64,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
         const stdin = options.process.stdin
         const stdout = options.process.stdout
         const dimensions = userDimensions[SELF]
+
         term = spawn(options.shell, [], {
           name: 'xterm-256color',
           cols: dimensions.cols,
@@ -68,7 +73,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
           env: options.process.env,
         })
 
-        setTimeout(() => {
+        ptyFuture.promise.then(() => {
           if (options.shell.endsWith('bash')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
             term.write("export PS1='📡 [streaming] '$PS1\n")
@@ -90,11 +95,16 @@ export const teletypeApp = (options: TeletypeOptions) => {
                 "function fish_prompt; echo -n '📡 [streaming] '; __orig_fish_prompt; end\n",
             )
           }
-        }, 100) // wait for shell to be ready
+        })
+
         // track own dimensions and keep it up to date
         setInterval(reEvaluateOwnDimensions, 1000)
 
         term.onData((d: string) => {
+          if (!ptyReady) {
+            ptyReady = true
+            ptyFuture.resolve!(true)
+          }
           stdout.write(d)
 
           if (sessionCount < 2) {
