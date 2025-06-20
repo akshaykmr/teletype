@@ -46,6 +46,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
   }
 
   return new Promise((resolve, reject) => {
+    let sessionCount = 0
     const channel = options.joinChannel({
       channel: `teletype:${options.roomKey.roomId}`,
       params: {
@@ -73,8 +74,12 @@ export const teletypeApp = (options: TeletypeOptions) => {
 
         term.onData((d: string) => {
           stdout.write(d)
-          // revisit: is it worth having one letter names, instead of something descriptive
-          // does it really save bytes?
+
+          if (sessionCount < 2) {
+            // 1 sub for own channel session
+            // < 2 means no subscribers. no point pushing data.
+            return
+          }
           channel.push('new_msg', {
             t: MessageType.OUT,
             b: true,
@@ -128,8 +133,11 @@ export const teletypeApp = (options: TeletypeOptions) => {
             }
         }
       },
-      handleSessionJoin: (s) => {},
+      handleSessionJoin: (s) => {
+        sessionCount++
+      },
       handleSessionLeave: (s) => {
+        sessionCount -= 1
         s && delete userDimensions[s]
         resizeBestFit(term, userDimensions)
       },
