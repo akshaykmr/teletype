@@ -112,9 +112,10 @@ Will also allow participants to write to your terminal!
       text: chalk.bold('Creating space with TeleType app'),
       discardStdin: false,
     }).start()
+    const now = new Date()
     const {roomKey} = await app
       .createRoom({
-        roomName: 'Untitled Space',
+        roomName: `Teletype session - ${os.hostname()} @ ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`,
         apps: {
           defaultFocus: '39',
           appList: [
