@@ -2,4 +2,5 @@
 - OTP flow is a lot of back and forth (confusing for first time user).
 - fix streaming indicator for powerlevel10k.
 - speed: init app early (connection and auth checks), rather than waiting till user has filled in space url.
+- remove use of deprecated oclif plugins/packages.
 - bun js would be cool, fast start. but node-pty doesn't work with it.
