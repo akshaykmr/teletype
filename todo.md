@@ -3,4 +3,5 @@
 - fix streaming indicator for powerlevel10k.
 - speed: init app early (connection and auth checks), rather than waiting till user has filled in space url.
 - remove use of deprecated oclif plugins/packages.
+- save a list of recent rooms (only the streams from this host)
 - bun js would be cool, fast start. but node-pty doesn't work with it.
