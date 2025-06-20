@@ -1,3 +1,4 @@
 - Remove relative imports from the project. ts-node doesn't like tsconfig lib paths though, maybe drop using oclif altogether?
 - OTP flow is a lot of back and forth (confusing for first time user).
+- need streaming indicator.
 - bun js would be cool, fast start. but node-pty doesn't work with it.

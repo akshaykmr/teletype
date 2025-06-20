@@ -69,6 +69,12 @@ export const teletypeApp = (options: TeletypeOptions) => {
           env: options.process.env,
         })
 
+        if (options.shell.includes('bash')) {
+          setTimeout(() => {
+            stdout.write('Adjusting shell prompt to show streaming indicator\n')
+            term.write("export PS1='📡 '$PS1\n")
+          }, 100) // wait for shell to be ready
+        }
         // track own dimensions and keep it up to date
         setInterval(reEvaluateOwnDimensions, 1000)
 
