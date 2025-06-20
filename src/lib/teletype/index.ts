@@ -69,15 +69,17 @@ export const teletypeApp = (options: TeletypeOptions) => {
         })
 
         setTimeout(() => {
-          if (options.shell.includes('bash')) {
+          if (options.shell.endsWith('bash')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
             term.write("export PS1='📡 [streaming] '$PS1\n")
           }
-          if (options.shell.includes('zsh')) {
+          if (options.shell.endsWith('zsh')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            term.write("PROMPT='📡 [streaming] '$PROMPT\n")
+            const zshCommand =
+              '_streaming_prompt_precmd() { if [[ "$PROMPT" != *\'📡 [streaming] \'* ]]; then PROMPT="📡 [streaming] $PROMPT"; fi; }; precmd_functions+=(_streaming_prompt_precmd)\n'
+            term.write(zshCommand)
           }
-          if (options.shell.includes('fish')) {
+          if (options.shell.endsWith('fish')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
             term.write(
               'functions -c fish_prompt __orig_fish_prompt; ' +
