@@ -1,7 +1,7 @@
 {
   "name": "oorja",
   "description": "stream terminals to the web and more.",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "keywords": [
     "teletype",
     "terminal",
