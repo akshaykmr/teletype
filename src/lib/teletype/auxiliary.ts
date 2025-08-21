@@ -10,9 +10,6 @@ export const initScreen = (username: string, hostname: string, shell: string, mu
     console.log(chalk.yellowBright('You have allowed room participants to write to your shell'))
   }
   console.log(
-    chalk.blue(`${chalk.bold(`${username}@${hostname}`)} Spawning streaming shell: ${chalk.bold(`${shell}`)}`),
-  )
-  console.log(
     `Note: Your shell size may adjust for optimum viewing experience for all participants.\n
 This session is end-to-end encrypted.
 To terminate stream run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright('ctrl-d')} \n`,

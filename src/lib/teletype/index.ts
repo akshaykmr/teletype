@@ -59,11 +59,15 @@ export const teletypeApp = (options: TeletypeOptions) => {
         multiplexed: options.multiplex,
       },
       onJoin: () => {
-        initScreen(username, hostname, options.shell, options.multiplex)
-
         const stdin = options.process.stdin
         const stdout = options.process.stdout
         const dimensions = userDimensions[SELF]
+
+        console.log(
+          chalk.blue(
+            `${chalk.bold(`${username}@${hostname}`)} Spawning streaming shell: ${chalk.bold(`${options.shell}`)}`,
+          ),
+        )
 
         term = spawn(options.shell, [], {
           name: 'xterm-256color',
@@ -74,6 +78,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
         })
 
         ptyFuture.promise.then(() => {
+          initScreen(username, hostname, options.shell, options.multiplex)
           if (options.shell.endsWith('bash')) {
             stdout.write('Adjusting shell prompt to show streaming indicator\n')
             term.write("export PS1='📡 [streaming] '$PS1\n")
