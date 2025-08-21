@@ -7,7 +7,7 @@ import {Unauthorized} from '../connect/errors.js'
 import {encrypt, decrypt} from '../encryption.js'
 import {JoinChannelOptions} from '../connect/index.js'
 import {Channel} from 'phoenix'
-import {Future} from '../utils.js'
+import {Future, printExitMessage} from '../utils.js'
 
 enum MessageType {
   IN = 'i',
@@ -127,14 +127,14 @@ export const teletypeApp = (options: TeletypeOptions) => {
         stdin.on('data', (d) => term.write(d.toString('utf8')))
       },
       onClose: () => {
-        console.log(chalk.redBright('connection closed, terminated stream.'))
+        printExitMessage(chalk.redBright('connection closed, terminated stream.'))
         process.exit(3)
       },
       onError: (err?: any) => {
         if (err instanceof Unauthorized) {
-          console.log(chalk.redBright(err.message))
+          printExitMessage(chalk.redBright(err.message))
         } else {
-          console.log(chalk.redBright('connection error, terminated stream.'))
+          printExitMessage(chalk.redBright('connection error, terminated stream.'))
         }
         process.exit(4)
       },
@@ -154,7 +154,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
             if (userId === options.userId) {
               term.write(data)
             } else {
-              console.log(
+              printExitMessage(
                 chalk.redBright(
                   `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
                 ),

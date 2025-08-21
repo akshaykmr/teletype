@@ -11,6 +11,7 @@ import {Unauthorized, BadRequest} from './errors.js'
 import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
+import {printExitMessage} from '../utils.js'
 
 export class ApiClientError extends Error {}
 
@@ -167,7 +168,7 @@ export class ConnectClient {
           reject()
           return
         }
-        console.error('connection error')
+        printExitMessage('connection error')
         process.exit(2)
       })
       // @ts-ignore
@@ -215,6 +216,7 @@ export class ConnectClient {
             onError(new Unauthorized('unauthorized: user needs to join the room before a stream can be started.'))
           return
         }
+        printExitMessage('error on channel')
         process.exit(3)
       })
     return chan

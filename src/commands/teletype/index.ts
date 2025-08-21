@@ -6,7 +6,7 @@ import * as os from 'os'
 import chalk from 'chalk'
 import {ROOM_LINK_SAMPLE} from '../../lib/config.js'
 import {getApp} from '../../lib/oorja/index.js'
-import {promptRoomLink} from '../../lib/utils.js'
+import {printExitMessage, promptRoomLink} from '../../lib/utils.js'
 
 const DEFAULT_SHELL = os.platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || 'bash'
 
@@ -96,7 +96,7 @@ Will also allow participants to write to your terminal!
   private async streamToLink(options: {shell: string; multiplex: boolean; roomLink?: string}) {
     const roomLink = options.roomLink || (await promptRoomLink())
     if (!roomLink) {
-      console.log(chalk.redBright('Space link not provided :('))
+      printExitMessage(chalk.redBright('Space link not provided :('))
       process.exit()
     }
     const app = await getApp({roomLink})
@@ -128,7 +128,7 @@ Will also allow participants to write to your terminal!
         },
       })
       .catch((e) => {
-        console.log('Failed to create space.')
+        printExitMessage('Failed to create space.')
         process.exit(9)
       })
     spinner.succeed(chalk.bold('Space created')).clear()

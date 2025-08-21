@@ -14,6 +14,7 @@ import {importKey, createRoomKey, exportKey} from '../encryption.js'
 import {loginByRoomOTP, preflight, promptAuth, resumeSession, validateCliVersion} from './preflight.js'
 import {getRegion} from './client.js'
 import ora from 'ora'
+import {printExitMessage} from '../utils.js'
 
 export class InvalidRoomLink extends Error {}
 
@@ -58,7 +59,7 @@ class OORJA {
 const parseRoomURL = (roomLink: string): URL => {
   const url = new URL(roomLink)
   if (!url.hash || !getRoomId(url)) {
-    console.log(INVALID_ROOM_LINK_MESSAGE)
+    printExitMessage(INVALID_ROOM_LINK_MESSAGE)
     process.exit(3)
   }
   return url
@@ -95,7 +96,7 @@ const init = async (env: env, options: {roomId?: string} = {}) => {
     } else {
       token = await promptAuth(connectClient, linkForTokenGen(config))
       if (!token) {
-        console.log('Token not provided :(')
+        printExitMessage('Token not provided :(')
         process.exit(12)
       }
     }

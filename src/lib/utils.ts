@@ -1,4 +1,9 @@
 import inquirer from 'inquirer'
+import {writeSync} from 'fs'
+
+export const printExitMessage = (printMessage: string) => {
+  writeSync(process.stdout.fd, printMessage)
+}
 
 export const promptRoomLink = async () => {
   const {spaceLink} = await inquirer.prompt([

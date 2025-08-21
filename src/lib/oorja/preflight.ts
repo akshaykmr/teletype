@@ -6,6 +6,7 @@ import {env, setENVAccessToken, CLI_VERSION, getENVAccessToken} from '../config.
 import {ConnectClient} from '../connect/index.js'
 import {BadRequest, Unauthorized} from '../connect/errors.js'
 import {User} from '../connect/types.js'
+import {printExitMessage} from '../utils.js'
 
 const promptToken = (): Promise<string> =>
   inquirer
@@ -63,7 +64,7 @@ export const loginByRoomOTP = async (connectClient: ConnectClient, roomId: strin
   const otp = await promptRoomParticipantOTP()
   if (!otp) {
     console.log('OTP not provided :(')
-    console.log(OTP_HELP_MESSAGE)
+    printExitMessage(OTP_HELP_MESSAGE)
     process.exit(213)
   }
   try {
@@ -71,7 +72,7 @@ export const loginByRoomOTP = async (connectClient: ConnectClient, roomId: strin
   } catch (e) {
     if (e instanceof BadRequest) {
       console.log(chalk.redBright('Invalid otp. It may have expired.'))
-      console.log(OTP_HELP_MESSAGE)
+      printExitMessage(OTP_HELP_MESSAGE)
       process.exit()
     }
     throw e
@@ -81,7 +82,7 @@ export const loginByRoomOTP = async (connectClient: ConnectClient, roomId: strin
 export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
-    console.log(chalk.redBright('Your oorja cli is outdated. Please run: npm update -g oorja'))
+    printExitMessage(chalk.redBright('Your oorja cli is outdated. Please run: npm update -g oorja'))
     process.exit(1)
   }
 }
@@ -132,10 +133,12 @@ export const preflight = async (env: env, connectClient: ConnectClient) => {
   } catch (e) {
     setENVAccessToken(env, '')
     if (e instanceof Unauthorized) {
-      spinner.fail('Your access token failed authentication, resetting...')
+      spinner.fail()
+      printExitMessage('Your access token failed authentication, resetting...')
       process.exit(33)
     } else {
-      spinner.fail('Something went wrong :(')
+      spinner.fail()
+      printExitMessage('Something went wrong :(')
     }
     throw e
   }

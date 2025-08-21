@@ -4,6 +4,7 @@ import {URL} from 'url'
 export const CLI_VERSION = 2.5
 
 import Conf from 'conf'
+import {printExitMessage} from './utils.js'
 
 export const config = new Conf<string>({
   projectName: 'oorja',
@@ -57,7 +58,7 @@ export const determineENV = (roomURL?: URL): env => {
     case 'localhost:3000':
       return 'local'
     default:
-      console.error(INVALID_ROOM_LINK_MESSAGE)
+      printExitMessage(INVALID_ROOM_LINK_MESSAGE)
       process.exit(1)
   }
 }

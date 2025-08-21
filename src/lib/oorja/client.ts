@@ -1,4 +1,5 @@
 import haversine from 'haversine-distance'
+import {printExitMessage} from '../utils.js'
 
 export class OorjaClientError extends Error {}
 
@@ -50,7 +51,7 @@ export const getRegion = async (): Promise<string> => {
     method: 'GET',
   })
   if (response.status !== 200) {
-    console.error('There seems to be an issue with the network')
+    printExitMessage('There seems to be an issue with the network')
     process.exit(1)
   }
   const settings = (await response.json()) as _Settings
@@ -68,7 +69,7 @@ export const getRegion = async (): Promise<string> => {
     const minDistance = distances.reduce((a, b) => (a.distance < b.distance ? a : b))
     return minDistance.name
   } catch {
-    console.error('error determining region')
+    printExitMessage('error determining region')
     process.exit(1)
   }
 }
