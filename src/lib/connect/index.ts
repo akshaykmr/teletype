@@ -154,7 +154,7 @@ export class ConnectClient {
           access_token: this.config.token,
         },
         transport: WebSocket,
-        heartbeatIntervalMs: 20_000,
+        heartbeatIntervalMs: 7500,
         binaryType: 'arraybuffer',
         encode: encodeMessage,
         decode: decodeMessage,

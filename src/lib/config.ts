@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import {URL} from 'url'
 
-export const CLI_VERSION = 2.5
+export const CLI_VERSION = 2.6
 
 import Conf from 'conf'
 import {printExitMessage} from './utils.js'
