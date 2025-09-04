@@ -21,7 +21,13 @@ export type TeletypeOptions = {
   shell: string
   multiplex: boolean
   process: NodeJS.Process
-  joinChannel: (options: JoinChannelOptions<any>) => Channel
+  joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
+}
+
+type TeletypeChannelParams = {
+  username: string
+  hostname: string
+  multiplexed: boolean
 }
 
 const SELF = 'self'

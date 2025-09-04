@@ -185,24 +185,28 @@ export class ConnectClient {
     onMessage,
     handleSessionJoin,
     handleSessionLeave,
-  }: JoinChannelOptions<any>): Channel => {
+  }: JoinChannelOptions<unknown, unknown>): Channel => {
     if (!this.socket) throw Error('no socket connection')
-    const chan = this.socket.channel(channel, params)
+    const chan = this.socket.channel(channel, params!)
     if (onError) chan.onError(onError)
     if (onClose) chan.onClose(onClose)
-
-    let presences: any = []
 
     chan.on('new_msg', (msg: any) => {
       onMessage(msg)
     })
 
-    chan.on('presence_state', (response: any) => {
-      Presence.syncState(presences, response, handleSessionJoin, undefined)
-      presences = response
+    const presence = new Presence(chan)
+
+    // https://hexdocs.pm/phoenix/js/index.html#handling-individual-presence-join-and-leave-events
+    presence.onJoin((key, current, newPres) => {
+      if (!current) {
+        handleSessionJoin(key!, current, newPres)
+      }
     })
-    chan.on('presence_diff', (newPresence: any) => {
-      presences = Presence.syncDiff(presences, newPresence, handleSessionJoin, handleSessionLeave)
+    presence.onLeave((key, current, leftPres) => {
+      if (current.metas.length === 0) {
+        handleSessionLeave(key!, current, leftPres)
+      }
     })
 
     chan
@@ -266,13 +270,13 @@ export type CreateRoomOptions = {
 
 // leaving specific types for later,
 // when there are more channel users
-export type JoinChannelOptions<T> = {
+export type JoinChannelOptions<Params, Metas> = {
   channel: string
-  params: T
+  params: Params
   onJoin?: () => void
   onError?: (reason: any) => void
   onClose?: (payload: any, ref: any, joinRef: any) => void
   onMessage: (payload: any) => void
-  handleSessionJoin: (session: string | undefined, _ignore: any, metas: any) => void
-  handleSessionLeave: (session: string | undefined) => void
+  handleSessionJoin: (session: string, currentMetas: undefined | Metas, newMetas: Metas) => void
+  handleSessionLeave: (session: string, currentMetas: undefined | Metas, leftMetas: Metas) => void
 }

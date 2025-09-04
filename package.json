@@ -55,7 +55,7 @@
     "inquirer": "^12.9.3",
     "node-pty": "^1.0.0",
     "ora": "^8.2.0",
-    "phoenix": "1.8.0",
+    "phoenix": "1.8.1",
     "terminal-size": "^4.0.0"
   },
   "devDependencies": {
