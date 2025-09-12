@@ -89,7 +89,7 @@ const oorjaURL = (config: oorjaConfig) => {
 const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_token`
 
 export class App {
-  connectionCheckFuture: Future<UserProfile | null> = new Future()
+  connectionCheckFuture: Future<void> = new Future()
 
   private connectClient: ConnectClient | null = null
 
@@ -103,7 +103,7 @@ export class App {
       discardStdin: true,
     }).start()
     await this.connectionCheckFuture.promise
-    spinner.succeed('Online')
+    spinner.succeed('Online');
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
 
@@ -133,6 +133,7 @@ export class App {
       const connectClient = new ConnectClient(this.config.getEnv(), region)
       await validateCliVersion(connectClient)
       this.connectClient = connectClient
+      this.connectionCheckFuture.resolve!();
     } catch (e) {
       this.connectionCheckFuture.reject!(e)
     }
@@ -146,6 +147,7 @@ export class App {
     } catch (e) {
       if (e instanceof Unauthorized) {
         this.config.setAccessToken('') // reset
+        return null;
       }
       throw e
     }

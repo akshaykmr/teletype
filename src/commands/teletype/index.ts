@@ -112,7 +112,6 @@ Will also allow participants to write to your terminal! Collaboration mode must 
 
   private async createRoomAndStream(app: App, {shell, multiplex}: {shell: string; multiplex: boolean}) {
     const oorja = await app.init()
-    // want a user at this point
     const spinner = ora({
       text: chalk.bold('Creating space with TeleType app'),
       discardStdin: false,
