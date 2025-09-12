@@ -2,13 +2,15 @@ import inquirer from 'inquirer'
 import {Command, Flags, Args} from '@oclif/core'
 import ora from 'ora'
 
-import {hostname} from 'os'
+import {hostname, platform} from 'os'
 import chalk from 'chalk'
 import {Config, STREAM_KEY_SAMPLE} from '../../lib/config.js'
 import {App, parseStreamKey} from '../../lib/oorja/index.js'
 import {printExitMessage, promptStreamKey} from '../../lib/utils.js'
 import {Unauthorized} from '../../lib/connect/errors.js'
 import {exit} from '../../lib/exit.js'
+
+const DEFAULT_SHELL = platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || 'bash'
 
 export default class TeleTypeCommand extends Command {
   static order = 1
@@ -36,7 +38,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
     shell: Flags.string({
       char: 's',
       description: 'shell to use. e.g. bash, fish',
-      default: 'bash',
+      default: DEFAULT_SHELL,
     }),
     multiplex: Flags.boolean({
       char: 'm',
