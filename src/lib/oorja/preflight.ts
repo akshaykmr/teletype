@@ -7,6 +7,7 @@ import {ConnectClient} from '../connect/index.js'
 import {Unauthorized} from '../connect/errors.js'
 import {printExitMessage} from '../utils.js'
 import {UserProfile} from '../connect/types.js'
+import {exit} from '../exit.js'
 
 const promptToken = (): Promise<string> =>
   inquirer
@@ -50,7 +51,7 @@ export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
     printExitMessage(chalk.redBright('Your oorja cli is outdated. Please run: npm update -g oorja'))
-    process.exit(1)
+    exit(1)
   }
 }
 
@@ -87,7 +88,7 @@ export const preflight = async (
     if (e instanceof Unauthorized) {
       spinner.fail()
       printExitMessage('Your access token failed authentication, resetting...')
-      process.exit(33)
+      exit(33)
     } else {
       spinner.fail()
       printExitMessage('Something went wrong :(')

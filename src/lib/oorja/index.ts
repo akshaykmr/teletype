@@ -8,6 +8,7 @@ import {getRegion} from './client.js'
 import ora from 'ora'
 import {Future, printExitMessage} from '../utils.js'
 import {Unauthorized} from '../connect/errors.js'
+import {exit} from '../exit.js'
 
 export class InvalidRoomLink extends Error {}
 
@@ -57,13 +58,13 @@ type StreamKey = {
 export const parseStreamKey = (streamKey: string): StreamKey => {
   if (!streamKey.startsWith('sk-')) {
     printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    process.exit(3)
+    exit(3)
   }
 
   const parts = streamKey.split(':')
   if (parts.length !== 2) {
     printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    process.exit(3)
+    exit(3)
   }
 
   const [token, rest] = parts
@@ -71,7 +72,7 @@ export const parseStreamKey = (streamKey: string): StreamKey => {
 
   if (!roomId || !encryptionSecret) {
     printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    process.exit(3)
+    exit(3)
   }
 
   return {
@@ -103,7 +104,7 @@ export class App {
       discardStdin: true,
     }).start()
     await this.connectionCheckFuture.promise
-    spinner.succeed('Online');
+    spinner.succeed('Online')
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
 
@@ -114,7 +115,7 @@ export class App {
         const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
         if (!token) {
           printExitMessage('Token not provided :(')
-          process.exit(12)
+          exit(12)
         }
         this.config.setAccessToken(token)
         this.connectClient!.setAccessToken(token)
@@ -130,10 +131,10 @@ export class App {
   private establishConnection = async () => {
     try {
       const region = await getRegion()
-      const connectClient = new ConnectClient(this.config.getEnv(), region)
+      const connectClient = new ConnectClient(this.config.getEnv(), region, this.config.getAccessToken())
       await validateCliVersion(connectClient)
       this.connectClient = connectClient
-      this.connectionCheckFuture.resolve!();
+      this.connectionCheckFuture.resolve!()
     } catch (e) {
       this.connectionCheckFuture.reject!(e)
     }
@@ -147,7 +148,7 @@ export class App {
     } catch (e) {
       if (e instanceof Unauthorized) {
         this.config.setAccessToken('') // reset
-        return null;
+        return null
       }
       throw e
     }

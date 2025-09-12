@@ -12,6 +12,7 @@ import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
 import {printExitMessage} from '../utils.js'
+import {exit} from '../exit.js'
 
 export class ApiClientError extends Error {}
 
@@ -23,7 +24,7 @@ export class ConnectClient {
   private socket?: Socket
   private accessToken: string
 
-  constructor(env: env, region: string, token?: string) {
+  constructor(env: env, region: string, token: string) {
     const config = getConnectConfig(env, region)
     this.baseURL = connectBaseURL(config.host, config.useHttps)
     this.headers = {
@@ -160,7 +161,7 @@ export class ConnectClient {
           return
         }
         printExitMessage('connection error')
-        process.exit(2)
+        exit(2)
       })
       this.socket.connect()
     })
@@ -211,7 +212,7 @@ export class ConnectClient {
           return
         }
         printExitMessage('error on channel')
-        process.exit(3)
+        exit(3)
       })
     return chan
   }

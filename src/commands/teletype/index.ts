@@ -8,6 +8,7 @@ import {Config, STREAM_KEY_SAMPLE} from '../../lib/config.js'
 import {App, parseStreamKey} from '../../lib/oorja/index.js'
 import {printExitMessage, promptStreamKey} from '../../lib/utils.js'
 import {Unauthorized} from '../../lib/connect/errors.js'
+import {exit} from '../../lib/exit.js'
 
 export default class TeleTypeCommand extends Command {
   static order = 1
@@ -65,11 +66,11 @@ Will also allow participants to write to your terminal! Collaboration mode must 
 
     if (args.streamKey) {
       await this.streamUsingStreamKey(app, {shell, multiplex, streamKey: args.streamKey})
-      process.exit(0)
+      exit(0)
     }
     if (new_space) {
       await this.createRoomAndStream(app, {shell, multiplex})
-      process.exit(0)
+      exit(0)
     }
 
     console.log('(use -h for description and options) \n')
@@ -94,14 +95,14 @@ Will also allow participants to write to your terminal! Collaboration mode must 
         await this.createRoomAndStream(app, {shell, multiplex})
         break
     }
-    process.exit(0)
+    exit(0)
   }
 
   private async streamUsingStreamKey(app: App, options: {shell: string; multiplex: boolean; streamKey?: string}) {
     const streamKey: string = options.streamKey || (await promptStreamKey())
     if (!streamKey) {
       printExitMessage(chalk.redBright('stream-key not provided :('))
-      process.exit()
+      exit()
     }
     const streamKeyStruct = parseStreamKey(streamKey)
     const oorja = await app.init(streamKeyStruct)
@@ -137,7 +138,8 @@ Will also allow participants to write to your terminal! Collaboration mode must 
         } else {
           printExitMessage('Failed to create space. Try again later or try updating your oorja-cli')
         }
-        process.exit(9)
+        exit(9)
+        return Promise.reject()
       })
     spinner.succeed(chalk.bold('Space created')).clear()
 
