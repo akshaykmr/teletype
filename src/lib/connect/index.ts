@@ -79,9 +79,10 @@ export class ConnectClient {
     }
   }
 
-  fetchSessionUser = async (): Promise<User> => {
+  fetchSessionUser = async (v2 = false): Promise<User> => {
+    const path = v2 ? '/v2/session/user_profile' : '/v1/session/user'
     try {
-      const response = await this._fetch('/v1/session/user')
+      const response = await this._fetch(path)
       const data = await response.json()
       return defaultParser(data.data) as User
     } catch (error) {

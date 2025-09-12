@@ -159,6 +159,16 @@ export const teletypeApp = (options: TeletypeOptions) => {
           case MessageType.IN:
             const data = decrypt(d, options.roomKey)
             const userId = session.split(':')[0]
+            const userType = session.split(':')[2]
+            if (userType === 'task') {
+              printExitMessage(
+                chalk.redBright(
+                  `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`,
+                ),
+              )
+              exit(5)
+              return
+            }
             if (options.multiplex) {
               term.write(data)
               return

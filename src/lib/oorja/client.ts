@@ -1,6 +1,7 @@
 import haversine from 'haversine-distance'
 import {printExitMessage} from '../utils.js'
 import {exit} from '../exit.js'
+import {geoMap} from './geoMap.js'
 
 export class OorjaClientError extends Error {}
 
@@ -48,7 +49,7 @@ type _Settings = {
 }
 
 export const getRegion = async (): Promise<string> => {
-  const response = await _client.get('https://static.oorja.io/nudge', {
+  const response = await _client.get('https://oorja.io/nudge', {
     method: 'GET',
   })
   if (response.status !== 200) {
@@ -57,10 +58,14 @@ export const getRegion = async (): Promise<string> => {
     return Promise.reject()
   }
   const settings = (await response.json()) as _Settings
+  const country = (response.headers.get('cdn-requestcountrycode') || 'us').toUpperCase().trim() as keyof typeof geoMap
+
+  const info = geoMap[country] || geoMap['US']
+
   try {
     const clientLocation = {
-      lat: parseFloat(response.headers.get('oorja-lat')!),
-      lng: parseFloat(response.headers.get('oorja-lon')!),
+      lat: parseFloat(info[0]),
+      lng: parseFloat(info[1]),
     }
     const distances = settings.regions.map((region) => {
       return {

@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import inquirer from 'inquirer'
-import ora from 'ora'
+import ora, {Ora} from 'ora'
 
 import {env, CLI_VERSION, Config} from '../config.js'
 import {ConnectClient} from '../connect/index.js'
@@ -52,47 +52,5 @@ export const validateCliVersion = async (connectClient: ConnectClient) => {
   if (manifest.cliVersion > CLI_VERSION) {
     printExitMessage(chalk.redBright('Your oorja cli is outdated. Please run: npm update -g oorja'))
     exit(1)
-  }
-}
-
-export const preflight = async (
-  user: UserProfile | null,
-  config: Config,
-  connectClient: ConnectClient,
-): Promise<UserProfile> => {
-  const spinner = ora({
-    text: 'Authenticating',
-    discardStdin: false,
-  }).start()
-  try {
-    const userProfile = user || (await connectClient.fetchSessionUser())
-    spinner.succeed(`Authenticated ✅: Welcome ${userProfile.name}`)
-    if (userProfile.profileType === 'anon') {
-      // don't persist tokens for anonymous users
-      config.setAccessToken('')
-      console.log(chalk.yellowBright("You're an anonymous user. CLI will not remember the auth-token"))
-    }
-    spinner.start('Connecting..')
-    return connectClient
-      .establishSocket()
-      .then(() => {
-        spinner.succeed('Connected').clear()
-        return userProfile
-      })
-      .catch((e) => {
-        spinner.fail('Socket connection failure..')
-        throw e
-      })
-  } catch (e) {
-    config.setAccessToken('')
-    if (e instanceof Unauthorized) {
-      spinner.fail()
-      printExitMessage('Your access token failed authentication, resetting...')
-      exit(33)
-    } else {
-      spinner.fail()
-      printExitMessage('Something went wrong :(')
-    }
-    throw e
   }
 }

@@ -3,12 +3,13 @@ import {RoomKey, UserProfile} from '../connect/types.js'
 import {teletypeApp, TeletypeOptions} from '../teletype/index.js'
 import {CreateRoomOptions, ConnectClient} from '../connect/index.js'
 import {importKey, createRoomKey, exportKey} from '../encryption.js'
-import {preflight, promptAuth, validateCliVersion} from './preflight.js'
+import {promptAuth, validateCliVersion} from './preflight.js'
 import {getRegion} from './client.js'
 import ora from 'ora'
 import {Future, printExitMessage} from '../utils.js'
 import {Unauthorized} from '../connect/errors.js'
 import {exit} from '../exit.js'
+import chalk from 'chalk'
 
 export class InvalidRoomLink extends Error {}
 
@@ -90,42 +91,81 @@ const oorjaURL = (config: oorjaConfig) => {
 const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_token`
 
 export class App {
-  connectionCheckFuture: Future<void> = new Future()
+  connectionCheckFailed: boolean = false
+  connectionCheckFuture: Future<void>
 
   private connectClient: ConnectClient | null = null
 
   constructor(private config: Config) {
     this.establishConnection()
+    this.connectionCheckFuture = new Future()
   }
 
   init = async (streamKey?: StreamKey): Promise<OORJA> => {
-    const spinner = ora({
-      text: 'Connecting...',
+    let spinner = ora({
+      text: 'Checking connectivity..',
       discardStdin: true,
     }).start()
     await this.connectionCheckFuture.promise
+    if (this.connectionCheckFailed) {
+      spinner.fail(
+        'There seems to be a connection issue. Check your connection or try again later. Does https://connect.oorja.io  load for you?',
+      )
+      exit(56)
+      return Promise.reject()
+    }
     spinner.succeed('Online')
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
 
-    let user: UserProfile | null = null
-    if (!streamKey) {
-      user = await this.tryResumeSession()
-      if (!user) {
-        const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
-        if (!token) {
-          printExitMessage('Token not provided :(')
-          exit(12)
-        }
-        this.config.setAccessToken(token)
-        this.connectClient!.setAccessToken(token)
-      }
-    } else {
-      this.connectClient!.setAccessToken(streamKey.token)
-    }
+    let user: UserProfile | undefined = undefined
 
-    user = await preflight(user, this.config, this.connectClient!)
-    return new OORJA(oorjaConfig, this.connectClient!, user)
+    try {
+      if (!streamKey) {
+        user = await this.tryResumeSession()
+        if (!user) {
+          const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
+          if (!token) {
+            printExitMessage('Token not provided :(')
+            exit(12)
+          }
+          this.config.setAccessToken(token)
+          this.connectClient!.setAccessToken(token)
+          spinner = ora({
+            text: 'Authenticating',
+            discardStdin: false,
+          }).start()
+          user = await this.connectClient?.fetchSessionUser()
+        }
+      } else {
+        spinner = ora({
+          text: 'Authenticating',
+          discardStdin: false,
+        }).start()
+        this.connectClient!.setAccessToken(streamKey.token)
+        user = await this.connectClient?.fetchSessionUser(true)
+      }
+    } catch (e) {
+      this.config.setAccessToken('')
+      if (e instanceof Unauthorized) {
+        spinner.fail()
+        printExitMessage('Your access token failed authentication, resetting...')
+        exit(33)
+        return Promise.reject()
+      } else {
+        spinner.fail()
+        printExitMessage('Something went wrong :(')
+      }
+      throw e
+    }
+    spinner.succeed(`Authenticated ✅: Welcome ${user!.name}`)
+    if (user!.profileType === 'anon') {
+      // don't persist tokens for anonymous users
+      this.config.setAccessToken('')
+      console.log(chalk.yellowBright("You're an anonymous user. CLI will not remember the auth-token"))
+    }
+    await this.socketConnect()
+    return new OORJA(oorjaConfig, this.connectClient!, user!)
   }
 
   private establishConnection = async () => {
@@ -134,23 +174,41 @@ export class App {
       const connectClient = new ConnectClient(this.config.getEnv(), region, this.config.getAccessToken())
       await validateCliVersion(connectClient)
       this.connectClient = connectClient
-      this.connectionCheckFuture.resolve!()
     } catch (e) {
-      this.connectionCheckFuture.reject!(e)
+      this.connectionCheckFailed = true
+    } finally {
+      this.connectionCheckFuture.resolve!()
     }
   }
 
-  private tryResumeSession = async (): Promise<UserProfile | null> => {
+  private tryResumeSession = async (): Promise<UserProfile | undefined> => {
     const personalAccessToken = this.config.getAccessToken()
-    if (!personalAccessToken) return null
+    if (!personalAccessToken) return
     try {
       return await this.connectClient!.fetchSessionUser()
     } catch (e) {
       if (e instanceof Unauthorized) {
         this.config.setAccessToken('') // reset
-        return null
+        return
       }
       throw e
     }
+  }
+
+  private socketConnect = async () => {
+    const spinner = ora({
+      text: 'Connecting..',
+      discardStdin: false,
+    }).start()
+    return this.connectClient!.establishSocket()
+      .then(() => {
+        spinner.succeed('Connected').clear()
+        return
+      })
+      .catch((e) => {
+        spinner.fail('Socket connection failure..')
+        exit(61)
+        return Promise.reject(e)
+      })
   }
 }

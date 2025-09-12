@@ -66,14 +66,14 @@ export const getConnectConfig = (env: env, region: string): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
-        return 'localhost:4000'
+        return 'nomad:4000'
       case 'prod':
         return region ? `${region}.connect.oorja.io` : 'connect.oorja.io'
     }
   }
   const host = getHost(env)
   return {
-    useHttps: !host.includes('localhost'),
+    useHttps: host.includes('oorja.io'),
     host,
   }
 }
