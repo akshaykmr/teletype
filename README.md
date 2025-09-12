@@ -83,20 +83,20 @@ DESCRIPTION
   Display help for oorja.
 ```
 
-## `oorja teletype [SPACE_URL]`
+## `oorja teletype [STREAM_KEY]`
 
 Launch a terminal streaming session in oorja.
 
 ```
 USAGE
-  $ oorja teletype [SPACE_URL] [-h] [-s <value>] [-m] [-n]
+  $ oorja teletype [STREAM_KEY] [-h] [-s <value>] [-m] [-n]
 
 FLAGS
   -h, --help           Show CLI help.
   -m, --multiplex      Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space
                        participants. Off by default
   -n, --new_space      Create new space
-  -s, --shell=<value>  [default: /usr/bin/zsh] shell to use. e.g. bash, fish
+  -s, --shell=<value>  [default: /usr/bin/bash] shell to use. e.g. bash, fish
 
 DESCRIPTION
   Launch a terminal streaming session in oorja.
@@ -108,8 +108,8 @@ EXAMPLES
   $ teletype
   Will prompt to choose streaming destination - existing space or create a new one.
 
-  $ teletype 'https://oorja.io/spaces?id=foo#key'
-  Will stream to the space specified by secret link, you must have joined the space before streaming.
+  $ teletype $stream-key
+  Will stream to the space specified by secret link.
 
   $ teletype -m
   Will also allow participants to write to your terminal!
