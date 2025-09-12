@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'fs'
 import path from 'path'
 
-export const CLI_VERSION = 2.6
+export const CLI_VERSION = 2.7
 
 export type env = 'local' | 'prod'
 
@@ -66,7 +66,7 @@ export const getConnectConfig = (env: env, region: string): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
-        return 'nomad:4000'
+        return 'localhost:4000'
       case 'prod':
         return region ? `${region}.connect.oorja.io` : 'connect.oorja.io'
     }
