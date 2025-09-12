@@ -18,19 +18,26 @@ export class ApiClientError extends Error {}
 export class ConnectClient {
   private config: ConnectConfig
   private baseURL: string
-  private headers: HeadersInit
+  private headers: Record<string, string>
   private timeout: number
   private socket?: Socket
+  private accessToken: string
 
-  constructor(env: env, region: string) {
+  constructor(env: env, region: string, token?: string) {
     const config = getConnectConfig(env, region)
-    this.baseURL = connectBaseURL(config.host)
+    this.baseURL = connectBaseURL(config.host, config.useHttps)
     this.headers = {
-      'x-access-token': config.token || '',
+      'x-access-token': token || '',
       'Content-Type': 'application/json',
     }
+    this.accessToken = token || ''
     this.timeout = 5000
     this.config = config
+  }
+
+  setAccessToken = (token: string) => {
+    this.accessToken = token
+    this.headers['x-access-token'] = token
   }
 
   // Private helper to encapsulate fetch with timeout and consistent error handling.
@@ -63,7 +70,7 @@ export class ConnectClient {
 
   fetchCliManifest = async (): Promise<CliManifest> => {
     try {
-      const response = await this._fetch('/cli')
+      const response = await this._fetch('/v1/cli')
       const data = await response.json()
       return camelcaseKeys(data) as CliManifest
     } catch (error) {
@@ -73,7 +80,7 @@ export class ConnectClient {
 
   fetchSessionUser = async (): Promise<User> => {
     try {
-      const response = await this._fetch('/session/user')
+      const response = await this._fetch('/v1/session/user')
       const data = await response.json()
       return defaultParser(data.data) as User
     } catch (error) {
@@ -90,7 +97,7 @@ export class ConnectClient {
       },
     }
     try {
-      const response = await this._fetch('/rooms', {
+      const response = await this._fetch('/v1/rooms', {
         method: 'POST',
         body: JSON.stringify(body),
       })
@@ -103,7 +110,7 @@ export class ConnectClient {
 
   createAnonymousUser = async (): Promise<string> => {
     try {
-      const response = await this._fetch('/session/anon', {method: 'POST'})
+      const response = await this._fetch('/v1/session/anon', {method: 'POST'})
       const data = await response.json()
       return data.access_token
     } catch (error) {
@@ -111,25 +118,9 @@ export class ConnectClient {
     }
   }
 
-  accessTokenFromRoomParticipantOTP = async (roomId: string, otp: string): Promise<string> => {
-    try {
-      const response = await this._fetch('/access_tokens/from_room_participant_otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          room_id: roomId,
-          otp: otp,
-        }),
-      })
-      const data = await response.json()
-      return data.data.token
-    } catch (error) {
-      return handleError(error)
-    }
-  }
-
   fetchRoom = async (roomId: string): Promise<Room> => {
     try {
-      const response = await this._fetch(`/rooms/${roomId}`)
+      const response = await this._fetch(`/v1/rooms/${roomId}`)
       const data = await response.json()
       return defaultParser(data.data) as Room
     } catch (error) {
@@ -138,7 +129,7 @@ export class ConnectClient {
   }
 
   establishSocket = async (): Promise<void> => {
-    const protocolPrefix = `wss://`
+    const protocolPrefix = this.config.useHttps ? 'wss://' : 'ws://'
     const host = this.config.host
     const encodeMessage = function (rawdata: any, callback: any) {
       return callback(encoder.encode(rawdata))
@@ -151,7 +142,7 @@ export class ConnectClient {
       let initialConnection = false
       this.socket = new Socket(`${protocolPrefix}${host}/socket`, {
         params: {
-          access_token: this.config.token,
+          access_token: this.accessToken,
         },
         transport: WebSocket,
         heartbeatIntervalMs: 7500,
@@ -171,7 +162,6 @@ export class ConnectClient {
         printExitMessage('connection error')
         process.exit(2)
       })
-      // @ts-ignore
       this.socket.connect()
     })
   }
@@ -243,7 +233,7 @@ export class ConnectClient {
   }
 }
 
-const connectBaseURL = (host: string) => `https://${host}/api/v1`
+const connectBaseURL = (host: string, useHttps: boolean) => `http${useHttps ? 's' : ''}://${host}/api`
 
 const handleError = (error: any) => {
   // This function was originally designed for AxiosError.

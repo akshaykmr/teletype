@@ -1,29 +1,22 @@
-import {
-  env,
-  determineENV,
-  getoorjaConfig,
-  oorjaConfig,
-  INVALID_ROOM_LINK_MESSAGE,
-  setENVAccessToken,
-} from '../config.js'
-import {User, RoomKey} from '../connect/types.js'
+import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from '../config.js'
+import {RoomKey, UserProfile} from '../connect/types.js'
 import {teletypeApp, TeletypeOptions} from '../teletype/index.js'
 import {CreateRoomOptions, ConnectClient} from '../connect/index.js'
-import {URL, URLSearchParams} from 'url'
 import {importKey, createRoomKey, exportKey} from '../encryption.js'
-import {loginByRoomOTP, preflight, promptAuth, resumeSession, validateCliVersion} from './preflight.js'
+import {preflight, promptAuth, validateCliVersion} from './preflight.js'
 import {getRegion} from './client.js'
 import ora from 'ora'
-import {printExitMessage} from '../utils.js'
+import {Future, printExitMessage} from '../utils.js'
+import {Unauthorized} from '../connect/errors.js'
 
 export class InvalidRoomLink extends Error {}
 
-class OORJA {
+export class OORJA {
   // should capture domain related commands and queries
   constructor(
     private config: oorjaConfig,
     private connectClient: ConnectClient,
-    public user: User,
+    public user: UserProfile,
   ) {}
 
   createRoom = async (options: CreateRoomOptions) => {
@@ -39,11 +32,10 @@ class OORJA {
     return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}#${exportKey(roomKey.key)}`
   }
 
-  getRoomKey(roomLink: string): RoomKey {
-    const url = parseRoomURL(roomLink)
+  getRoomKey(streamKey: StreamKey): RoomKey {
     return {
-      key: importKey(url.hash),
-      roomId: getRoomId(url) as string,
+      key: importKey(streamKey.encryptionSecret),
+      roomId: streamKey.roomId,
     }
   }
 
@@ -56,18 +48,37 @@ class OORJA {
   }
 }
 
-const parseRoomURL = (roomLink: string): URL => {
-  const url = new URL(roomLink)
-  if (!url.hash || !getRoomId(url)) {
-    printExitMessage(INVALID_ROOM_LINK_MESSAGE)
-    process.exit(3)
-  }
-  return url
+type StreamKey = {
+  roomId: string
+  token: string
+  encryptionSecret: string
 }
 
-const getRoomId = (roomURL: URL) => {
-  const params = new URLSearchParams(roomURL.search)
-  return params.get('id') || undefined
+export const parseStreamKey = (streamKey: string): StreamKey => {
+  if (!streamKey.startsWith('sk-')) {
+    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
+    process.exit(3)
+  }
+
+  const parts = streamKey.split(':')
+  if (parts.length !== 2) {
+    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
+    process.exit(3)
+  }
+
+  const [token, rest] = parts
+  const [roomId, encryptionSecret] = rest.split('#')
+
+  if (!roomId || !encryptionSecret) {
+    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
+    process.exit(3)
+  }
+
+  return {
+    roomId,
+    token,
+    encryptionSecret,
+  }
 }
 
 const oorjaURL = (config: oorjaConfig) => {
@@ -77,52 +88,66 @@ const oorjaURL = (config: oorjaConfig) => {
 
 const linkForTokenGen = (config: oorjaConfig) => `${oorjaURL(config)}/access_token`
 
-const init = async (env: env, options: {roomId?: string} = {}) => {
-  const config = getoorjaConfig(env)
-  const spinner = ora({
-    text: 'Connecting...',
-    discardStdin: true,
-  }).start()
-  const region = await getRegion()
-  let connectClient = new ConnectClient(env, region)
-  await validateCliVersion(connectClient)
-  let user = await resumeSession(env, connectClient, options.roomId)
-  spinner.succeed('Online')
+export class App {
+  connectionCheckFuture: Future<UserProfile | null> = new Future()
 
-  if (!user) {
-    let token: string = ''
-    if (options.roomId) {
-      token = await loginByRoomOTP(connectClient, options.roomId)
-    } else {
-      token = await promptAuth(connectClient, linkForTokenGen(config))
-      if (!token) {
-        printExitMessage('Token not provided :(')
-        process.exit(12)
+  private connectClient: ConnectClient | null = null
+
+  constructor(private config: Config) {
+    this.establishConnection()
+  }
+
+  init = async (streamKey?: StreamKey): Promise<OORJA> => {
+    const spinner = ora({
+      text: 'Connecting...',
+      discardStdin: true,
+    }).start()
+    await this.connectionCheckFuture.promise
+    spinner.succeed('Online')
+
+    const oorjaConfig = getoorjaConfig(this.config.getEnv())
+
+    let user: UserProfile | null = null
+    if (!streamKey) {
+      user = await this.tryResumeSession()
+      if (!user) {
+        const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
+        if (!token) {
+          printExitMessage('Token not provided :(')
+          process.exit(12)
+        }
+        this.config.setAccessToken(token)
+        this.connectClient!.setAccessToken(token)
       }
+    } else {
+      this.connectClient!.setAccessToken(streamKey.token)
     }
-    setENVAccessToken(env, token)
+
+    user = await preflight(user, this.config, this.connectClient!)
+    return new OORJA(oorjaConfig, this.connectClient!, user)
   }
-  await connectClient.destroy()
-  connectClient = new ConnectClient(env, region)
-  user = await preflight(env, connectClient)
-  return new OORJA(config, connectClient, user)
-}
 
-let currentEnv: env
-let oorja: OORJA | null = null
-
-export const getApp = async (options: {roomLink?: string} = {}): Promise<OORJA> => {
-  const {roomLink} = options
-  const roomURL = roomLink ? parseRoomURL(roomLink) : undefined
-  const env = determineENV(roomURL)
-  if (oorja) {
-    if (env !== currentEnv) {
-      return Promise.reject('Attempt to run different env in same session')
+  private establishConnection = async () => {
+    try {
+      const region = await getRegion()
+      const connectClient = new ConnectClient(this.config.getEnv(), region)
+      await validateCliVersion(connectClient)
+      this.connectClient = connectClient
+    } catch (e) {
+      this.connectionCheckFuture.reject!(e)
     }
-    return Promise.resolve(oorja)
   }
-  const app = await init(env, {roomId: roomURL ? getRoomId(roomURL) : undefined})
-  currentEnv = env
-  oorja = app
-  return app
+
+  private tryResumeSession = async (): Promise<UserProfile | null> => {
+    const personalAccessToken = this.config.getAccessToken()
+    if (!personalAccessToken) return null
+    try {
+      return await this.connectClient!.fetchSessionUser()
+    } catch (e) {
+      if (e instanceof Unauthorized) {
+        this.config.setAccessToken('') // reset
+      }
+      throw e
+    }
+  }
 }

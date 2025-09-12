@@ -5,15 +5,15 @@ export const printExitMessage = (printMessage: string) => {
   writeSync(process.stdout.fd, printMessage)
 }
 
-export const promptRoomLink = async () => {
-  const {spaceLink} = await inquirer.prompt([
+export const promptStreamKey = async (): Promise<string> => {
+  const {streamKey} = await inquirer.prompt([
     {
       type: 'input',
-      name: 'spaceLink',
-      message: 'Enter the space secret link (copy URL from address bar in your browser):',
+      name: 'streamKey',
+      message: 'Enter the stream-key (copy from teletype app within the space):',
     },
   ])
-  return spaceLink
+  return streamKey
 }
 
 export class Future<T> {

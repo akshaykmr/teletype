@@ -1,75 +1,88 @@
 import chalk from 'chalk'
-import {URL} from 'url'
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'fs'
+import path from 'path'
 
 export const CLI_VERSION = 2.6
 
-import Conf from 'conf'
-import {printExitMessage} from './utils.js'
-
-export const config = new Conf<string>({
-  projectName: 'oorja',
-  schema: {
-    env: {
-      type: 'string',
-    },
-    'staging-access-token': {
-      type: 'string',
-    },
-    'prod-access-token': {
-      type: 'string',
-    },
-  },
-})
-
 export type env = 'local' | 'prod'
 
+export class Config {
+  streamKeyAuth: boolean = false
+
+  private configPath: string
+  private config: Record<string, any> = {}
+
+  constructor(configDir: string) {
+    this.configPath = path.join(configDir, 'config.json')
+    this.loadConfig()
+  }
+
+  private loadConfig() {
+    try {
+      const data = readFileSync(this.configPath, 'utf8')
+      this.config = JSON.parse(data)
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        // Config file doesn't exist, create it with default values
+        const dir = path.dirname(this.configPath)
+        if (!existsSync(dir)) {
+          mkdirSync(dir, {recursive: true})
+        }
+        this.saveConfig()
+      } else {
+        console.error(chalk.redBright('Error loading config:'), error.message, this.configPath)
+      }
+    }
+  }
+
+  private async saveConfig(): Promise<void> {
+    try {
+      writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8')
+    } catch (error: any) {
+      console.error(chalk.redBright('Error saving config:'), error.message)
+    }
+  }
+
+  getEnv = (): env => {
+    return this.config['env'] ?? ('prod' as env)
+  }
+
+  getAccessToken = () => {
+    return (this.config[`${this.getEnv()}-access-token`] as string) || ''
+  }
+
+  setAccessToken = (token: string) => {
+    this.config[`${this.getEnv()}-access-token`] = token
+    this.saveConfig()
+  }
+}
+
 export type ConnectConfig = {
+  useHttps: boolean
   host: string
-  token: string
 }
 
 export const getConnectConfig = (env: env, region: string): ConnectConfig => {
   const getHost = (env: env) => {
     switch (env) {
       case 'local':
-        return 'connect-staging.oorja.io'
+        return 'localhost:4000'
       case 'prod':
         return region ? `${region}.connect.oorja.io` : 'connect.oorja.io'
     }
   }
+  const host = getHost(env)
   return {
-    host: getHost(env),
-    token: getENVAccessToken(env),
+    useHttps: !host.includes('localhost'),
+    host,
   }
 }
 
-export const ROOM_LINK_SAMPLE = 'https://oorja.io/spaces?id=foo#key'
+export const STREAM_KEY_SAMPLE = 'sk-xxxx:space-id#encryption-secret'
 
-export const INVALID_ROOM_LINK_MESSAGE = `${chalk.redBright(
-  'invalid url ',
-)}🤔. It should look like: ${chalk.blue(ROOM_LINK_SAMPLE)}`
-
-export const determineENV = (roomURL?: URL): env => {
-  if (!roomURL) return (config.get('env') as env) || 'prod'
-  switch (roomURL.host) {
-    case 'oorja.io':
-    case 'teletype.oorja.io':
-      return 'prod'
-    case 'localhost:3000':
-      return 'local'
-    default:
-      printExitMessage(INVALID_ROOM_LINK_MESSAGE)
-      process.exit(1)
-  }
-}
-
-export const getENVAccessToken = (env: env) => {
-  return (config.get(`${env}-access-token`) as string) || ''
-}
-
-export const setENVAccessToken = (env: env, token: string) => {
-  config.set(`${env}-access-token`, token)
-}
+export const INVALID_STREAM_KEY_MESSAGE = `${chalk.redBright(
+  'invalid stream-key ',
+)}🤔. It should look like: ${chalk.blue(STREAM_KEY_SAMPLE)}`
 
 export type oorjaConfig = {
   host: string

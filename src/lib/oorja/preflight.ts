@@ -2,11 +2,11 @@ import chalk from 'chalk'
 import inquirer from 'inquirer'
 import ora from 'ora'
 
-import {env, setENVAccessToken, CLI_VERSION, getENVAccessToken} from '../config.js'
+import {env, CLI_VERSION, Config} from '../config.js'
 import {ConnectClient} from '../connect/index.js'
-import {BadRequest, Unauthorized} from '../connect/errors.js'
-import {User} from '../connect/types.js'
+import {Unauthorized} from '../connect/errors.js'
 import {printExitMessage} from '../utils.js'
+import {UserProfile} from '../connect/types.js'
 
 const promptToken = (): Promise<string> =>
   inquirer
@@ -18,20 +18,6 @@ const promptToken = (): Promise<string> =>
       },
     ])
     .then((answers) => answers.accessToken)
-
-export const promptRoomParticipantOTP = (): Promise<string> =>
-  inquirer
-    .prompt([
-      {
-        type: 'input',
-        name: 'otp',
-        message:
-          'Please enter your OTP for authentication (switch to teletype app in the room and click on blue "Generate OTP" button):',
-      },
-    ])
-    .then((answers) => answers.otp)
-
-const OTP_HELP_MESSAGE = "You can generate OTP from the room, it's in the instruction steps"
 
 export const promptAuth = async (connectClient: ConnectClient, generateTokenLink: string): Promise<string> => {
   const ANON = 'Proceed as an anonymous user'
@@ -60,25 +46,6 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
   throw Error('Unexpected input')
 }
 
-export const loginByRoomOTP = async (connectClient: ConnectClient, roomId: string) => {
-  const otp = await promptRoomParticipantOTP()
-  if (!otp) {
-    console.log('OTP not provided :(')
-    printExitMessage(OTP_HELP_MESSAGE)
-    process.exit(213)
-  }
-  try {
-    return await connectClient.accessTokenFromRoomParticipantOTP(roomId, otp)
-  } catch (e) {
-    if (e instanceof BadRequest) {
-      console.log(chalk.redBright('Invalid otp. It may have expired.'))
-      printExitMessage(OTP_HELP_MESSAGE)
-      process.exit()
-    }
-    throw e
-  }
-}
-
 export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
@@ -87,36 +54,21 @@ export const validateCliVersion = async (connectClient: ConnectClient) => {
   }
 }
 
-export const resumeSession = async (env: env, connectClient: ConnectClient, roomId?: string): Promise<User | null> => {
-  const token = getENVAccessToken(env)
-  if (!token) return null
-  // try to validate authorization with existing token
-  try {
-    const user = await connectClient.fetchSessionUser()
-    if (roomId) {
-      await connectClient.fetchRoom(roomId)
-    }
-    return user
-  } catch (e) {
-    if (e instanceof Unauthorized) {
-      setENVAccessToken(env, '')
-      return null
-    }
-    throw e
-  }
-}
-
-export const preflight = async (env: env, connectClient: ConnectClient) => {
+export const preflight = async (
+  user: UserProfile | null,
+  config: Config,
+  connectClient: ConnectClient,
+): Promise<UserProfile> => {
   const spinner = ora({
     text: 'Authenticating',
     discardStdin: false,
   }).start()
   try {
-    const user = await connectClient.fetchSessionUser()
-    spinner.succeed(`Authenticated: Welcome ${user.name}`)
-    if (user.profileType === 'anon') {
+    const userProfile = user || (await connectClient.fetchSessionUser())
+    spinner.succeed(`Authenticated ✅: Welcome ${userProfile.name}`)
+    if (userProfile.profileType === 'anon') {
       // don't persist tokens for anonymous users
-      setENVAccessToken(env, '')
+      config.setAccessToken('')
       console.log(chalk.yellowBright("You're an anonymous user. CLI will not remember the auth-token"))
     }
     spinner.start('Connecting..')
@@ -124,14 +76,14 @@ export const preflight = async (env: env, connectClient: ConnectClient) => {
       .establishSocket()
       .then(() => {
         spinner.succeed('Connected').clear()
-        return user
+        return userProfile
       })
       .catch((e) => {
         spinner.fail('Socket connection failure..')
         throw e
       })
   } catch (e) {
-    setENVAccessToken(env, '')
+    config.setAccessToken('')
     if (e instanceof Unauthorized) {
       spinner.fail()
       printExitMessage('Your access token failed authentication, resetting...')
