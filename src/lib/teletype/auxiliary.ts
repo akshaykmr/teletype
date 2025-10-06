@@ -1,7 +1,6 @@
 import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
-import {Hash} from '../connect/types.js'
 
 export const initScreen = (username: string, hostname: string, shell: string, multiplexed: boolean) => {
   console.log(chalk.bold(chalk.blueBright('TeleType')))
@@ -30,7 +29,11 @@ export const areDimensionEqual = (a: dimensions, b: dimensions): boolean => {
   return a.rows === b.rows && a.cols === b.cols
 }
 
-export const resizeBestFit = (term: IPty, userDimensions: Hash<dimensions>, shouldClearScreen: boolean = false) => {
+export const resizeBestFit = (
+  term: IPty,
+  userDimensions: Record<string, dimensions>,
+  shouldClearScreen: boolean = false,
+) => {
   const allViewports = Object.values(userDimensions)
   const minrows = Math.min(...allViewports.map((d) => d.rows))
   const mincols = Math.min(...allViewports.map((d) => d.cols))

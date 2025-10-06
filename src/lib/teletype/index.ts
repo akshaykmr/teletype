@@ -1,6 +1,6 @@
 import {spawn, IPty} from 'node-pty'
 import * as os from 'os'
-import {Hash, RoomKey} from '../connect/types.js'
+import {RoomKey} from '../connect/types.js'
 import {getDimensions, dimensions, initScreen, areDimensionEqual, resizeBestFit} from './auxiliary.js'
 import chalk from 'chalk'
 import {Unauthorized} from '../connect/errors.js'
@@ -37,7 +37,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
   const username = os.userInfo().username
   const hostname = os.hostname()
 
-  const userDimensions: Hash<dimensions> = {}
+  const userDimensions: Record<string, dimensions> = {}
   userDimensions[SELF] = getDimensions()
 
   let term: IPty
