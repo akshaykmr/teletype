@@ -120,7 +120,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
       discardStdin: false,
     }).start()
     const now = new Date()
-    const {roomKey} = await oorja
+    const {roomKey, inviteCode} = await oorja
       .createRoom({
         roomName: `Teletype session - ${hostname()} @ ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`,
         apps: {
@@ -145,7 +145,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
       })
     spinner.succeed(chalk.bold('Space created')).clear()
 
-    const link = oorja.linkForRoom(roomKey)
+    const link = oorja.linkForRoom(roomKey, inviteCode)
     console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`)
     console.log(chalk.bold("^^ You'll be streaming here ^^"))
     this.clearstdin()

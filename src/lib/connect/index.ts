@@ -5,7 +5,7 @@ const encoder = new Encoder()
 const decoder = new Decoder()
 
 import {defaultParser} from './resources.js'
-import {User, RoomApps, Room, CliManifest} from './types.js'
+import {User, RoomApps, Room, CliManifest, NewRoomInviteResponse} from './types.js'
 import {ConnectConfig, env, getConnectConfig} from '../config.js'
 import {Unauthorized, BadRequest} from './errors.js'
 import {Socket, Channel, Presence} from 'phoenix'
@@ -105,6 +105,22 @@ export class ConnectClient {
       })
       const data = await response.json()
       return defaultParser(data.data) as Room
+    } catch (error) {
+      return handleError(error)
+    }
+  }
+
+  createInviteCode = async ({roomId}: {roomId: string}): Promise<NewRoomInviteResponse> => {
+    const body = {
+      participant_access: 'can_edit',
+    }
+    try {
+      const response = await this._fetch(`/v1/rooms/${roomId}/invites`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      const data = await response.json()
+      return defaultParser(data) as NewRoomInviteResponse
     } catch (error) {
       return handleError(error)
     }

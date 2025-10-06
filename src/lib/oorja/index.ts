@@ -24,14 +24,18 @@ export class OORJA {
   createRoom = async (options: CreateRoomOptions) => {
     const room = await this.connectClient.createRoom(options)
     const roomKey = createRoomKey(room.id)
+    const {
+      data: {inviteCode},
+    } = await this.connectClient.createInviteCode({roomId: room.id})
     return {
       room,
       roomKey,
+      inviteCode,
     }
   }
 
-  linkForRoom = (roomKey: RoomKey): string => {
-    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}#${exportKey(roomKey.key)}`
+  linkForRoom = (roomKey: RoomKey, inviteCode: string): string => {
+    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}&inviteCode=${inviteCode}#${exportKey(roomKey.key)}`
   }
 
   getRoomKey(streamKey: StreamKey): RoomKey {

@@ -42,3 +42,19 @@ export type RoomKey = {
   roomId: string
   key: Buffer
 }
+
+export type ParticipantAccess = 'full_access' | 'can_edit' | 'can_view'
+
+export type RoomInvite = {
+  id: string
+  creatorId: string
+  insertedAt: string
+  inviteCode: string
+  participantAccess: ParticipantAccess
+  roomId: string
+}
+
+export type NewRoomInviteResponse = {
+  allInvites: RoomInvite[]
+  data: RoomInvite
+}
