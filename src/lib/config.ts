@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'fs'
 import path from 'path'
 
-export const CLI_VERSION = 2.7
+export const CLI_VERSION = 2.8
 
 export type env = 'local' | 'prod'
 
