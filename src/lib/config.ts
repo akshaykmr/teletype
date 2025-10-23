@@ -44,7 +44,7 @@ export class Config {
   }
 
   getEnv = (): env => {
-    return this.config['env'] ?? ('prod' as env)
+    return this.config['env'] || ('prod' as env)
   }
 
   getAccessToken = () => {
@@ -68,6 +68,7 @@ export const getConnectConfig = (env: env, region: string): ConnectConfig => {
       case 'local':
         return 'localhost:4000'
       case 'prod':
+      default:
         return region ? `${region}.connect.oorja.io` : 'connect.oorja.io'
     }
   }
