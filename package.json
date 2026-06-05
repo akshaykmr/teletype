@@ -63,7 +63,7 @@
     "eslint-config-oclif": "^6.0.102",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.4.0",
-    "oclif": "^4.22.18",
+    "oclif": "^4.23.10",
     "prettier": "^3.6.2",
     "shx": "^0.4.0",
     "ts-node": "^10.9.2",
