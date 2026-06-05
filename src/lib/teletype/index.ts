@@ -45,6 +45,8 @@ class TeletypeSession {
   private sessionCount = 0
   private ptyReady = false
   private readonly ptyFuture: Future<boolean> = new Future()
+  private stopped = false
+  private cleanupShell: (options?: {killTerm?: boolean}) => void = () => {}
   private resolve?: (value: null) => void
 
   constructor(private readonly options: TeletypeOptions) {}
@@ -109,9 +111,9 @@ class TeletypeSession {
     })
 
     // track own dimensions and keep it up to date
-    setInterval(this.reEvaluateOwnDimensions, 1000)
+    const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
 
-    this.term.onData((d: string) => {
+    const ptyDataSubscription = this.term.onData((d: string) => {
       stdout.write(d)
 
       if (!this.ptyReady) {
@@ -132,15 +134,28 @@ class TeletypeSession {
         d: encrypt(d, this.options.roomKey),
       })
     })
-    this.term.onExit(() => {
+    const ptyExitSubscription = this.term.onExit(() => {
       console.log(chalk.blueBright('terminated shell stream to oorja. byee!'))
+      this.stop({killTerm: false})
       this.resolve?.(null)
     })
 
     stdin.setEncoding('utf8')
     stdin.setRawMode!(true)
 
-    stdin.on('data', (d) => this.term.write(d.toString('utf8')))
+    const stdinDataHandler = (d: Buffer | string) => this.term.write(d.toString('utf8'))
+    stdin.on('data', stdinDataHandler)
+
+    this.cleanupShell = ({killTerm = true}: {killTerm?: boolean} = {}) => {
+      clearInterval(dimensionPoll)
+      ptyDataSubscription.dispose()
+      ptyExitSubscription.dispose()
+      stdin.off('data', stdinDataHandler)
+      stdin.setRawMode!(false)
+      if (killTerm) {
+        this.term.kill()
+      }
+    }
   }
 
   private reEvaluateOwnDimensions = () => {
@@ -155,11 +170,16 @@ class TeletypeSession {
   }
 
   private handleClose = () => {
+    if (this.stopped) {
+      return
+    }
+    this.stop({leaveChannel: false})
     printExitMessage(chalk.redBright('connection closed, terminated stream.'))
     exit(3)
   }
 
   private handleError = (err?: any) => {
+    this.stop({leaveChannel: false})
     if (err instanceof Unauthorized) {
       printExitMessage(chalk.redBright(err.message))
     } else {
@@ -179,6 +199,7 @@ class TeletypeSession {
         const userId = session.split(':')[0]
         const userType = session.split(':')[2]
         if (userType === 'task') {
+          this.stop()
           printExitMessage(
             chalk.redBright(
               `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`,
@@ -194,6 +215,7 @@ class TeletypeSession {
         if (userId === this.options.userId) {
           this.term.write(data)
         } else {
+          this.stop()
           printExitMessage(
             chalk.redBright(
               `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
@@ -216,6 +238,19 @@ class TeletypeSession {
       delete this.userDimensions[s]
     }
     resizeBestFit(this.term, this.userDimensions)
+  }
+
+  private stop = ({killTerm = true, leaveChannel = true}: {killTerm?: boolean; leaveChannel?: boolean} = {}) => {
+    if (this.stopped) {
+      return
+    }
+    this.stopped = true
+    this.cleanupShell({killTerm})
+    this.cleanupShell = () => {}
+
+    if (leaveChannel) {
+      this.channel.leave(1000)
+    }
   }
 }
 
