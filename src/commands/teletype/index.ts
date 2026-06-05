@@ -85,7 +85,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
     const STREAM_TO_NEW_SPACE = 'New space'
     const {answer} = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'select',
         name: 'answer',
         message: 'Choose streaming destination',
         choices: [STREAM_TO_NEW_SPACE, STREAM_USING_STREAM_KEY],
