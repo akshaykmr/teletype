@@ -121,12 +121,13 @@ export class App {
     spinner.succeed('Online')
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
+    const isControlledMode = this.config.hasInjectedAccessToken()
 
     let user: UserProfile | undefined = undefined
 
     try {
       if (!streamKey) {
-        user = await this.tryResumeSession()
+        user = await this.tryResumeSession(isControlledMode)
         if (!user) {
           const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
           if (!token) {
@@ -150,10 +151,16 @@ export class App {
         user = await this.connectClient?.fetchSessionUser(true)
       }
     } catch (e) {
-      this.config.setAccessToken('')
+      if (!isControlledMode) {
+        this.config.setAccessToken('')
+      }
       if (e instanceof Unauthorized) {
         spinner.fail()
-        printExitMessage('Your access token failed authentication, resetting...')
+        printExitMessage(
+          isControlledMode
+            ? 'The provided access token failed authentication.'
+            : 'Your access token failed authentication, resetting...',
+        )
         exit(33)
         return Promise.reject()
       } else {
@@ -185,13 +192,16 @@ export class App {
     }
   }
 
-  private tryResumeSession = async (): Promise<UserProfile | undefined> => {
+  private tryResumeSession = async (isControlledMode: boolean): Promise<UserProfile | undefined> => {
     const personalAccessToken = this.config.getAccessToken()
     if (!personalAccessToken) return
     try {
       return await this.connectClient!.fetchSessionUser()
     } catch (e) {
       if (e instanceof Unauthorized) {
+        if (isControlledMode) {
+          throw e
+        }
         this.config.setAccessToken('') // reset
         return
       }

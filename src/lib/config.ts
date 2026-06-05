@@ -6,6 +6,16 @@ export const CLI_VERSION = 2.9
 
 export type env = 'local' | 'prod'
 
+export const SUPAKIT_ACCESS_TOKEN_ENV = 'SUPAKIT_ACCESS_TOKEN'
+export const SUPAKIT_ENV_ENV = 'SUPAKIT_ENV'
+
+const envFromValue = (value: string | undefined): env | undefined => {
+  if (value === 'local' || value === 'prod') {
+    return value
+  }
+  return undefined
+}
+
 export class Config {
   streamKeyAuth: boolean = false
 
@@ -44,11 +54,18 @@ export class Config {
   }
 
   getEnv = (): env => {
-    return this.config['env'] || ('prod' as env)
+    return envFromValue(process.env[SUPAKIT_ENV_ENV]) || envFromValue(this.config['env']) || 'prod'
   }
 
   getAccessToken = () => {
+    if (process.env[SUPAKIT_ACCESS_TOKEN_ENV]) {
+      return process.env[SUPAKIT_ACCESS_TOKEN_ENV]
+    }
     return (this.config[`${this.getEnv()}-access-token`] as string) || ''
+  }
+
+  hasInjectedAccessToken = () => {
+    return Boolean(process.env[SUPAKIT_ACCESS_TOKEN_ENV])
   }
 
   setAccessToken = (token: string) => {
