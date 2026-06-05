@@ -1,11 +1,11 @@
-import js from "@eslint/js";
-import prettier from "eslint-config-prettier";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import js from '@eslint/js'
+import prettier from 'eslint-config-prettier'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default [
   {
-    ignores: ["dist/**", "tmp/**"],
+    ignores: ['dist/**', 'tmp/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -15,7 +15,7 @@ export default [
       globals: globals.node,
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-];
+]
