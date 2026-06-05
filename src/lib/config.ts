@@ -96,7 +96,7 @@ export const getoorjaConfig = (env: env): oorjaConfig => {
       host = 'localhost:3000'
       break
     case 'prod':
-      host = 'oorja.io'
+      host = 'supakit.app'
       break
   }
   return {

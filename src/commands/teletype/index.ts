@@ -15,7 +15,7 @@ const DEFAULT_SHELL = platform() === 'win32' ? 'powershell.exe' : process.env.SH
 export default class TeleTypeCommand extends Command {
   static order = 1
   static aliases = ['tty']
-  static description = `Launch a terminal streaming session in oorja.`
+  static description = `Launch a terminal streaming session in SupaKit.`
 
   static examples = [
     `${chalk.blueBright('$ teletype')}
@@ -23,7 +23,7 @@ Will prompt to choose streaming destination - either enter a stream key for an e
 
 `,
     `${chalk.blueBright(`$ teletype '${STREAM_KEY_SAMPLE}'`)}
-Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at oorja.io), do not accept them from other people, nor should
+Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at supakit.app), do not accept them from other people, nor should
 you share your stream-keys with others.
 
 `,
@@ -140,7 +140,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
         if (e instanceof Unauthorized) {
           printExitMessage('Failed to create space. Are you sure your access-token is valid?')
         } else {
-          printExitMessage('Failed to create space. Try again later or try updating your oorja-cli')
+          printExitMessage('Failed to create space. Try again later or try updating your SupaKit CLI')
         }
         exit(9)
         return Promise.reject()

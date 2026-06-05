@@ -135,7 +135,7 @@ class TeletypeSession {
       })
     })
     const ptyExitSubscription = this.term.onExit(() => {
-      console.log(chalk.blueBright('terminated shell stream to oorja. byee!'))
+      console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
       this.stop({killTerm: false})
       this.resolve?.(null)
     })

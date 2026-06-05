@@ -19,7 +19,7 @@ const promptToken = (): Promise<string> =>
 
 export const promptAuth = async (connectClient: ConnectClient, generateTokenLink: string): Promise<string> => {
   const ANON = 'Proceed as an anonymous user'
-  const SIGN_IN = 'Sign-in with oorja'
+  const SIGN_IN = 'Sign in with SupaKit'
   console.log(
     `\n${chalk.bold(
       'PRO-TIP:',
@@ -47,7 +47,7 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
 export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
-    printExitMessage(chalk.redBright('Your oorja cli is outdated. Please run: npm update -g oorja'))
+    printExitMessage(chalk.redBright('Your SupaKit CLI is outdated. Please run: npm update -g oorja'))
     exit(1)
   }
 }

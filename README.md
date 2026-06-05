@@ -1,7 +1,7 @@
 TeleType
 =====
 
-cli tool that allows you to share your terminal online conveniently. Check out [oorja.io](https://oorja.io) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
+cli tool that allows you to share your terminal online conveniently. Check out [SupaKit](https://supakit.app) - show off mad cli-fu, help a colleague, teach, or troubleshoot.
 
 [![Version](https://img.shields.io/npm/v/oorja.svg)](https://npmjs.org/package/oorja)
 [![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
@@ -9,11 +9,11 @@ cli tool that allows you to share your terminal online conveniently. Check out [
 
 
 <p align="center">
-  <img width="600" src="https://oorja.io/images/cli-demo.svg">
+  <img width="600" src="https://supakit.app/images/cli-demo.svg">
 </p>
 
 <p align="center">
-  <img src="https://oorja.io/images/teletype-session.png">
+  <img src="https://supakit.app/images/teletype-session.png">
 </p>
 
 Your stream can be view-only or collaboration enabled (command-line flag).
@@ -49,14 +49,14 @@ Any participant in the room can stream their terminal(s) i.e there can be multip
 For options: `teletype -h` 
 
 **Note**
-This is the cli companion for [oorja.io](https://oorja.io) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://oorja.io/privacy-policy).
+This is the cli companion for [SupaKit](https://supakit.app) which is a privacy focussed collaboration tool with more features like voice, notes, and chat - [privacy policy](https://supakit.app/privacy-policy).
 TLDR: Your data is end-to-end encrypted, no prying eyes 🍻.
 
 Like it ? [follow or tweet, tell your colleagues](https://twitter.com/oorja_app) 👩🏻‍💻
 
 Open [issues](https://github.com/akshaykmr/TeleType/issues).
 
-More ways to [contact](https://oorja.io/contact).
+More ways to [contact](https://supakit.app/contact).
 
 
 # Commands
@@ -67,7 +67,7 @@ More ways to [contact](https://oorja.io/contact).
 
 ## `oorja teletype [STREAMKEY]`
 
-Launch a terminal streaming session in oorja.
+Launch a terminal streaming session in SupaKit.
 
 ```
 USAGE
@@ -81,7 +81,7 @@ FLAGS
   -s, --shell=<value>  shell to use. e.g. bash, fish
 
 DESCRIPTION
-  Launch a terminal streaming session in oorja.
+  Launch a terminal streaming session in SupaKit.
 
 ALIASES
   $ oorja tty
@@ -91,7 +91,7 @@ EXAMPLES
   Will prompt to choose streaming destination - either enter a stream key for an existing space or create a new space.
 
   $ teletype 'sk-xxxx:space-id#encryption-secret'
-  Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at oorja.io), do not accept them from other people, nor should
+  Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at supakit.app), do not accept them from other people, nor should
   you share your stream-keys with others.
 
   $ teletype -m
@@ -100,14 +100,14 @@ EXAMPLES
 
 ## `oorja signout`
 
-Sign-out of oorja. Clears saved auth-token
+Sign out of SupaKit. Clears saved auth-token
 
 ```
 USAGE
   $ oorja signout
 
 DESCRIPTION
-  Sign-out of oorja. Clears saved auth-token
+  Sign out of SupaKit. Clears saved auth-token
 ```
 
 
