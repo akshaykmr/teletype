@@ -53,7 +53,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
     resizeBestFit(term, userDimensions)
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let sessionCount = 0
     let ptyReady = false
     const ptyFuture: Future<boolean> = new Future()
@@ -156,7 +156,7 @@ export const teletypeApp = (options: TeletypeOptions) => {
             userDimensions[session] = d
             resizeBestFit(term, userDimensions, d.initial)
             break
-          case MessageType.IN:
+          case MessageType.IN: {
             const data = decrypt(d, options.roomKey)
             const userId = session.split(':')[0]
             const userType = session.split(':')[2]
@@ -183,14 +183,18 @@ export const teletypeApp = (options: TeletypeOptions) => {
               )
               exit(5)
             }
+            break
+          }
         }
       },
-      handleSessionJoin: (s) => {
+      handleSessionJoin: () => {
         sessionCount++
       },
       handleSessionLeave: (s) => {
         sessionCount -= 1
-        s && delete userDimensions[s]
+        if (s) {
+          delete userDimensions[s]
+        }
         resizeBestFit(term, userDimensions)
       },
     })

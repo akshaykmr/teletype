@@ -1,12 +1,9 @@
 import chalk from 'chalk'
 import inquirer from 'inquirer'
-import ora, {Ora} from 'ora'
 
-import {env, CLI_VERSION, Config} from '../config.js'
+import {CLI_VERSION} from '../config.js'
 import {ConnectClient} from '../connect/index.js'
-import {Unauthorized} from '../connect/errors.js'
 import {printExitMessage} from '../utils.js'
-import {UserProfile} from '../connect/types.js'
 import {exit} from '../exit.js'
 
 const promptToken = (): Promise<string> =>
