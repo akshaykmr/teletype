@@ -2,6 +2,8 @@ import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
 
+export const DEFAULT_DIMENSIONS: dimensions = {rows: 24, cols: 80}
+
 export const initScreen = (username: string, hostname: string, shell: string, multiplexed: boolean) => {
   console.log(chalk.bold(chalk.blueBright('TeleType')))
 
@@ -22,6 +24,9 @@ export type dimensions = {
 
 export const getDimensions = (): dimensions => {
   const {rows, columns} = termSize()
+  if (!Number.isFinite(rows) || !Number.isFinite(columns) || rows < 1 || columns < 1) {
+    return DEFAULT_DIMENSIONS
+  }
   return {rows, cols: columns}
 }
 
@@ -35,6 +40,9 @@ export const resizeBestFit = (
   shouldClearScreen: boolean = false,
 ) => {
   const allViewports = Object.values(userDimensions)
+  if (allViewports.length === 0) {
+    return
+  }
   const minrows = Math.min(...allViewports.map((d) => d.rows))
   const mincols = Math.min(...allViewports.map((d) => d.cols))
   term.resize(mincols, minrows)
