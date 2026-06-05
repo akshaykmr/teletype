@@ -38,7 +38,6 @@ Will also allow participants to write to your terminal! Collaboration mode must 
     shell: Flags.string({
       char: 's',
       description: 'shell to use. e.g. bash, fish',
-      default: DEFAULT_SHELL,
     }),
     multiplex: Flags.boolean({
       char: 'm',
@@ -60,8 +59,9 @@ Will also allow participants to write to your terminal! Collaboration mode must 
   async run() {
     const {
       args,
-      flags: {shell, multiplex, new_space},
+      flags: {shell: selectedShell, multiplex, new_space},
     } = await this.parse(TeleTypeCommand)
+    const shell = selectedShell || DEFAULT_SHELL
 
     const config = new Config(this.config.configDir)
     const app = new App(config)
