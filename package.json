@@ -39,7 +39,7 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
     "docs:commands": "pnpm run build && pnpm run docs:commands:generate",
-    "docs:commands:generate": "oclif readme --no-aliases --no-source-links",
+    "docs:commands:generate": "oclif readme --no-aliases --no-source-links && node scripts/order-readme-commands.mjs",
     "lint": "eslint . --ext .ts",
     "prepack": "pnpm run build && oclif manifest && pnpm run docs:commands:generate",
     "prepare": "pnpm run build",

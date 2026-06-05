@@ -61,39 +61,9 @@ More ways to [contact](https://oorja.io/contact).
 
 # Commands
 <!-- commands -->
-* [`oorja help [COMMAND]`](#oorja-help-command)
-* [`oorja signout`](#oorja-signout)
 * [`oorja teletype [STREAMKEY]`](#oorja-teletype-streamkey)
-
-## `oorja help [COMMAND]`
-
-Display help for oorja.
-
-```
-USAGE
-  $ oorja help [COMMAND...] [-n]
-
-ARGUMENTS
-  [COMMAND...]  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for oorja.
-```
-
-## `oorja signout`
-
-Sign-out of oorja. Clears saved auth-token
-
-```
-USAGE
-  $ oorja signout
-
-DESCRIPTION
-  Sign-out of oorja. Clears saved auth-token
-```
+* [`oorja signout`](#oorja-signout)
+* [`oorja help [COMMAND]`](#oorja-help-command)
 
 ## `oorja teletype [STREAMKEY]`
 
@@ -127,4 +97,36 @@ EXAMPLES
   $ teletype -m
   Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 ```
+
+## `oorja signout`
+
+Sign-out of oorja. Clears saved auth-token
+
+```
+USAGE
+  $ oorja signout
+
+DESCRIPTION
+  Sign-out of oorja. Clears saved auth-token
+```
+
+
+## `oorja help [COMMAND]`
+
+Display help for oorja.
+
+```
+USAGE
+  $ oorja help [COMMAND...] [-n]
+
+ARGUMENTS
+  [COMMAND...]  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for oorja.
+```
+
 <!-- commandsstop -->
