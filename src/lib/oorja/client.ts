@@ -1,7 +1,7 @@
 import haversine from 'haversine-distance'
-import {printExitMessage} from '../utils.js'
-import {exit} from '../exit.js'
-import {geoMap} from './geoMap.js'
+import {printExitMessage} from 'oorja/lib/utils'
+import {exit} from 'oorja/lib/exit'
+import {geoMap} from 'oorja/lib/oorja/geoMap'
 
 export class OorjaClientError extends Error {}
 

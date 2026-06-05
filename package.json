@@ -16,7 +16,16 @@
   "license": "SEE LICENSE IN license.txt",
   "author": "Akshay Kumar",
   "type": "module",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./dist/*.js"
+    }
+  },
   "types": "dist/index.d.ts",
   "bin": {
     "oorja": "./bin/run.js",
