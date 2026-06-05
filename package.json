@@ -48,7 +48,7 @@
     "chalk": "^5.6.2",
     "haversine-distance": "^1.2.4",
     "inquirer": "^12.9.4",
-    "node-pty": "^1.0.0",
+    "node-pty": "^1.1.0",
     "ora": "^8.2.0",
     "phoenix": "1.8.1",
     "terminal-size": "^4.0.0"
