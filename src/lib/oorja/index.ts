@@ -178,7 +178,7 @@ export class App {
       const connectClient = new ConnectClient(this.config.getEnv(), region, this.config.getAccessToken())
       await validateCliVersion(connectClient)
       this.connectClient = connectClient
-    } catch (e) {
+    } catch {
       this.connectionCheckFailed = true
     } finally {
       this.connectionCheckFuture.resolve!()

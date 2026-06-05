@@ -15,7 +15,7 @@ export function exit(exitCode: number = 0, streams?: any) {
   if (!streams) {
     streams = [process.stdout, process.stderr]
   }
-  var drainCount = 0
+  let drainCount = 0
   // Actually exit if all streams are drained.
   function tryToExit() {
     if (drainCount === streams.length) {
