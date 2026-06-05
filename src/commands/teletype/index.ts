@@ -45,9 +45,11 @@ Will also allow participants to write to your terminal! Collaboration mode must 
         'Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space participants. Off by default',
       default: false,
     }),
-    new_space: Flags.boolean({
+    new: Flags.boolean({
+      aliases: ['new-space', 'new_space'],
       char: 'n',
-      description: 'Create new space',
+      deprecateAliases: true,
+      description: 'Create a new space',
       default: false,
     }),
   }
@@ -59,7 +61,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
   async run() {
     const {
       args,
-      flags: {shell: selectedShell, multiplex, new_space},
+      flags: {shell: selectedShell, multiplex, new: createNewSpace},
     } = await this.parse(TeleTypeCommand)
     const shell = selectedShell || DEFAULT_SHELL
 
@@ -70,7 +72,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
       await this.streamUsingStreamKey(app, {shell, multiplex, streamKey: args.streamKey})
       exit(0)
     }
-    if (new_space) {
+    if (createNewSpace) {
       await this.createRoomAndStream(app, {shell, multiplex})
       exit(0)
     }

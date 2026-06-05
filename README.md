@@ -77,7 +77,7 @@ FLAGS
   -h, --help           Show CLI help.
   -m, --multiplex      Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space
                        participants. Off by default
-  -n, --new_space      Create new space
+  -n, --new            Create a new space
   -s, --shell=<value>  shell to use. e.g. bash, fish
 
 DESCRIPTION
