@@ -71,7 +71,7 @@ Launch a terminal streaming session in SupaKit.
 
 ```
 USAGE
-  $ oorja teletype [STREAMKEY] [-h] [-s <value>] [-m] [-n]
+  $ oorja teletype [STREAMKEY] [-h] [-s <value>] [-m] [-n] [--anonymous] [--ci-debug]
 
 FLAGS
   -h, --help           Show CLI help.
@@ -79,6 +79,8 @@ FLAGS
                        participants. Off by default
   -n, --new            Create a new space
   -s, --shell=<value>  shell to use. e.g. bash, fish
+      --anonymous      Create an anonymous session without prompting for sign-in.
+      --ci-debug       Create a new anonymous writable bash stream for CI debugging.
 
 DESCRIPTION
   Launch a terminal streaming session in SupaKit.
@@ -96,6 +98,9 @@ EXAMPLES
 
   $ teletype -m
   Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
+
+  $ teletype --ci-debug
+  Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
 ```
 
 ## `oorja signout`

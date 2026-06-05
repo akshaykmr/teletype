@@ -3,7 +3,7 @@ import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
 import {TeletypeSession, TeletypeOptions} from 'oorja/lib/teletype/index'
 import {CreateRoomOptions, ConnectClient} from 'oorja/lib/connect/index'
 import {importKey, createRoomKey, exportKey} from 'oorja/lib/encryption'
-import {promptAuth, validateCliVersion} from 'oorja/lib/oorja/preflight'
+import {createAnonymousSession, promptAuth, validateCliVersion} from 'oorja/lib/oorja/preflight'
 import {getRegion} from 'oorja/lib/oorja/client'
 import ora from 'ora'
 import {Future, printExitMessage} from 'oorja/lib/utils'
@@ -12,6 +12,13 @@ import {exit} from 'oorja/lib/exit'
 import chalk from 'chalk'
 
 export class InvalidRoomLink extends Error {}
+
+export type AuthMode = 'prompt' | 'anonymous'
+
+type AppInitOptions = {
+  streamKey?: StreamKey
+  authMode?: AuthMode
+}
 
 export class OORJA {
   // should capture domain related commands and queries
@@ -105,7 +112,8 @@ export class App {
     this.connectionCheckFuture = new Future()
   }
 
-  init = async (streamKey?: StreamKey): Promise<OORJA> => {
+  init = async (options: AppInitOptions = {}): Promise<OORJA> => {
+    const {streamKey} = options
     let spinner = ora({
       text: 'Checking connectivity..',
       discardStdin: true,
@@ -121,15 +129,19 @@ export class App {
     spinner.succeed('Online')
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
-    const isControlledMode = this.config.hasInjectedAccessToken()
+    const authMode = options.authMode || 'prompt'
+    const isControlledMode = authMode !== 'anonymous' && this.config.hasInjectedAccessToken()
 
     let user: UserProfile | undefined = undefined
 
     try {
       if (!streamKey) {
-        user = await this.tryResumeSession(isControlledMode)
+        user = authMode === 'anonymous' ? undefined : await this.tryResumeSession(isControlledMode)
         if (!user) {
-          const token = await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
+          const token =
+            authMode === 'anonymous'
+              ? await createAnonymousSession(this.connectClient!)
+              : await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
           if (!token) {
             printExitMessage('Token not provided :(')
             exit(12)

@@ -31,6 +31,10 @@ you share your stream-keys with others.
 Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 
 `,
+    `${chalk.blueBright('$ teletype --ci-debug')}
+Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
+
+`,
   ]
 
   static flags = {
@@ -52,6 +56,15 @@ Will also allow participants to write to your terminal! Collaboration mode must 
       description: 'Create a new space',
       default: false,
     }),
+    anonymous: Flags.boolean({
+      description: 'Create an anonymous session without prompting for sign-in.',
+      default: false,
+    }),
+    'ci-debug': Flags.boolean({
+      aliases: ['ci'],
+      description: 'Create a new anonymous writable bash stream for CI debugging.',
+      default: false,
+    }),
   }
 
   static args = {
@@ -61,19 +74,22 @@ Will also allow participants to write to your terminal! Collaboration mode must 
   async run() {
     const {
       args,
-      flags: {shell: selectedShell, multiplex, new: createNewSpace},
+      flags: {shell: selectedShell, multiplex, new: createNewSpace, anonymous, 'ci-debug': ciDebug},
     } = await this.parse(TeleTypeCommand)
-    const shell = selectedShell || DEFAULT_SHELL
+    const shell = selectedShell || (ciDebug ? 'bash' : DEFAULT_SHELL)
+    const shouldCreateNewSpace = createNewSpace || ciDebug
+    const shouldUseAnonymousAuth = anonymous || ciDebug
+    const shouldMultiplex = multiplex || ciDebug
 
     const config = new Config(this.config.configDir)
     const app = new App(config)
 
     if (args.streamKey) {
-      await this.streamUsingStreamKey(app, {shell, multiplex, streamKey: args.streamKey})
+      await this.streamUsingStreamKey(app, {shell, multiplex: shouldMultiplex, streamKey: args.streamKey})
       exit(0)
     }
-    if (createNewSpace) {
-      await this.createRoomAndStream(app, {shell, multiplex})
+    if (shouldCreateNewSpace) {
+      await this.createRoomAndStream(app, {shell, multiplex: shouldMultiplex, anonymous: shouldUseAnonymousAuth})
       exit(0)
     }
 
@@ -93,10 +109,10 @@ Will also allow participants to write to your terminal! Collaboration mode must 
     ])
     switch (answer) {
       case STREAM_USING_STREAM_KEY:
-        await this.streamUsingStreamKey(app, {shell, multiplex})
+        await this.streamUsingStreamKey(app, {shell, multiplex: shouldMultiplex})
         break
       case STREAM_TO_NEW_SPACE:
-        await this.createRoomAndStream(app, {shell, multiplex})
+        await this.createRoomAndStream(app, {shell, multiplex: shouldMultiplex, anonymous: shouldUseAnonymousAuth})
         break
     }
     exit(0)
@@ -109,14 +125,17 @@ Will also allow participants to write to your terminal! Collaboration mode must 
       exit()
     }
     const streamKeyStruct = parseStreamKey(streamKey)
-    const oorja = await app.init(streamKeyStruct)
+    const oorja = await app.init({streamKey: streamKeyStruct})
     const roomKey = oorja.getRoomKey(streamKeyStruct)
     this.clearstdin()
     await oorja.teletype({roomKey, ...options, process})
   }
 
-  private async createRoomAndStream(app: App, {shell, multiplex}: {shell: string; multiplex: boolean}) {
-    const oorja = await app.init()
+  private async createRoomAndStream(
+    app: App,
+    {shell, multiplex, anonymous}: {shell: string; multiplex: boolean; anonymous: boolean},
+  ) {
+    const oorja = await app.init({authMode: anonymous ? 'anonymous' : 'prompt'})
     const spinner = ora({
       text: chalk.bold('Creating space with TeleType app'),
       discardStdin: false,
@@ -149,6 +168,9 @@ Will also allow participants to write to your terminal! Collaboration mode must 
 
     const link = oorja.linkForRoom(roomKey, inviteCode)
     console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`)
+    if (anonymous && multiplex) {
+      console.log(chalk.yellowBright('Anyone with this link can access and write to this shell. Share it carefully.'))
+    }
     console.log(chalk.bold("^^ You'll be streaming here ^^"))
     this.clearstdin()
     return await oorja.teletype({roomKey, shell, multiplex, process})

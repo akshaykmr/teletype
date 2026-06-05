@@ -140,18 +140,22 @@ export class TeletypeSession {
       this.resolve?.(null)
     })
 
-    stdin.setEncoding('utf8')
-    stdin.setRawMode!(true)
-
+    const shouldReadLocalStdin = stdin.isTTY && typeof stdin.setRawMode === 'function'
     const stdinDataHandler = (d: Buffer | string) => this.term.write(d.toString('utf8'))
-    stdin.on('data', stdinDataHandler)
+    if (shouldReadLocalStdin) {
+      stdin.setEncoding('utf8')
+      stdin.setRawMode(true)
+      stdin.on('data', stdinDataHandler)
+    }
 
     this.cleanupShell = ({killTerm = true}: {killTerm?: boolean} = {}) => {
       clearInterval(dimensionPoll)
       ptyDataSubscription.dispose()
       ptyExitSubscription.dispose()
-      stdin.off('data', stdinDataHandler)
-      stdin.setRawMode!(false)
+      if (shouldReadLocalStdin) {
+        stdin.off('data', stdinDataHandler)
+        stdin.setRawMode(false)
+      }
       if (killTerm) {
         this.term.kill()
       }
