@@ -47,7 +47,7 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
 export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
-    printExitMessage(chalk.redBright('Your SupaKit CLI is outdated. Please run: npm update -g oorja'))
+    printExitMessage(chalk.redBright('Your CLI is outdated. Please run: npm update -g oorja'))
     exit(1)
   }
 }

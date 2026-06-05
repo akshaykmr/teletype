@@ -140,7 +140,7 @@ Will also allow participants to write to your terminal! Collaboration mode must 
         if (e instanceof Unauthorized) {
           printExitMessage('Failed to create space. Are you sure your access-token is valid?')
         } else {
-          printExitMessage('Failed to create space. Try again later or try updating your SupaKit CLI')
+          printExitMessage('Failed to create space. Try again later or update the CLI: npm update -g oorja')
         }
         exit(9)
         return Promise.reject()
