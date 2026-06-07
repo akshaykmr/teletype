@@ -17,6 +17,12 @@ const promptToken = (): Promise<string> =>
     ])
     .then((answers) => answers.accessToken)
 
+export const createAnonymousSession = async (connectClient: ConnectClient): Promise<string> => {
+  console.log('Creating anonymous user...')
+  connectClient.setAccessToken('')
+  return connectClient.createAnonymousUser()
+}
+
 export const promptAuth = async (connectClient: ConnectClient, generateTokenLink: string): Promise<string> => {
   const ANON = 'Proceed as an anonymous user'
   const SIGN_IN = 'Sign in with SupaKit'
@@ -35,8 +41,7 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
   ])
   switch (answer) {
     case ANON:
-      console.log('Creating anonymous user...')
-      return connectClient.createAnonymousUser()
+      return createAnonymousSession(connectClient)
     case SIGN_IN:
       console.log(`You can sign-in and generate your token here: ${chalk.blue(generateTokenLink)}`)
       return promptToken()
