@@ -27,7 +27,7 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
   )
   const {answer} = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'select',
       name: 'answer',
       message: 'You need an access-token for authentication.\n ',
       choices: [ANON, SIGN_IN],
