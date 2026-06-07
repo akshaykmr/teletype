@@ -8,7 +8,7 @@ export class OorjaClientError extends Error {}
 const _maybeError = (response: Response) => {
   const {status} = response
   if (status >= 400) {
-    throw new OorjaClientError('oorja network client error')
+    throw new OorjaClientError('SupaKit network client error')
   }
 }
 
@@ -49,7 +49,7 @@ type _Settings = {
 }
 
 export const getRegion = async (): Promise<string> => {
-  const response = await _client.get('https://oorja.io/nudge', {
+  const response = await _client.get('https://supakit.app/nudge', {
     method: 'GET',
   })
   if (response.status !== 200) {

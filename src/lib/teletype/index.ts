@@ -33,170 +33,223 @@ type TeletypeChannelParams = {
 
 const SELF = 'self'
 
-export const teletypeApp = (options: TeletypeOptions) => {
-  const username = os.userInfo().username
-  const hostname = os.hostname()
+export class TeletypeSession {
+  private readonly username = os.userInfo().username
+  private readonly hostname = os.hostname()
+  private readonly userDimensions: Record<string, dimensions> = {
+    [SELF]: getDimensions(),
+  }
 
-  const userDimensions: Record<string, dimensions> = {}
-  userDimensions[SELF] = getDimensions()
+  private channel!: Channel
+  private term!: IPty
+  private sessionCount = 0
+  private ptyReady = false
+  private readonly ptyFuture: Future<boolean> = new Future()
+  private stopped = false
+  private cleanupShell: (options?: {killTerm?: boolean}) => void = () => {}
+  private resolve?: (value: null) => void
 
-  let term: IPty
+  constructor(private readonly options: TeletypeOptions) {}
 
-  const reEvaluateOwnDimensions = () => {
-    const lastKnown = userDimensions[SELF]
+  run = () =>
+    new Promise<null>((resolve) => {
+      this.resolve = resolve
+      this.channel = this.options.joinChannel({
+        channel: `teletype:${this.options.roomKey.roomId}`,
+        params: {
+          username: this.username,
+          hostname: this.hostname,
+          multiplexed: this.options.multiplex,
+        },
+        onJoin: this.startTerm,
+        onClose: this.handleClose,
+        onError: this.handleError,
+        onMessage: this.handleMessage,
+        handleSessionJoin: this.handleSessionJoin,
+        handleSessionLeave: this.handleSessionLeave,
+      })
+    })
+
+  private startTerm = () => {
+    const {stdin, stdout} = this.options.process
+    const dimensions = this.userDimensions[SELF]
+
+    console.log(
+      chalk.blue(
+        `${chalk.bold(`${this.username}@${this.hostname}`)} Spawning streaming shell: ${chalk.bold(
+          `${this.options.shell}`,
+        )}`,
+      ),
+    )
+
+    this.term = spawn(this.options.shell, [], {
+      name: 'xterm-256color',
+      cols: dimensions.cols,
+      rows: dimensions.rows,
+      cwd: this.options.process.cwd(),
+      env: this.options.process.env,
+    })
+
+    this.ptyFuture.promise.then(() => {
+      initScreen(this.username, this.hostname, this.options.shell, this.options.multiplex)
+      if (this.options.shell.endsWith('bash')) {
+        stdout.write('Adjusting shell prompt to show streaming indicator\n')
+        this.term.write("export PS1='📡 [streaming] '$PS1\n")
+      }
+      if (this.options.shell.endsWith('zsh')) {
+        stdout.write('Adjusting shell prompt to show streaming indicator\n')
+        // FIXME: this doesnt work on macos (or its probably due to some conflict with powerlevel10k)
+        this.term.write("PROMPT='📡 [streaming] '$PROMPT\n")
+      }
+      if (this.options.shell.endsWith('fish')) {
+        stdout.write('Adjusting shell prompt to show streaming indicator\n')
+        this.term.write(
+          'functions -c fish_prompt __orig_fish_prompt; ' +
+            "function fish_prompt; echo -n '📡 [streaming] '; __orig_fish_prompt; end\n",
+        )
+      }
+    })
+
+    // track own dimensions and keep it up to date
+    const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
+
+    const ptyDataSubscription = this.term.onData((d: string) => {
+      stdout.write(d)
+
+      if (!this.ptyReady) {
+        this.ptyReady = true
+        setTimeout(() => {
+          this.ptyFuture.resolve!(true)
+        }, 100)
+      }
+
+      if (this.sessionCount < 2) {
+        // 1 sub for own channel session
+        // < 2 means no subscribers. no point pushing data.
+        return
+      }
+      this.channel.push('new_msg', {
+        t: MessageType.OUT,
+        b: true,
+        d: encrypt(d, this.options.roomKey),
+      })
+    })
+    const ptyExitSubscription = this.term.onExit(() => {
+      console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
+      this.stop({killTerm: false})
+      this.resolve?.(null)
+    })
+
+    stdin.setEncoding('utf8')
+    stdin.setRawMode!(true)
+
+    const stdinDataHandler = (d: Buffer | string) => this.term.write(d.toString('utf8'))
+    stdin.on('data', stdinDataHandler)
+
+    this.cleanupShell = ({killTerm = true}: {killTerm?: boolean} = {}) => {
+      clearInterval(dimensionPoll)
+      ptyDataSubscription.dispose()
+      ptyExitSubscription.dispose()
+      stdin.off('data', stdinDataHandler)
+      stdin.setRawMode!(false)
+      if (killTerm) {
+        this.term.kill()
+      }
+    }
+  }
+
+  private reEvaluateOwnDimensions = () => {
+    const lastKnown = this.userDimensions[SELF]
     const latest = getDimensions()
 
     if (areDimensionEqual(lastKnown, latest)) {
       return
     }
-    userDimensions[SELF] = latest
-    resizeBestFit(term, userDimensions)
+    this.userDimensions[SELF] = latest
+    resizeBestFit(this.term, this.userDimensions)
   }
 
-  return new Promise((resolve) => {
-    let sessionCount = 0
-    let ptyReady = false
-    const ptyFuture: Future<boolean> = new Future()
+  private handleClose = () => {
+    if (this.stopped) {
+      return
+    }
+    this.stop({leaveChannel: false})
+    printExitMessage(chalk.redBright('connection closed, terminated stream.'))
+    exit(3)
+  }
 
-    const channel = options.joinChannel({
-      channel: `teletype:${options.roomKey.roomId}`,
-      params: {
-        username,
-        hostname,
-        multiplexed: options.multiplex,
-      },
-      onJoin: () => {
-        const stdin = options.process.stdin
-        const stdout = options.process.stdout
-        const dimensions = userDimensions[SELF]
+  private handleError = (err?: any) => {
+    this.stop({leaveChannel: false})
+    if (err instanceof Unauthorized) {
+      printExitMessage(chalk.redBright(err.message))
+    } else {
+      printExitMessage(chalk.redBright('connection error, terminated stream.'))
+    }
+    exit(4)
+  }
 
-        console.log(
-          chalk.blue(
-            `${chalk.bold(`${username}@${hostname}`)} Spawning streaming shell: ${chalk.bold(`${options.shell}`)}`,
-          ),
-        )
-
-        term = spawn(options.shell, [], {
-          name: 'xterm-256color',
-          cols: dimensions.cols,
-          rows: dimensions.rows,
-          cwd: options.process.cwd(),
-          env: options.process.env,
-        })
-
-        ptyFuture.promise.then(() => {
-          initScreen(username, hostname, options.shell, options.multiplex)
-          if (options.shell.endsWith('bash')) {
-            stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            term.write("export PS1='📡 [streaming] '$PS1\n")
-          }
-          if (options.shell.endsWith('zsh')) {
-            stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            // FIXME: this doesnt work on macos (or its probably due to some conflict with powerlevel10k)
-            term.write("PROMPT='📡 [streaming] '$PROMPT\n")
-          }
-          if (options.shell.endsWith('fish')) {
-            stdout.write('Adjusting shell prompt to show streaming indicator\n')
-            term.write(
-              'functions -c fish_prompt __orig_fish_prompt; ' +
-                "function fish_prompt; echo -n '📡 [streaming] '; __orig_fish_prompt; end\n",
-            )
-          }
-        })
-
-        // track own dimensions and keep it up to date
-        setInterval(reEvaluateOwnDimensions, 1000)
-
-        term.onData((d: string) => {
-          stdout.write(d)
-
-          if (!ptyReady) {
-            ptyReady = true
-            setTimeout(() => {
-              ptyFuture.resolve!(true)
-            }, 100)
-          }
-
-          if (sessionCount < 2) {
-            // 1 sub for own channel session
-            // < 2 means no subscribers. no point pushing data.
-            return
-          }
-          channel.push('new_msg', {
-            t: MessageType.OUT,
-            b: true,
-            d: encrypt(d, options.roomKey),
-          })
-        })
-        term.onExit(() => {
-          console.log(chalk.blueBright('terminated shell stream to oorja. byee!'))
-          resolve(null)
-        })
-
-        stdin.setEncoding('utf8')
-        stdin.setRawMode!(true)
-
-        stdin.on('data', (d) => term.write(d.toString('utf8')))
-      },
-      onClose: () => {
-        printExitMessage(chalk.redBright('connection closed, terminated stream.'))
-        exit(3)
-      },
-      onError: (err?: any) => {
-        if (err instanceof Unauthorized) {
-          printExitMessage(chalk.redBright(err.message))
+  private handleMessage = ({from: {session}, t, d}: any) => {
+    switch (t) {
+      case MessageType.DIMENSIONS:
+        this.userDimensions[session] = d
+        resizeBestFit(this.term, this.userDimensions, d.initial)
+        break
+      case MessageType.IN: {
+        const data = decrypt(d, this.options.roomKey)
+        const userId = session.split(':')[0]
+        const userType = session.split(':')[2]
+        if (userType === 'task') {
+          this.stop()
+          printExitMessage(
+            chalk.redBright(
+              `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`,
+            ),
+          )
+          exit(5)
+          return
+        }
+        if (this.options.multiplex) {
+          this.term.write(data)
+          return
+        }
+        if (userId === this.options.userId) {
+          this.term.write(data)
         } else {
-          printExitMessage(chalk.redBright('connection error, terminated stream.'))
+          this.stop()
+          printExitMessage(
+            chalk.redBright(
+              `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
+            ),
+          )
+          exit(5)
         }
-        exit(4)
-      },
-      onMessage: ({from: {session}, t, d}) => {
-        switch (t) {
-          case MessageType.DIMENSIONS:
-            userDimensions[session] = d
-            resizeBestFit(term, userDimensions, d.initial)
-            break
-          case MessageType.IN: {
-            const data = decrypt(d, options.roomKey)
-            const userId = session.split(':')[0]
-            const userType = session.split(':')[2]
-            if (userType === 'task') {
-              printExitMessage(
-                chalk.redBright(
-                  `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`,
-                ),
-              )
-              exit(5)
-              return
-            }
-            if (options.multiplex) {
-              term.write(data)
-              return
-            }
-            if (userId === options.userId) {
-              term.write(data)
-            } else {
-              printExitMessage(
-                chalk.redBright(
-                  `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
-                ),
-              )
-              exit(5)
-            }
-            break
-          }
-        }
-      },
-      handleSessionJoin: () => {
-        sessionCount++
-      },
-      handleSessionLeave: (s) => {
-        sessionCount -= 1
-        if (s) {
-          delete userDimensions[s]
-        }
-        resizeBestFit(term, userDimensions)
-      },
-    })
-  })
+        break
+      }
+    }
+  }
+
+  private handleSessionJoin = () => {
+    this.sessionCount++
+  }
+
+  private handleSessionLeave = (s: string) => {
+    this.sessionCount -= 1
+    if (s) {
+      delete this.userDimensions[s]
+    }
+    resizeBestFit(this.term, this.userDimensions)
+  }
+
+  private stop = ({killTerm = true, leaveChannel = true}: {killTerm?: boolean; leaveChannel?: boolean} = {}) => {
+    if (this.stopped) {
+      return
+    }
+    this.stopped = true
+    this.cleanupShell({killTerm})
+    this.cleanupShell = () => {}
+
+    if (leaveChannel) {
+      this.channel.leave(1000)
+    }
+  }
 }

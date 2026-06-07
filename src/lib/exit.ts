@@ -11,6 +11,8 @@
 
 'use strict'
 
+export const CLI_OUTDATED_EXIT_CODE = 42
+
 export function exit(exitCode: number = 0, streams?: any) {
   if (!streams) {
     streams = [process.stdout, process.stderr]
