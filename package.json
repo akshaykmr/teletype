@@ -38,16 +38,21 @@
   ],
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
+    "docs:commands": "pnpm run build && pnpm run docs:commands:generate",
+    "docs:commands:generate": "oclif readme --no-aliases --no-source-links && node scripts/order-readme-commands.mjs",
     "lint": "eslint . --ext .ts",
-    "prepack": "pnpm run build && oclif manifest && oclif readme",
+    "prepack": "pnpm run build && oclif manifest && pnpm run docs:commands:generate",
     "prepare": "pnpm run build",
-    "version": "oclif readme && git add README.md",
+    "version": "pnpm run docs:commands && git add README.md",
     "format": "prettier --write ."
   },
   "oclif": {
     "bin": "oorja",
     "commands": "./dist/commands",
-    "dirname": "oorja"
+    "dirname": "oorja",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
   },
   "dependencies": {
     "@msgpack/msgpack": "3.1.2",

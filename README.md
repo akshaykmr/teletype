@@ -60,43 +60,25 @@ More ways to [contact](https://oorja.io/contact).
 
 
 # Commands
-<!-- commands-disabled -->
-* [`oorja help [COMMAND]`](#oorja-help-command)
-* [`oorja teletype [SPACE]`](#oorja-teletype-space)
+<!-- commands -->
+* [`oorja teletype [STREAMKEY]`](#oorja-teletype-streamkey)
 * [`oorja signout`](#oorja-signout)
+* [`oorja help [COMMAND]`](#oorja-help-command)
 
-## `oorja help [COMMAND]`
-
-Display help for oorja.
-
-```
-USAGE
-  $ oorja help [COMMAND...] [-n]
-
-ARGUMENTS
-  COMMAND...  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for oorja.
-```
-
-## `oorja teletype [STREAM_KEY]`
+## `oorja teletype [STREAMKEY]`
 
 Launch a terminal streaming session in oorja.
 
 ```
 USAGE
-  $ oorja teletype [STREAM_KEY] [-h] [-s <value>] [-m] [-n]
+  $ oorja teletype [STREAMKEY] [-h] [-s <value>] [-m] [-n]
 
 FLAGS
   -h, --help           Show CLI help.
   -m, --multiplex      Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space
                        participants. Off by default
   -n, --new_space      Create new space
-  -s, --shell=<value>  [default: /usr/bin/bash] shell to use. e.g. bash, fish
+  -s, --shell=<value>  shell to use. e.g. bash, fish
 
 DESCRIPTION
   Launch a terminal streaming session in oorja.
@@ -106,13 +88,14 @@ ALIASES
 
 EXAMPLES
   $ teletype
-  Will prompt to choose streaming destination - existing space or create a new one.
+  Will prompt to choose streaming destination - either enter a stream key for an existing space or create a new space.
 
-  $ teletype $stream-key
-  Will stream to the space specified by secret link.
+  $ teletype 'sk-xxxx:space-id#encryption-secret'
+  Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at oorja.io), do not accept them from other people, nor should
+  you share your stream-keys with others.
 
   $ teletype -m
-  Will also allow participants to write to your terminal!
+  Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 ```
 
 ## `oorja signout`
@@ -127,4 +110,23 @@ DESCRIPTION
   Sign-out of oorja. Clears saved auth-token
 ```
 
-<!-- commandsstop-disabled -->
+
+## `oorja help [COMMAND]`
+
+Display help for oorja.
+
+```
+USAGE
+  $ oorja help [COMMAND...] [-n]
+
+ARGUMENTS
+  [COMMAND...]  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for oorja.
+```
+
+<!-- commandsstop -->
