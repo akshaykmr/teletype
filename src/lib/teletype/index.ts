@@ -33,7 +33,7 @@ type TeletypeChannelParams = {
 
 const SELF = 'self'
 
-class TeletypeSession {
+export class TeletypeSession {
   private readonly username = os.userInfo().username
   private readonly hostname = os.hostname()
   private readonly userDimensions: Record<string, dimensions> = {
@@ -61,7 +61,7 @@ class TeletypeSession {
           hostname: this.hostname,
           multiplexed: this.options.multiplex,
         },
-        onJoin: this.handleJoin,
+        onJoin: this.startTerm,
         onClose: this.handleClose,
         onError: this.handleError,
         onMessage: this.handleMessage,
@@ -70,7 +70,7 @@ class TeletypeSession {
       })
     })
 
-  private handleJoin = () => {
+  private startTerm = () => {
     const {stdin, stdout} = this.options.process
     const dimensions = this.userDimensions[SELF]
 
@@ -253,5 +253,3 @@ class TeletypeSession {
     }
   }
 }
-
-export const teletypeApp = (options: TeletypeOptions) => new TeletypeSession(options).run()

@@ -1,6 +1,6 @@
 import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from 'oorja/lib/config'
 import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
-import {teletypeApp, TeletypeOptions} from 'oorja/lib/teletype/index'
+import {TeletypeSession, TeletypeOptions} from 'oorja/lib/teletype/index'
 import {CreateRoomOptions, ConnectClient} from 'oorja/lib/connect/index'
 import {importKey, createRoomKey, exportKey} from 'oorja/lib/encryption'
 import {promptAuth, validateCliVersion} from 'oorja/lib/oorja/preflight'
@@ -46,11 +46,11 @@ export class OORJA {
   }
 
   teletype = (options: Omit<TeletypeOptions, 'userId' | 'joinChannel'>) => {
-    return teletypeApp({
+    return new TeletypeSession({
       userId: this.user!.id,
       joinChannel: this.connectClient.joinChannel,
       ...options,
-    })
+    }).run();
   }
 }
 
