@@ -1,7 +1,14 @@
 import {spawn, IPty} from 'node-pty'
 import * as os from 'os'
 import {RoomKey} from 'oorja/lib/connect/types'
-import {getDimensions, dimensions, initScreen, areDimensionEqual, resizeBestFit} from 'oorja/lib/teletype/auxiliary'
+import {
+  DEFAULT_DIMENSIONS,
+  getDimensions,
+  dimensions,
+  initScreen,
+  areDimensionEqual,
+  resizeBestFit,
+} from 'oorja/lib/teletype/auxiliary'
 import chalk from 'chalk'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {encrypt, decrypt} from 'oorja/lib/encryption'
@@ -36,9 +43,7 @@ const SELF = 'self'
 export class TeletypeSession {
   private readonly username = os.userInfo().username
   private readonly hostname = os.hostname()
-  private readonly userDimensions: Record<string, dimensions> = {
-    [SELF]: getDimensions(),
-  }
+  private readonly userDimensions: Record<string, dimensions> = {}
 
   private channel!: Channel
   private term!: IPty
@@ -72,7 +77,11 @@ export class TeletypeSession {
 
   private startTerm = () => {
     const {stdin, stdout} = this.options.process
-    const dimensions = this.userDimensions[SELF]
+    const shouldReadLocalStdin = stdin.isTTY && typeof stdin.setRawMode === 'function'
+    const dimensions = shouldReadLocalStdin ? getDimensions() : DEFAULT_DIMENSIONS
+    if (shouldReadLocalStdin) {
+      this.userDimensions[SELF] = dimensions
+    }
 
     console.log(
       chalk.blue(
@@ -92,6 +101,9 @@ export class TeletypeSession {
 
     this.ptyFuture.promise.then(() => {
       initScreen(this.username, this.hostname, this.options.shell, this.options.multiplex)
+      if (!shouldReadLocalStdin) {
+        return
+      }
       if (this.options.shell.endsWith('bash')) {
         stdout.write('Adjusting shell prompt to show streaming indicator\n')
         this.term.write("export PS1='📡 [streaming] '$PS1\n")
@@ -140,7 +152,6 @@ export class TeletypeSession {
       this.resolve?.(null)
     })
 
-    const shouldReadLocalStdin = stdin.isTTY && typeof stdin.setRawMode === 'function'
     const stdinDataHandler = (d: Buffer | string) => this.term.write(d.toString('utf8'))
     if (shouldReadLocalStdin) {
       stdin.setEncoding('utf8')
@@ -163,6 +174,9 @@ export class TeletypeSession {
   }
 
   private reEvaluateOwnDimensions = () => {
+    if (!this.userDimensions[SELF]) {
+      return
+    }
     const lastKnown = this.userDimensions[SELF]
     const latest = getDimensions()
 
