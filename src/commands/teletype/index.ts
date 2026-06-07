@@ -4,11 +4,11 @@ import ora from 'ora'
 
 import {hostname, platform} from 'os'
 import chalk from 'chalk'
-import {Config, STREAM_KEY_SAMPLE} from '../../lib/config.js'
-import {App, parseStreamKey} from '../../lib/oorja/index.js'
-import {printExitMessage, promptStreamKey} from '../../lib/utils.js'
-import {Unauthorized} from '../../lib/connect/errors.js'
-import {exit} from '../../lib/exit.js'
+import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
+import {App, parseStreamKey} from 'oorja/lib/oorja/index'
+import {printExitMessage, promptStreamKey} from 'oorja/lib/utils'
+import {Unauthorized} from 'oorja/lib/connect/errors'
+import {exit} from 'oorja/lib/exit'
 
 const DEFAULT_SHELL = platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || 'bash'
 

@@ -1,10 +1,10 @@
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 
-import {CLI_VERSION} from '../config.js'
-import {ConnectClient} from '../connect/index.js'
-import {printExitMessage} from '../utils.js'
-import {exit} from '../exit.js'
+import {CLI_VERSION} from 'oorja/lib/config'
+import {ConnectClient} from 'oorja/lib/connect/index'
+import {printExitMessage} from 'oorja/lib/utils'
+import {exit} from 'oorja/lib/exit'
 
 const promptToken = (): Promise<string> =>
   inquirer

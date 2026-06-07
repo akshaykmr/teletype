@@ -1,5 +1,5 @@
 import {Command} from '@oclif/core'
-import {Config} from '../lib/config.js'
+import {Config} from 'oorja/lib/config'
 export class SignOut extends Command {
   static description = `Sign-out of oorja. Clears saved auth-token`
   async run() {

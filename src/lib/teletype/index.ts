@@ -1,14 +1,14 @@
 import {spawn, IPty} from 'node-pty'
 import * as os from 'os'
-import {RoomKey} from '../connect/types.js'
-import {getDimensions, dimensions, initScreen, areDimensionEqual, resizeBestFit} from './auxiliary.js'
+import {RoomKey} from 'oorja/lib/connect/types'
+import {getDimensions, dimensions, initScreen, areDimensionEqual, resizeBestFit} from 'oorja/lib/teletype/auxiliary'
 import chalk from 'chalk'
-import {Unauthorized} from '../connect/errors.js'
-import {encrypt, decrypt} from '../encryption.js'
-import {JoinChannelOptions} from '../connect/index.js'
+import {Unauthorized} from 'oorja/lib/connect/errors'
+import {encrypt, decrypt} from 'oorja/lib/encryption'
+import {JoinChannelOptions} from 'oorja/lib/connect/index'
 import {Channel} from 'phoenix'
-import {Future, printExitMessage} from '../utils.js'
-import {exit} from '../exit.js'
+import {Future, printExitMessage} from 'oorja/lib/utils'
+import {exit} from 'oorja/lib/exit'
 
 enum MessageType {
   IN = 'i',

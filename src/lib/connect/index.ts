@@ -4,15 +4,15 @@ import {Encoder, Decoder} from '@msgpack/msgpack'
 const encoder = new Encoder()
 const decoder = new Decoder()
 
-import {defaultParser} from './resources.js'
-import {User, RoomApps, Room, CliManifest, NewRoomInviteResponse} from './types.js'
-import {ConnectConfig, env, getConnectConfig} from '../config.js'
-import {Unauthorized, BadRequest} from './errors.js'
+import {defaultParser} from 'oorja/lib/connect/resources'
+import {User, RoomApps, Room, CliManifest, NewRoomInviteResponse} from 'oorja/lib/connect/types'
+import {ConnectConfig, env, getConnectConfig} from 'oorja/lib/config'
+import {Unauthorized, BadRequest} from 'oorja/lib/connect/errors'
 import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
-import {printExitMessage} from '../utils.js'
-import {exit} from '../exit.js'
+import {printExitMessage} from 'oorja/lib/utils'
+import {exit} from 'oorja/lib/exit'
 
 export class ApiClientError extends Error {}
 

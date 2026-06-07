@@ -1,5 +1,5 @@
 import * as crypto from 'crypto'
-import {RoomKey} from './connect/types.js'
+import {RoomKey} from 'oorja/lib/connect/types'
 import {encode, decode} from '@msgpack/msgpack'
 
 export type EncryptedPayload = {
