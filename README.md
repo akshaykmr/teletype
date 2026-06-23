@@ -32,6 +32,8 @@ Your stream can be view-only or collaboration enabled (command-line flag).
   </a> 
 - Package does fail on some systems because of node-pty compilation failures. I'm thinking it's better to package the whole thing
 as a binary in future releases (i.e. not available via npm but via a script or manual install).
+- macOS: if teletype crashes with `Error: posix_spawnp failed.`, node-pty may have installed its helper without execute permissions ([node-pty#850](https://github.com/microsoft/node-pty/issues/850)). This should be fixed by a newer node-pty release. Workaround:
+  `chmod +x "$(npm root -g)"/oorja/node_modules/node-pty/prebuilds/darwin-*/spawn-helper`
 
 - `npm install -g oorja`
 - `teletype`
