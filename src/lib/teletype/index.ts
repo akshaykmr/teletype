@@ -96,8 +96,30 @@ export class TeletypeManager {
     })
 
     this.terms[termId] = teletype
-    teletype.start()
+    try {
+      teletype.start()
+    } catch (error) {
+      this.handleTermStartError(error)
+      return
+    }
     this.broadcastActiveStreams()
+  }
+
+  private handleTermStartError = (error: unknown) => {
+    this.stop({killTerms: false})
+
+    const reason = error instanceof Error ? error.message : String(error)
+    if (this.options.process.platform === 'darwin' && reason.includes('posix_spawnp failed')) {
+      const workaround = 'chmod +x "$(npm root -g)"/oorja/node_modules/node-pty/prebuilds/darwin-*/spawn-helper'
+      printExitMessage(
+        `${chalk.redBright(`Failed to start ${this.options.shell}.`)}\n` +
+          'node-pty may have installed its macOS spawn helper without execute permissions.\n' +
+          `Try running:\n${chalk.yellowBright(workaround)}\n`,
+      )
+    } else {
+      printExitMessage(chalk.redBright(`Failed to start ${this.options.shell}: ${reason}\n`))
+    }
+    exit(6)
   }
 
   private broadcastActiveStreams = () => {
