@@ -10,6 +10,8 @@ import {exit} from 'oorja/lib/exit'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
 import {readlinkSync} from 'fs'
+import {execFileSync} from 'child_process'
+import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 
 enum MessageType {
   IN = 'i',
@@ -18,6 +20,9 @@ enum MessageType {
   NEW_STREAM = 'new_stream',
   STREAM_EXITED = 'stream_exited',
   ACTIVE_STREAMS = 'active_streams',
+  FILE_TRANSFER_INIT = 'file_transfer_init',
+  FILE_TRANSFER = 'file_transfer',
+  FILE_TRANSFER_DONE = 'file_transfer_done',
 }
 
 export type TeletypeOptions = {
@@ -46,6 +51,7 @@ export class TeletypeManager {
   private readonly username = os.userInfo().username
   private readonly hostname = os.hostname()
   private readonly terms: Record<string, Teletype> = {}
+  private readonly fileTransferDirs: Record<string, string> = {}
 
   private channel!: Channel
   private nextTermId = '1'
@@ -204,6 +210,25 @@ export class TeletypeManager {
       return
     }
 
+    if (t === MessageType.FILE_TRANSFER_INIT || t === MessageType.FILE_TRANSFER) {
+      const {userId, userType} = getSessionIdentity(session)
+      if (userId !== this.options.userId || userType === 'task') {
+        return
+      }
+
+      if (t === MessageType.FILE_TRANSFER_INIT) {
+        const cwd = getCwd(this.terms[sid].pid)
+        if (cwd) {
+          this.fileTransferDirs[d.batch_id] = cwd
+        }
+        return
+      }
+
+      const transfer = decrypt(d, this.options.roomKey) as FileTransfer
+      this.receiveFile(sid, transfer, session).catch(console.error)
+      return
+    }
+
     const term = this.terms[sid]
     switch (t) {
       case MessageType.DIMENSIONS:
@@ -216,6 +241,30 @@ export class TeletypeManager {
         term.write(decrypt(d, this.options.roomKey))
         break
       }
+    }
+  }
+
+  private receiveFile = async (sid: string, transfer: FileTransfer, session: string) => {
+    const pushStatus = (status: 'ok' | 'err') =>
+      this.channel.push('new_msg', {
+        to: [{session}],
+        t: MessageType.FILE_TRANSFER_DONE,
+        sid,
+        d: {id: transfer.id, status},
+      })
+
+    const cwd = this.fileTransferDirs[transfer.batch_id]
+    if (!cwd) {
+      pushStatus('err')
+      return
+    }
+
+    try {
+      await downloadTransferredFile(transfer, cwd, this.options.roomKey)
+      pushStatus('ok')
+    } catch (error) {
+      pushStatus('err')
+      throw error
     }
   }
 
@@ -241,8 +290,7 @@ export class TeletypeManager {
   }
 
   private ensureCanWrite = (session: string) => {
-    const userId = session.split(':')[0]
-    const userType = session.split(':')[2]
+    const {userId, userType} = getSessionIdentity(session)
     if (userId === this.options.userId) {
       return true
     }
@@ -280,10 +328,31 @@ export class TeletypeManager {
   }
 }
 
+const getSessionIdentity = (session: string) => {
+  const [userId, , userType] = session.split(':')
+  return {userId, userType}
+}
+
 const getCwd = (pid: number): string | null => {
   try {
     return readlinkSync(`/proc/${pid}/cwd`)
   } catch {
-    return null
+    // /proc is not available on macOS.
   }
+
+  if (process.platform === 'darwin') {
+    try {
+      const output = execFileSync('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn'], {encoding: 'utf8'})
+      return (
+        output
+          .split('\n')
+          .find((line) => line.startsWith('n'))
+          ?.slice(1) || null
+      )
+    } catch {
+      // lsof may be unavailable or unable to inspect the shell process.
+    }
+  }
+
+  return null
 }
