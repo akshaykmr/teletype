@@ -38,11 +38,7 @@ if (firstCommandSection === -1) {
   throw new Error('Could not find generated command sections in README.md')
 }
 
-const tocItems = commandsBody
-  .slice(0, firstCommandSection)
-  .trim()
-  .split('\n')
-  .filter(Boolean)
+const tocItems = commandsBody.slice(0, firstCommandSection).trim().split('\n').filter(Boolean)
 
 const sortedTocItems = sortByCommandOrder(tocItems, (item) => item.match(/\[`([^`]+)`\]/)?.[1] ?? '')
 const commandBlocks = commandsBody

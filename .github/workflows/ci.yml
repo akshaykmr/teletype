@@ -17,7 +17,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: '24'
 
       - name: Set up pnpm
         run: npm install -g pnpm@11.5.2
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
-          PNPM_CONFIG_MINIMUM_RELEASE_AGE: "0"
+          PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
 
       - name: Lint
         run: pnpm run lint
