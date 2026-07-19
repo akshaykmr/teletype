@@ -42,7 +42,7 @@ export class OORJA {
   }
 
   linkForRoom = (roomKey: RoomKey, inviteCode: string): string => {
-    return `${oorjaURL(this.config)}/rooms?id=${roomKey.roomId}&inviteCode=${inviteCode}#${exportKey(roomKey.key)}`
+    return `${oorjaURL(this.config)}/spaces?id=${roomKey.roomId}&inviteCode=${inviteCode}#${exportKey(roomKey.key)}`
   }
 
   getRoomKey(streamKey: StreamKey): RoomKey {

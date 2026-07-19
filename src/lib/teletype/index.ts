@@ -28,7 +28,9 @@ export type TeletypeOptions = {
 type TeletypeChannelParams = {
   username: string
   hostname: string
+  tty: string
   multiplexed: boolean
+  multishell: boolean
 }
 
 export class TeletypeManager {
@@ -52,7 +54,9 @@ export class TeletypeManager {
         params: {
           username: this.username,
           hostname: this.hostname,
+          tty: `${this.username}@${this.hostname}`,
           multiplexed: this.options.multiplex,
+          multishell: false,
         },
         onJoin: this.startTerm,
         onClose: this.handleClose,
