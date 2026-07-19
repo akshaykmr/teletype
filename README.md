@@ -9,11 +9,7 @@ cli tool that allows you to share your terminal online conveniently. Check out [
 
 
 <p align="center">
-  <img width="600" src="https://supakit.app/images/cli-demo.svg">
-</p>
-
-<p align="center">
-  <img src="https://supakit.app/images/teletype-session.png">
+  <img width="800" alt="image" src="https://github.com/user-attachments/assets/b7c70235-2d2d-43e5-a0a0-6778c7d2ce07" />
 </p>
 
 Your stream can be view-only or collaboration enabled (command-line flag).
