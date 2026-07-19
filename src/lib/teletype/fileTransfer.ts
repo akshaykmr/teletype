@@ -27,7 +27,9 @@ export const downloadTransferredFile = async (transfer: FileTransfer, cwd: strin
   } catch (error) {
     try {
       await unlink(temporary)
-    } catch {}
+    } catch {
+      // The temporary file may not have been created yet.
+    }
     throw error
   }
 }

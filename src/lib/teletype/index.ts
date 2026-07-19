@@ -336,7 +336,9 @@ const getSessionIdentity = (session: string) => {
 const getCwd = (pid: number): string | null => {
   try {
     return readlinkSync(`/proc/${pid}/cwd`)
-  } catch {}
+  } catch {
+    // /proc is not available on macOS.
+  }
 
   if (process.platform === 'darwin') {
     try {
@@ -347,7 +349,9 @@ const getCwd = (pid: number): string | null => {
           .find((line) => line.startsWith('n'))
           ?.slice(1) || null
       )
-    } catch {}
+    } catch {
+      // lsof may be unavailable or unable to inspect the shell process.
+    }
   }
 
   return null
