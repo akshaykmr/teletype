@@ -50,12 +50,14 @@ export class TeletypeManager {
   private channel!: Channel
   private nextTermId = '1'
   private readonly viewers = new Set<string>()
-  private readonly ui: MultishellUI
+  private readonly ui?: MultishellUI
   private stopped = false
   private resolve?: (value: null) => void
 
   constructor(private readonly options: TeletypeOptions) {
-    this.ui = new MultishellUI(options.process, options.multishell)
+    if (options.multishell) {
+      this.ui = new MultishellUI(options.process)
+    }
   }
 
   run = () =>
@@ -77,7 +79,7 @@ export class TeletypeManager {
         handleSessionJoin: this.handleSessionJoin,
         handleSessionLeave: this.handleSessionLeave,
       })
-      this.ui.start(this.handleInterrupt)
+      this.ui?.start(this.handleInterrupt)
     })
 
   private startTerm = () => {
@@ -118,7 +120,7 @@ export class TeletypeManager {
       return
     }
     this.broadcastActiveStreams()
-    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+    this.updateUI()
   }
 
   private handleTermExit = (termId: string) => {
@@ -132,7 +134,7 @@ export class TeletypeManager {
     this.broadcastActiveStreams()
 
     if (Object.keys(this.terms).length > 0 || this.options.multishell) {
-      this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+      this.updateUI()
       return
     }
 
@@ -187,6 +189,9 @@ export class TeletypeManager {
 
   private handleMessage = ({from: {session}, sid, t, d}: any) => {
     if (t === MessageType.NEW_STREAM) {
+      if (!this.ensureCanWrite(session)) {
+        return
+      }
       if (!this.options.multishell) {
         console.log(
           chalk.yellowBright('This session is running in single-shell mode. Restart with --multishell to add shells.'),
@@ -205,34 +210,10 @@ export class TeletypeManager {
         term.setDimensions(session, d)
         break
       case MessageType.IN: {
-        const data = decrypt(d, this.options.roomKey)
-        const userId = session.split(':')[0]
-        const userType = session.split(':')[2]
-        if (userType === 'task') {
-          this.stop()
-          printExitMessage(
-            chalk.redBright(
-              `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`,
-            ),
-          )
-          exit(5)
+        if (!this.ensureCanWrite(session)) {
           return
         }
-        if (this.options.multiplex) {
-          term.write(data)
-          return
-        }
-        if (userId === this.options.userId) {
-          term.write(data)
-        } else {
-          this.stop()
-          printExitMessage(
-            chalk.redBright(
-              `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
-            ),
-          )
-          exit(5)
-        }
+        term.write(decrypt(d, this.options.roomKey))
         break
       }
     }
@@ -244,19 +225,45 @@ export class TeletypeManager {
       this.viewers.add(session)
     }
     this.broadcastActiveStreams()
-    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+    this.updateUI()
   }
 
   private handleSessionLeave = (session: string) => {
     this.viewers.delete(session)
     Object.values(this.terms).forEach((term) => term.removeSession(session))
-    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+    this.updateUI()
   }
 
   private handleInterrupt = () => {
     this.stop()
-    this.ui.confirmStopped()
+    this.ui?.confirmStopped()
     this.resolve?.(null)
+  }
+
+  private ensureCanWrite = (session: string) => {
+    const userId = session.split(':')[0]
+    const userType = session.split(':')[2]
+    if (userId === this.options.userId) {
+      return true
+    }
+    if (this.options.multiplex && userType !== 'task') {
+      return true
+    }
+
+    this.stop()
+    printExitMessage(
+      chalk.redBright(
+        userType === 'task'
+          ? `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`
+          : `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
+      ),
+    )
+    exit(5)
+    return false
+  }
+
+  private updateUI = () => {
+    this.ui?.update(Object.keys(this.terms).length, this.viewers.size)
   }
 
   private stop = ({killTerms = true, leaveChannel = true}: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
@@ -264,7 +271,7 @@ export class TeletypeManager {
       return
     }
     this.stopped = true
-    this.ui.stop()
+    this.ui?.stop()
     Object.values(this.terms).forEach((term) => term.stop({killTerm: killTerms}))
 
     if (leaveChannel) {

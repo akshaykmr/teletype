@@ -4,22 +4,16 @@ import {clearLine, cursorTo} from 'readline'
 export class MultishellUI {
   private stopHosting?: () => void
 
-  constructor(
-    private readonly process: NodeJS.Process,
-    private readonly enabled: boolean,
-  ) {}
+  constructor(private readonly process: NodeJS.Process) {}
 
   start(stopHosting: () => void) {
-    if (!this.enabled) {
-      return
-    }
     this.stopHosting = stopHosting
     this.process.once('SIGINT', stopHosting)
   }
 
   update(shells: number, viewers: number) {
     const {stdout} = this.process
-    if (!this.enabled || !stdout.isTTY) {
+    if (!stdout.isTTY) {
       return
     }
 
@@ -35,10 +29,6 @@ export class MultishellUI {
   }
 
   stop() {
-    if (!this.enabled) {
-      return
-    }
-
     if (this.stopHosting) {
       this.process.off('SIGINT', this.stopHosting)
       this.stopHosting = undefined
@@ -51,8 +41,6 @@ export class MultishellUI {
   }
 
   confirmStopped() {
-    if (this.enabled) {
-      this.process.stdout.write(chalk.blueBright('TeleType hosting stopped. All terminal streams have ended.\n'))
-    }
+    this.process.stdout.write(chalk.blueBright('TeleType hosting stopped. All terminal streams have ended.\n'))
   }
 }
