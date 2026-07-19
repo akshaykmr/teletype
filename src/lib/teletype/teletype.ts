@@ -15,6 +15,8 @@ type TeletypeOptions = {
   hostname: string
   shell: string
   multiplex: boolean
+  cwd: string
+  mirrorToLocalTerminal: boolean
   process: NodeJS.Process
   onData: (data: string) => void
   onExit: () => void
@@ -35,29 +37,35 @@ export class Teletype {
 
   start = () => {
     const {stdin, stdout} = this.options.process
-    const shouldReadLocalStdin = stdin.isTTY && typeof stdin.setRawMode === 'function'
+    const shouldReadLocalStdin =
+      this.options.mirrorToLocalTerminal && stdin.isTTY && typeof stdin.setRawMode === 'function'
     const dimensions = shouldReadLocalStdin ? getDimensions() : DEFAULT_DIMENSIONS
     if (shouldReadLocalStdin) {
       this.userDimensions[SELF] = dimensions
     }
 
-    console.log(
-      chalk.blue(
-        `${chalk.bold(`${this.options.username}@${this.options.hostname}`)} Spawning streaming shell: ${chalk.bold(
-          `${this.options.shell}`,
-        )}`,
-      ),
-    )
+    if (this.options.mirrorToLocalTerminal) {
+      console.log(
+        chalk.blue(
+          `${chalk.bold(`${this.options.username}@${this.options.hostname}`)} Spawning streaming shell: ${chalk.bold(
+            `${this.options.shell}`,
+          )}`,
+        ),
+      )
+    }
 
     this.term = spawn(this.options.shell, [], {
       name: 'xterm-256color',
       cols: dimensions.cols,
       rows: dimensions.rows,
-      cwd: this.options.process.cwd(),
+      cwd: this.options.cwd,
       env: this.options.process.env,
     })
 
     this.ptyFuture.promise.then(() => {
+      if (!this.options.mirrorToLocalTerminal) {
+        return
+      }
       initScreen(this.options.username, this.options.hostname, this.options.shell, this.options.multiplex)
       if (!shouldReadLocalStdin) {
         return
@@ -83,7 +91,9 @@ export class Teletype {
     const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
 
     const ptyDataSubscription = this.term.onData((data: string) => {
-      stdout.write(data)
+      if (this.options.mirrorToLocalTerminal) {
+        stdout.write(data)
+      }
 
       if (!this.ptyReady) {
         this.ptyReady = true
@@ -115,6 +125,10 @@ export class Teletype {
         this.term.kill()
       }
     }
+  }
+
+  get pid() {
+    return this.term.pid
   }
 
   write = (data: string) => {

@@ -8,11 +8,15 @@ import {Channel} from 'phoenix'
 import {printExitMessage} from 'oorja/lib/utils'
 import {exit} from 'oorja/lib/exit'
 import {Teletype} from 'oorja/lib/teletype/teletype'
+import {MultishellUI} from 'oorja/lib/teletype/ui'
+import {readlinkSync} from 'fs'
 
 enum MessageType {
   IN = 'i',
   OUT = 'o',
   DIMENSIONS = 'd',
+  NEW_STREAM = 'new_stream',
+  STREAM_EXITED = 'stream_exited',
   ACTIVE_STREAMS = 'active_streams',
 }
 
@@ -21,6 +25,7 @@ export type TeletypeOptions = {
   roomKey: RoomKey
   shell: string
   multiplex: boolean
+  multishell: boolean
   process: NodeJS.Process
   joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
 }
@@ -33,6 +38,10 @@ type TeletypeChannelParams = {
   multishell: boolean
 }
 
+type TeletypeChannelMetas = {
+  metas: [{tty?: string}]
+}
+
 export class TeletypeManager {
   private readonly username = os.userInfo().username
   private readonly hostname = os.hostname()
@@ -40,11 +49,14 @@ export class TeletypeManager {
 
   private channel!: Channel
   private nextTermId = '1'
-  private sessionCount = 0
+  private readonly viewers = new Set<string>()
+  private readonly ui: MultishellUI
   private stopped = false
   private resolve?: (value: null) => void
 
-  constructor(private readonly options: TeletypeOptions) {}
+  constructor(private readonly options: TeletypeOptions) {
+    this.ui = new MultishellUI(options.process, options.multishell)
+  }
 
   run = () =>
     new Promise<null>((resolve) => {
@@ -56,7 +68,7 @@ export class TeletypeManager {
           hostname: this.hostname,
           tty: `${this.username}@${this.hostname}`,
           multiplexed: this.options.multiplex,
-          multishell: false,
+          multishell: this.options.multishell,
         },
         onJoin: this.startTerm,
         onClose: this.handleClose,
@@ -65,9 +77,14 @@ export class TeletypeManager {
         handleSessionJoin: this.handleSessionJoin,
         handleSessionLeave: this.handleSessionLeave,
       })
+      this.ui.start(this.handleInterrupt)
     })
 
   private startTerm = () => {
+    this.start(this.options.process.cwd())
+  }
+
+  private start = (cwd: string) => {
     const termId = this.nextTermId
     this.nextTermId = String(parseInt(termId) + 1)
 
@@ -76,11 +93,11 @@ export class TeletypeManager {
       hostname: this.hostname,
       shell: this.options.shell,
       multiplex: this.options.multiplex,
+      cwd,
+      mirrorToLocalTerminal: !this.options.multishell,
       process: this.options.process,
       onData: (data) => {
-        if (this.sessionCount < 2) {
-          // 1 sub for own channel session
-          // < 2 means no subscribers. no point pushing data.
+        if (this.viewers.size === 0) {
           return
         }
         this.channel.push('new_msg', {
@@ -90,13 +107,7 @@ export class TeletypeManager {
           d: encrypt(data, this.options.roomKey),
         })
       },
-      onExit: () => {
-        this.terms[termId]?.stop({killTerm: false})
-        delete this.terms[termId]
-        console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
-        this.stop({killTerms: false})
-        this.resolve?.(null)
-      },
+      onExit: () => this.handleTermExit(termId),
     })
 
     this.terms[termId] = teletype
@@ -107,6 +118,27 @@ export class TeletypeManager {
       return
     }
     this.broadcastActiveStreams()
+    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+  }
+
+  private handleTermExit = (termId: string) => {
+    this.terms[termId].stop({killTerm: false})
+    delete this.terms[termId]
+    this.channel.push('new_msg', {
+      t: MessageType.STREAM_EXITED,
+      b: true,
+      sid: termId,
+    })
+    this.broadcastActiveStreams()
+
+    if (Object.keys(this.terms).length > 0 || this.options.multishell) {
+      this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+      return
+    }
+
+    this.stop({killTerms: false})
+    console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
+    this.resolve?.(null)
   }
 
   private handleTermStartError = (error: unknown) => {
@@ -154,11 +186,20 @@ export class TeletypeManager {
   }
 
   private handleMessage = ({from: {session}, sid, t, d}: any) => {
-    const term = this.terms[sid]
-    if (!term) {
+    if (t === MessageType.NEW_STREAM) {
+      if (!this.options.multishell) {
+        console.log(
+          chalk.yellowBright('This session is running in single-shell mode. Restart with --multishell to add shells.'),
+        )
+        return
+      }
+      const sourceTerm = this.terms[d.sid]
+      const cwd = sourceTerm ? getCwd(sourceTerm.pid) : null
+      this.start(cwd || this.options.process.cwd())
       return
     }
 
+    const term = this.terms[sid]
     switch (t) {
       case MessageType.DIMENSIONS:
         term.setDimensions(session, d)
@@ -197,14 +238,25 @@ export class TeletypeManager {
     }
   }
 
-  private handleSessionJoin = () => {
-    this.sessionCount++
+  private handleSessionJoin = (session: string, _current: unknown, newMetas: unknown) => {
+    const {metas} = newMetas as TeletypeChannelMetas
+    if (!metas[0].tty) {
+      this.viewers.add(session)
+    }
     this.broadcastActiveStreams()
+    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
   }
 
   private handleSessionLeave = (session: string) => {
-    this.sessionCount -= 1
+    this.viewers.delete(session)
     Object.values(this.terms).forEach((term) => term.removeSession(session))
+    this.ui.update(Object.keys(this.terms).length, this.viewers.size)
+  }
+
+  private handleInterrupt = () => {
+    this.stop()
+    this.ui.confirmStopped()
+    this.resolve?.(null)
   }
 
   private stop = ({killTerms = true, leaveChannel = true}: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
@@ -212,10 +264,19 @@ export class TeletypeManager {
       return
     }
     this.stopped = true
+    this.ui.stop()
     Object.values(this.terms).forEach((term) => term.stop({killTerm: killTerms}))
 
     if (leaveChannel) {
       this.channel.leave(1000)
     }
+  }
+}
+
+const getCwd = (pid: number): string | null => {
+  try {
+    return readlinkSync(`/proc/${pid}/cwd`)
+  } catch {
+    return null
   }
 }
