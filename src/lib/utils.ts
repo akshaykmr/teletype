@@ -5,6 +5,22 @@ export const printExitMessage = (printMessage: string) => {
   writeSync(process.stdout.fd, printMessage)
 }
 
+export const setTerminalTitle = (title: string) => {
+  if (!process.stdout.isTTY) {
+    return
+  }
+
+  const sanitizedTitle = [...title]
+    .filter((character) => {
+      const codePoint = character.codePointAt(0)!
+      return codePoint >= 0x20 && codePoint !== 0x7f && !(codePoint >= 0x80 && codePoint <= 0x9f)
+    })
+    .join('')
+    .slice(0, 254)
+
+  process.stdout.write(`\u001B]2;${sanitizedTitle}\u001B\\`)
+}
+
 export const promptStreamKey = async (): Promise<string> => {
   const {streamKey} = await inquirer.prompt([
     {

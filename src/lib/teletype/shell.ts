@@ -9,7 +9,11 @@ export const getDefaultShell = ({
   platform = process.platform,
   environment = process.env,
 }: DefaultShellOptions): string => {
-  if (ciDebug && platform !== 'win32') return 'bash'
-  if (platform === 'win32') return 'powershell.exe'
+  if (ciDebug && platform !== 'win32') {
+    return 'bash'
+  }
+  if (platform === 'win32') {
+    return 'powershell.exe'
+  }
   return environment.SHELL || 'bash'
 }

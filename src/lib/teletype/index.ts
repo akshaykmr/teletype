@@ -216,7 +216,9 @@ export class TeletypeManager {
 
       if (t === MessageType.FILE_TRANSFER_INIT) {
         const cwd = this.getTermCwd(sid)
-        if (!cwd) return
+        if (!cwd) {
+          return
+        }
         this.fileTransferDirs[d.batch_id] = cwd
         return
       }
@@ -267,7 +269,9 @@ export class TeletypeManager {
 
   private getTermCwd = (termId: string): string | null => {
     const term = this.terms[termId]
-    if (!term) return null
+    if (!term) {
+      return null
+    }
 
     try {
       return getShellCwd(term.pid)

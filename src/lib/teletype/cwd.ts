@@ -15,7 +15,9 @@ export const getShellCwd = (pid: number, platform: NodeJS.Platform = process.pla
         .split('\n')
         .find((line) => line.startsWith('n'))
         ?.slice(1)
-      if (cwd) return cwd
+      if (cwd) {
+        return cwd
+      }
     } catch {
       // Report the common error below.
     }

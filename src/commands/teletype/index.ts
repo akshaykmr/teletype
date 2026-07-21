@@ -6,7 +6,7 @@ import {hostname} from 'os'
 import chalk from 'chalk'
 import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
 import {App, parseStreamKey} from 'oorja/lib/oorja/index'
-import {printExitMessage, promptStreamKey} from 'oorja/lib/utils'
+import {printExitMessage, promptStreamKey, setTerminalTitle} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import {getDefaultShell} from 'oorja/lib/teletype/shell'
@@ -88,6 +88,9 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     const shouldCreateNewSpace = createNewSpace || ciDebug
     const shouldUseAnonymousAuth = anonymous || ciDebug
     const shouldMultiplex = multiplex || ciDebug
+    if (multishell) {
+      setTerminalTitle('TeleType')
+    }
 
     const config = new Config(this.config.configDir)
     const app = new App(config)
@@ -172,7 +175,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       discardStdin: false,
     }).start()
     const now = new Date()
-    const {roomKey, inviteCode} = await oorja
+    const {room, roomKey, inviteCode} = await oorja
       .createRoom({
         roomName: `Teletype session - ${hostname()} @ ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`,
         apps: {
@@ -195,6 +198,9 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         exit(9)
         return Promise.reject()
       })
+    if (multishell) {
+      setTerminalTitle(`TeleType — ${room.name}`)
+    }
     spinner.succeed(chalk.bold('Space created')).clear()
 
     const link = oorja.linkForRoom(roomKey, inviteCode)
