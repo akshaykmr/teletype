@@ -2,15 +2,14 @@ import inquirer from 'inquirer'
 import {Command, Flags, Args} from '@oclif/core'
 import ora from 'ora'
 
-import {hostname, platform} from 'os'
+import {hostname} from 'os'
 import chalk from 'chalk'
 import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
 import {App, parseStreamKey} from 'oorja/lib/oorja/index'
 import {printExitMessage, promptStreamKey} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
-
-const DEFAULT_SHELL = platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || 'bash'
+import {getDefaultShell} from 'oorja/lib/teletype/shell'
 
 export default class TeleTypeCommand extends Command {
   static order = 1
@@ -85,7 +84,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       args,
       flags: {shell: selectedShell, multiplex, multishell, new: createNewSpace, anonymous, 'ci-debug': ciDebug},
     } = await this.parse(TeleTypeCommand)
-    const shell = selectedShell || (ciDebug ? 'bash' : DEFAULT_SHELL)
+    const shell = selectedShell || getDefaultShell({ciDebug})
     const shouldCreateNewSpace = createNewSpace || ciDebug
     const shouldUseAnonymousAuth = anonymous || ciDebug
     const shouldMultiplex = multiplex || ciDebug
