@@ -1,3 +1,3 @@
 @echo off
 
-node "%~dp0\run teletype" %*
+node "%~dp0\teletype.js" %*

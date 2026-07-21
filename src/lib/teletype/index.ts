@@ -9,9 +9,8 @@ import {printExitMessage} from 'oorja/lib/utils'
 import {exit} from 'oorja/lib/exit'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {readlinkSync} from 'fs'
-import {execFileSync} from 'child_process'
 import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
+import {getShellCwd} from 'oorja/lib/teletype/cwd'
 
 enum MessageType {
   IN = 'i',
@@ -204,9 +203,8 @@ export class TeletypeManager {
         )
         return
       }
-      const sourceTerm = this.terms[d.sid]
-      const cwd = sourceTerm ? getCwd(sourceTerm.pid) : null
-      this.start(cwd || this.options.process.cwd())
+      const cwd = this.getTermCwd(d.sid) || this.options.process.cwd()
+      this.start(cwd)
       return
     }
 
@@ -217,10 +215,9 @@ export class TeletypeManager {
       }
 
       if (t === MessageType.FILE_TRANSFER_INIT) {
-        const cwd = getCwd(this.terms[sid].pid)
-        if (cwd) {
-          this.fileTransferDirs[d.batch_id] = cwd
-        }
+        const cwd = this.getTermCwd(sid)
+        if (!cwd) return
+        this.fileTransferDirs[d.batch_id] = cwd
         return
       }
 
@@ -265,6 +262,17 @@ export class TeletypeManager {
     } catch (error) {
       pushStatus('err')
       throw error
+    }
+  }
+
+  private getTermCwd = (termId: string): string | null => {
+    const term = this.terms[termId]
+    if (!term) return null
+
+    try {
+      return getShellCwd(term.pid)
+    } catch {
+      return null
     }
   }
 
@@ -331,28 +339,4 @@ export class TeletypeManager {
 const getSessionIdentity = (session: string) => {
   const [userId, , userType] = session.split(':')
   return {userId, userType}
-}
-
-const getCwd = (pid: number): string | null => {
-  try {
-    return readlinkSync(`/proc/${pid}/cwd`)
-  } catch {
-    // /proc is not available on macOS.
-  }
-
-  if (process.platform === 'darwin') {
-    try {
-      const output = execFileSync('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn'], {encoding: 'utf8'})
-      return (
-        output
-          .split('\n')
-          .find((line) => line.startsWith('n'))
-          ?.slice(1) || null
-      )
-    } catch {
-      // lsof may be unavailable or unable to inspect the shell process.
-    }
-  }
-
-  return null
 }

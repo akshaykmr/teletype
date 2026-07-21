@@ -106,6 +106,7 @@ export class App {
   connectionCheckFuture: Future<void>
 
   private connectClient: ConnectClient | null = null
+  private connectionFallback?: {from: string; to: string}
 
   constructor(private config: Config) {
     this.establishConnection()
@@ -127,6 +128,13 @@ export class App {
       return Promise.reject()
     }
     spinner.succeed('Online')
+    if (this.connectionFallback) {
+      console.warn(
+        chalk.yellowBright(
+          `${this.connectionFallback.from.toUpperCase()} region connection failed; using ${this.connectionFallback.to.toUpperCase()} region for this session.`,
+        ),
+      )
+    }
 
     const oorjaConfig = getoorjaConfig(this.config.getEnv())
     const authMode = options.authMode || 'prompt'
@@ -194,8 +202,18 @@ export class App {
   private establishConnection = async () => {
     try {
       const region = await getRegion()
-      const connectClient = new ConnectClient(this.config.getEnv(), region, this.config.getAccessToken())
-      await validateCliVersion(connectClient)
+      let connectClient = new ConnectClient(this.config.getEnv(), region, this.config.getAccessToken())
+
+      try {
+        await validateCliVersion(connectClient)
+      } catch (error) {
+        if (region === 'us') throw error
+
+        connectClient = new ConnectClient(this.config.getEnv(), 'us', this.config.getAccessToken())
+        await validateCliVersion(connectClient)
+        this.connectionFallback = {from: region, to: 'us'}
+      }
+
       this.connectClient = connectClient
     } catch {
       this.connectionCheckFailed = true
