@@ -1,13 +1,17 @@
 import {spawn, IPty} from 'node-pty'
 import chalk from 'chalk'
+import {emitKeypressEvents} from 'readline'
+import type {Key} from 'readline'
 import {
   DEFAULT_DIMENSIONS,
   getDimensions,
   dimensions,
   initScreen,
+  clearAttachmentScreen,
   areDimensionEqual,
   resizeBestFit,
 } from 'oorja/lib/teletype/auxiliary'
+import {HeadlessTerminal} from 'oorja/lib/teletype/headlessTerminal'
 import {Future} from 'oorja/lib/utils'
 
 type TeletypeOptions = {
@@ -16,20 +20,23 @@ type TeletypeOptions = {
   shell: string
   multiplex: boolean
   cwd: string
-  mirrorToLocalTerminal: boolean
+  localAttachmentEnabled: boolean
   process: NodeJS.Process
   onData: (data: string) => void
   onExit: () => void
 }
 
 const SELF = 'self'
+const ENTER_KEYS = new Set(['enter', 'return'])
 
 export class Teletype {
   private readonly userDimensions: Record<string, dimensions> = {}
 
   private term!: IPty
-  private ptyReady = false
-  private readonly ptyFuture: Future<boolean> = new Future()
+  private attached = false
+  private headlessTerminal?: HeadlessTerminal
+  private readonly ptyFuture: Future<void> = new Future()
+  private ptyReadyTimer?: NodeJS.Timeout
   private stopped = false
   private cleanupShell: (options?: {killTerm?: boolean}) => void = () => {}
 
@@ -37,14 +44,15 @@ export class Teletype {
 
   start = () => {
     const {stdin, stdout} = this.options.process
-    const shouldReadLocalStdin =
-      this.options.mirrorToLocalTerminal && stdin.isTTY && typeof stdin.setRawMode === 'function'
-    const dimensions = shouldReadLocalStdin ? getDimensions() : DEFAULT_DIMENSIONS
-    if (shouldReadLocalStdin) {
+    const supportsRawMode = typeof stdin.setRawMode === 'function'
+    const canAttachLocally = this.options.localAttachmentEnabled && stdin.isTTY && supportsRawMode
+    const dimensions = canAttachLocally ? getDimensions() : DEFAULT_DIMENSIONS
+    if (canAttachLocally) {
       this.userDimensions[SELF] = dimensions
+      this.headlessTerminal = new HeadlessTerminal(dimensions)
     }
 
-    if (this.options.mirrorToLocalTerminal) {
+    if (this.options.localAttachmentEnabled) {
       console.log(
         chalk.blue(
           `${chalk.bold(`${this.options.username}@${this.options.hostname}`)} Spawning streaming shell: ${chalk.bold(
@@ -62,43 +70,20 @@ export class Teletype {
       env: this.options.process.env,
     })
 
-    this.ptyFuture.promise.then(() => {
-      if (!this.options.mirrorToLocalTerminal) {
-        return
-      }
-      initScreen(this.options.username, this.options.hostname, this.options.shell, this.options.multiplex)
-      if (!shouldReadLocalStdin) {
-        return
-      }
-      if (this.options.shell.endsWith('bash')) {
-        stdout.write('Adjusting shell prompt to show streaming indicator\n')
-        this.term.write("export PS1='📡 [streaming] '$PS1\n")
-      }
-      if (this.options.shell.endsWith('zsh')) {
-        stdout.write('Adjusting shell prompt to show streaming indicator\n')
-        // FIXME: this doesnt work on macos (or its probably due to some conflict with powerlevel10k)
-        this.term.write("PROMPT='📡 [streaming] '$PROMPT\n")
-      }
-      if (this.options.shell.endsWith('fish')) {
-        stdout.write('Adjusting shell prompt to show streaming indicator\n')
-        this.term.write(
-          'functions -c fish_prompt __orig_fish_prompt; ' +
-            "function fish_prompt; echo -n '📡 [streaming] '; __orig_fish_prompt; end\n",
-        )
-      }
-    })
-
     const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
 
     const ptyDataSubscription = this.term.onData((data: string) => {
-      if (this.options.mirrorToLocalTerminal) {
-        stdout.write(data)
+      if (canAttachLocally) {
+        if (this.attached) {
+          stdout.write(data)
+        } else {
+          this.headlessTerminal!.write(data)
+        }
       }
 
-      if (!this.ptyReady) {
-        this.ptyReady = true
-        setTimeout(() => {
-          this.ptyFuture.resolve!(true)
+      if (!this.ptyReadyTimer) {
+        this.ptyReadyTimer = setTimeout(() => {
+          this.ptyFuture.resolve!(undefined)
         }, 100)
       }
 
@@ -106,19 +91,27 @@ export class Teletype {
     })
     const ptyExitSubscription = this.term.onExit(this.options.onExit)
 
-    const stdinDataHandler = (data: Buffer | string) => this.term.write(data.toString('utf8'))
-    if (shouldReadLocalStdin) {
+    this.ready.then(() => {
+      if (this.stopped || !canAttachLocally) {
+        return
+      }
+      initScreen(this.options.multiplex)
+      emitKeypressEvents(stdin)
       stdin.setEncoding('utf8')
       stdin.setRawMode(true)
-      stdin.on('data', stdinDataHandler)
-    }
+      stdin.on('keypress', this.handleAttachmentKey)
+    })
 
     this.cleanupShell = ({killTerm = true}: {killTerm?: boolean} = {}) => {
       clearInterval(dimensionPoll)
+      if (this.ptyReadyTimer) {
+        clearTimeout(this.ptyReadyTimer)
+      }
       ptyDataSubscription.dispose()
       ptyExitSubscription.dispose()
-      if (shouldReadLocalStdin) {
-        stdin.off('data', stdinDataHandler)
+      if (canAttachLocally) {
+        stdin.off('keypress', this.handleAttachmentKey)
+        stdin.off('data', this.handleShellInput)
         stdin.setRawMode(false)
       }
       if (killTerm) {
@@ -131,6 +124,28 @@ export class Teletype {
     return this.term.pid
   }
 
+  get ready() {
+    return this.ptyFuture.promise
+  }
+
+  private attach = async () => {
+    const {stdin, stdout} = this.options.process
+    const headlessTerminal = this.headlessTerminal!
+
+    stdin.off('keypress', this.handleAttachmentKey)
+    const snapshot = await headlessTerminal.captureSnapshot()
+    if (this.stopped) {
+      return
+    }
+
+    headlessTerminal.dispose()
+    this.headlessTerminal = undefined
+    this.attached = true
+    clearAttachmentScreen(stdout)
+    stdout.write(snapshot)
+    stdin.on('data', this.handleShellInput)
+  }
+
   write = (data: string) => {
     this.term.write(data)
   }
@@ -138,11 +153,13 @@ export class Teletype {
   setDimensions = (session: string, dimensions: dimensions & {initial?: boolean}) => {
     this.userDimensions[session] = dimensions
     resizeBestFit(this.term, this.userDimensions, dimensions.initial)
+    this.resizeHeadlessTerminal()
   }
 
   removeSession = (session: string) => {
     delete this.userDimensions[session]
     resizeBestFit(this.term, this.userDimensions)
+    this.resizeHeadlessTerminal()
   }
 
   private reEvaluateOwnDimensions = () => {
@@ -157,14 +174,31 @@ export class Teletype {
     }
     this.userDimensions[SELF] = latest
     resizeBestFit(this.term, this.userDimensions)
+    this.resizeHeadlessTerminal()
+  }
+
+  private resizeHeadlessTerminal = () => {
+    this.headlessTerminal?.resize({cols: this.term.cols, rows: this.term.rows})
+  }
+
+  private handleAttachmentKey = (_input: string, key: Key) => {
+    if (key.name && ENTER_KEYS.has(key.name)) {
+      void this.attach()
+      return
+    }
+    if (key.ctrl && key.name === 'c') {
+      this.term.kill()
+    }
+  }
+
+  private handleShellInput = (data: Buffer | string) => {
+    this.term.write(data.toString('utf8'))
   }
 
   stop = ({killTerm = true}: {killTerm?: boolean} = {}) => {
-    if (this.stopped) {
-      return
-    }
     this.stopped = true
+    this.headlessTerminal?.dispose()
+    this.headlessTerminal = undefined
     this.cleanupShell({killTerm})
-    this.cleanupShell = () => {}
   }
 }

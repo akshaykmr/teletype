@@ -101,7 +101,7 @@ export class TeletypeManager {
       shell: this.options.shell,
       multiplex: this.options.multiplex,
       cwd,
-      mirrorToLocalTerminal: !this.options.multishell,
+      localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,
       onData: (data) => {
         if (this.viewers.size === 0) {
