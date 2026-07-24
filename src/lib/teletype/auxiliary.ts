@@ -14,12 +14,14 @@ export const initScreen = (username: string, hostname: string, shell: string, mu
   if (multiplexed) {
     console.log(chalk.yellowBright('You have allowed room participants to write to your shell'))
   }
+
   console.log(
     `Note: Your shell size may adjust for optimum viewing experience for all participants.\n
 This session is end-to-end encrypted.
 
 ${chalk.blueBright('┌─ Control your shell')}
-${chalk.blueBright('│')} You can control this shell from the web using your stream link.
+${chalk.blueBright('│')} Everyone in the space can view this shell on the web.
+${chalk.blueBright('│')} Anyone with write access can also control it there.
 ${chalk.blueBright('│')} If you prefer this terminal, press ${chalk.yellowBright('Enter')} to attach here.
 ${chalk.blueBright('│')} Once attached, run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright(
       'Ctrl-D',
