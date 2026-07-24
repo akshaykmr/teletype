@@ -47,7 +47,6 @@ export class Teletype {
     const canAttachLocally = this.options.localAttachmentEnabled && stdin.isTTY && supportsRawMode
     const dimensions = canAttachLocally ? getDimensions() : DEFAULT_DIMENSIONS
     if (canAttachLocally) {
-      this.userDimensions[SELF] = dimensions
       this.headlessTerminal = new HeadlessTerminal(dimensions)
     }
 
@@ -122,6 +121,9 @@ export class Teletype {
     const headlessTerminal = this.headlessTerminal!
 
     stdin.off('keypress', this.handleAttachmentKey)
+    this.userDimensions[SELF] = getDimensions()
+    resizeBestFit(this.term, this.userDimensions)
+    this.resizeHeadlessTerminal()
     const snapshot = await headlessTerminal.captureSnapshot()
     if (this.stopped) {
       return
@@ -152,7 +154,7 @@ export class Teletype {
   }
 
   private reEvaluateOwnDimensions = () => {
-    if (!this.userDimensions[SELF]) {
+    if (!this.attached) {
       return
     }
     const lastKnown = this.userDimensions[SELF]
