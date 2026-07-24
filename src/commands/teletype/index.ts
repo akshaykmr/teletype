@@ -204,7 +204,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     spinner.succeed(chalk.bold('Space created')).clear()
 
     const link = oorja.linkForRoom(roomKey, inviteCode)
-    console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`)
+    console.log(`\n${chalk.bold('Your stream link:')}\n${chalk.bold(chalk.blueBright(link))}\n`)
     if (anonymous && multiplex) {
       console.log(chalk.yellowBright('Anyone with this link can access and write to this shell. Share it carefully.'))
     }
@@ -222,7 +222,6 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         ),
       )
     }
-    console.log(chalk.bold("^^ You'll be streaming here ^^"))
     this.clearstdin()
     return await oorja.teletype({roomKey, shell, multiplex, multishell, process})
   }

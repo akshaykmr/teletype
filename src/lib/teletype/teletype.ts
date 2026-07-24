@@ -1,5 +1,4 @@
 import {spawn, IPty} from 'node-pty'
-import chalk from 'chalk'
 import {emitKeypressEvents} from 'readline'
 import type {Key} from 'readline'
 import {
@@ -52,16 +51,6 @@ export class Teletype {
       this.headlessTerminal = new HeadlessTerminal(dimensions)
     }
 
-    if (this.options.localAttachmentEnabled) {
-      console.log(
-        chalk.blue(
-          `${chalk.bold(`${this.options.username}@${this.options.hostname}`)} Spawning streaming shell: ${chalk.bold(
-            `${this.options.shell}`,
-          )}`,
-        ),
-      )
-    }
-
     this.term = spawn(this.options.shell, [], {
       name: 'xterm-256color',
       cols: dimensions.cols,
@@ -95,7 +84,7 @@ export class Teletype {
       if (this.stopped || !canAttachLocally) {
         return
       }
-      initScreen(this.options.multiplex)
+      initScreen(this.options.username, this.options.hostname, this.options.shell, this.options.multiplex)
       emitKeypressEvents(stdin)
       stdin.setEncoding('utf8')
       stdin.setRawMode(true)
