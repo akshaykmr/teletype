@@ -19,6 +19,7 @@ type TeletypeOptions = {
   hostname: string
   shell: string
   multiplex: boolean
+  streamingIndicator: boolean
   cwd: string
   localAttachmentEnabled: boolean
   process: NodeJS.Process
@@ -51,13 +52,17 @@ export class Teletype {
       this.headlessTerminal = new HeadlessTerminal(dimensions)
     }
 
-    this.term = spawnStreamingShell(this.options.shell, {
-      name: 'xterm-256color',
-      cols: dimensions.cols,
-      rows: dimensions.rows,
-      cwd: this.options.cwd,
-      env: this.options.process.env,
-    })
+    this.term = spawnStreamingShell(
+      this.options.shell,
+      {
+        name: 'xterm-256color',
+        cols: dimensions.cols,
+        rows: dimensions.rows,
+        cwd: this.options.cwd,
+        env: this.options.process.env,
+      },
+      this.options.streamingIndicator,
+    )
 
     const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
 

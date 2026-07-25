@@ -30,6 +30,7 @@ export type TeletypeOptions = {
   shell: string
   multiplex: boolean
   multishell: boolean
+  streamingIndicator: boolean
   process: NodeJS.Process
   joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
 }
@@ -100,6 +101,7 @@ export class TeletypeManager {
       hostname: this.hostname,
       shell: this.options.shell,
       multiplex: this.options.multiplex,
+      streamingIndicator: this.options.streamingIndicator,
       cwd,
       localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,

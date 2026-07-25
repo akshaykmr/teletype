@@ -18,9 +18,10 @@ type ShellLaunch = {
 export const spawnStreamingShell = (
   shell: string,
   options: PtyOptions,
+  streamingIndicator: boolean = true,
   platform: NodeJS.Platform = process.platform,
 ): IPty => {
-  const launch = prepareShell(shell, options.env, platform)
+  const launch = streamingIndicator ? prepareShell(shell, options.env, platform) : {args: [], env: options.env}
   try {
     const term = spawn(shell, launch.args, {...options, env: launch.env})
     if (launch.cleanup) {
