@@ -70,16 +70,18 @@ Launch a terminal streaming session in SupaKit.
 ```
 USAGE
   $ oorja teletype [STREAMKEY] [-h] [-s <value>] [-m] [--multishell] [-n] [--anonymous] [--ci-debug]
+    [--streaming-indicator enabled|disabled]
 
 FLAGS
-  -h, --help           Show CLI help.
-  -m, --multiplex      Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space
-                       participants. Off by default
-  -n, --new            Create a new space
-  -s, --shell=<value>  shell to use. e.g. bash, fish
-      --anonymous      Create an anonymous session without prompting for sign-in.
-      --ci-debug       Create a new anonymous writable bash stream for CI debugging.
-      --multishell     Allow this CLI session to host multiple terminal shells. Off by default
+  -h, --help                          Show CLI help.
+  -m, --multiplayer                   Allow space participants to type into and control this shell.
+  -n, --new                           Create a new space
+  -s, --shell=<value>                 shell to use. e.g. bash, fish
+      --anonymous                     Create an anonymous session without prompting for sign-in.
+      --ci-debug                      Create a new anonymous writable bash stream for CI debugging.
+      --multishell                    Allow this CLI session to host multiple terminal shells. Off by default
+      --streaming-indicator=<option>  [default: enabled] Prefix the shell prompt with a streaming indicator.
+                                      <options: enabled|disabled>
 
 DESCRIPTION
   Launch a terminal streaming session in SupaKit.
@@ -95,7 +97,7 @@ EXAMPLES
   Will stream to the space using the secret stream-key. NOTE: stream-keys are personal (generated for you in the teletype app at supakit.app), do not accept them from other people, nor should
   you share your stream-keys with others.
 
-  $ teletype -m
+  $ teletype --multiplayer
   Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 
   $ teletype --multishell

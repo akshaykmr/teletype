@@ -1,20 +1,40 @@
 import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
+import {clearScreenDown, cursorTo} from 'readline'
 
 export const DEFAULT_DIMENSIONS: dimensions = {rows: 24, cols: 80}
 
 export const initScreen = (username: string, hostname: string, shell: string, multiplexed: boolean) => {
-  console.log(chalk.bold(chalk.blueBright('TeleType')))
+  console.log(
+    `${chalk.greenBright('✔')} ${chalk.bold(chalk.blueBright('TeleType'))} ${chalk.greenBright('is streaming')}`,
+  )
+  console.log(`  ${chalk.bold(`${username}@${hostname}`)} ${chalk.dim(' • ')} ${chalk.bold(shell)}\n`)
 
   if (multiplexed) {
     console.log(chalk.yellowBright('You have allowed room participants to write to your shell'))
   }
+
   console.log(
     `Note: Your shell size may adjust for optimum viewing experience for all participants.\n
 This session is end-to-end encrypted.
-To terminate stream run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright('ctrl-d')} \n`,
+
+${chalk.blueBright('┌─ Control your shell')}
+${chalk.blueBright('│')} Everyone in the space can view this shell on the web.
+${chalk.blueBright('│')} Anyone with write access can also control it there.
+${chalk.blueBright('│')} If you prefer this terminal, press ${chalk.yellowBright('Enter')} to attach here.
+${chalk.blueBright('│')} Once attached, run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright(
+      'Ctrl-D',
+    )} to stop streaming.
+${chalk.blueBright('└─')}
+
+Press ${chalk.yellowBright('Ctrl-C')} now to stop streaming.\n`,
   )
+}
+
+export const clearAttachmentScreen = (stdout: NodeJS.WriteStream) => {
+  cursorTo(stdout, 0, 0)
+  clearScreenDown(stdout)
 }
 
 export type dimensions = {

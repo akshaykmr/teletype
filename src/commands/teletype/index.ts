@@ -26,7 +26,7 @@ Will stream to the space using the secret stream-key. NOTE: stream-keys are pers
 you share your stream-keys with others.
 
 `,
-    `${chalk.blueBright('$ teletype -m')}
+    `${chalk.blueBright('$ teletype --multiplayer')}
 Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 
 `,
@@ -47,10 +47,11 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       char: 's',
       description: 'shell to use. e.g. bash, fish',
     }),
-    multiplex: Flags.boolean({
+    multiplayer: Flags.boolean({
+      aliases: ['multiplex'],
       char: 'm',
-      description:
-        'Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space participants. Off by default',
+      deprecateAliases: true,
+      description: 'Allow space participants to type into and control this shell.',
       default: false,
     }),
     multishell: Flags.boolean({
@@ -73,6 +74,11 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       description: 'Create a new anonymous writable bash stream for CI debugging.',
       default: false,
     }),
+    'streaming-indicator': Flags.string({
+      description: 'Prefix the shell prompt with a streaming indicator.',
+      options: ['enabled', 'disabled'],
+      default: 'enabled',
+    }),
   }
 
   static args = {
@@ -82,12 +88,21 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
   async run() {
     const {
       args,
-      flags: {shell: selectedShell, multiplex, multishell, new: createNewSpace, anonymous, 'ci-debug': ciDebug},
+      flags: {
+        shell: selectedShell,
+        multiplayer,
+        multishell,
+        new: createNewSpace,
+        anonymous,
+        'ci-debug': ciDebug,
+        'streaming-indicator': streamingIndicatorSetting,
+      },
     } = await this.parse(TeleTypeCommand)
+    const streamingIndicator = streamingIndicatorSetting === 'enabled'
     const shell = selectedShell || getDefaultShell({ciDebug})
     const shouldCreateNewSpace = createNewSpace || ciDebug
     const shouldUseAnonymousAuth = anonymous || ciDebug
-    const shouldMultiplex = multiplex || ciDebug
+    const shouldMultiplex = multiplayer || ciDebug
     if (multishell) {
       setTerminalTitle('TeleType')
     }
@@ -100,6 +115,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         shell,
         multiplex: shouldMultiplex,
         multishell,
+        streamingIndicator,
         streamKey: args.streamKey,
       })
       exit(0)
@@ -110,6 +126,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         multiplex: shouldMultiplex,
         multishell,
         anonymous: shouldUseAnonymousAuth,
+        streamingIndicator,
       })
       exit(0)
     }
@@ -130,7 +147,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     ])
     switch (answer) {
       case STREAM_USING_STREAM_KEY:
-        await this.streamUsingStreamKey(app, {shell, multiplex: shouldMultiplex, multishell})
+        await this.streamUsingStreamKey(app, {shell, multiplex: shouldMultiplex, multishell, streamingIndicator})
         break
       case STREAM_TO_NEW_SPACE:
         await this.createRoomAndStream(app, {
@@ -138,6 +155,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
           multiplex: shouldMultiplex,
           multishell,
           anonymous: shouldUseAnonymousAuth,
+          streamingIndicator,
         })
         break
     }
@@ -146,7 +164,13 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
 
   private async streamUsingStreamKey(
     app: App,
-    options: {shell: string; multiplex: boolean; multishell: boolean; streamKey?: string},
+    options: {
+      shell: string
+      multiplex: boolean
+      multishell: boolean
+      streamingIndicator: boolean
+      streamKey?: string
+    },
   ) {
     const streamKey: string = options.streamKey || (await promptStreamKey())
     if (!streamKey) {
@@ -167,7 +191,14 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       multiplex,
       multishell,
       anonymous,
-    }: {shell: string; multiplex: boolean; multishell: boolean; anonymous: boolean},
+      streamingIndicator,
+    }: {
+      shell: string
+      multiplex: boolean
+      multishell: boolean
+      anonymous: boolean
+      streamingIndicator: boolean
+    },
   ) {
     const oorja = await app.init({authMode: anonymous ? 'anonymous' : 'prompt'})
     const spinner = ora({
@@ -204,27 +235,26 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     spinner.succeed(chalk.bold('Space created')).clear()
 
     const link = oorja.linkForRoom(roomKey, inviteCode)
-    console.log(`\n${chalk.bold(chalk.blueBright(link))}\n`)
+    console.log(`\n${chalk.bold('Your stream link:')}\n${chalk.bold(chalk.blueBright(link))}\n`)
     if (anonymous && multiplex) {
       console.log(chalk.yellowBright('Anyone with this link can access and write to this shell. Share it carefully.'))
     }
     if (anonymous && !multiplex && multishell) {
       console.log(
         chalk.yellowBright(
-          'Anonymous multi-shell sessions require --multiplex for web control. Restart with --multiplex, or sign in to keep the session view-only while controlling it from your account.',
+          'Anonymous multi-shell sessions require --multiplayer for web control. Restart with --multiplayer, or sign in to keep the session view-only while controlling it from your account.',
         ),
       )
     }
     if (anonymous && !multiplex && !multishell) {
       console.log(
         chalk.yellowBright(
-          'Anonymous view-only streams can only be controlled from this local terminal. To control the shell from the web app, restart with --multiplex or sign in.',
+          'Anonymous view-only streams can only be controlled from this local terminal. To control the shell from the web app, restart with --multiplayer or sign in.',
         ),
       )
     }
-    console.log(chalk.bold("^^ You'll be streaming here ^^"))
     this.clearstdin()
-    return await oorja.teletype({roomKey, shell, multiplex, multishell, process})
+    return await oorja.teletype({roomKey, shell, multiplex, multishell, streamingIndicator, process})
   }
 
   private clearstdin() {
