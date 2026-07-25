@@ -26,7 +26,7 @@ Will stream to the space using the secret stream-key. NOTE: stream-keys are pers
 you share your stream-keys with others.
 
 `,
-    `${chalk.blueBright('$ teletype -m')}
+    `${chalk.blueBright('$ teletype --multiplayer')}
 Will also allow participants to write to your terminal! Collaboration mode must be explicitly enabled.
 
 `,
@@ -47,10 +47,11 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       char: 's',
       description: 'shell to use. e.g. bash, fish',
     }),
-    multiplex: Flags.boolean({
+    multiplayer: Flags.boolean({
+      aliases: ['multiplex'],
       char: 'm',
-      description:
-        'Allows users to WRITE TO YOUR SHELL i.e enables collaboration mode. Make sure you trust space participants. Off by default',
+      deprecateAliases: true,
+      description: 'Allow space participants to type into and control this shell.',
       default: false,
     }),
     multishell: Flags.boolean({
@@ -89,7 +90,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       args,
       flags: {
         shell: selectedShell,
-        multiplex,
+        multiplayer,
         multishell,
         new: createNewSpace,
         anonymous,
@@ -101,7 +102,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     const shell = selectedShell || getDefaultShell({ciDebug})
     const shouldCreateNewSpace = createNewSpace || ciDebug
     const shouldUseAnonymousAuth = anonymous || ciDebug
-    const shouldMultiplex = multiplex || ciDebug
+    const shouldMultiplex = multiplayer || ciDebug
     if (multishell) {
       setTerminalTitle('TeleType')
     }
@@ -241,14 +242,14 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     if (anonymous && !multiplex && multishell) {
       console.log(
         chalk.yellowBright(
-          'Anonymous multi-shell sessions require --multiplex for web control. Restart with --multiplex, or sign in to keep the session view-only while controlling it from your account.',
+          'Anonymous multi-shell sessions require --multiplayer for web control. Restart with --multiplayer, or sign in to keep the session view-only while controlling it from your account.',
         ),
       )
     }
     if (anonymous && !multiplex && !multishell) {
       console.log(
         chalk.yellowBright(
-          'Anonymous view-only streams can only be controlled from this local terminal. To control the shell from the web app, restart with --multiplex or sign in.',
+          'Anonymous view-only streams can only be controlled from this local terminal. To control the shell from the web app, restart with --multiplayer or sign in.',
         ),
       )
     }
