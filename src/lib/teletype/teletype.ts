@@ -1,4 +1,4 @@
-import {spawn, IPty} from 'node-pty'
+import {IPty} from 'node-pty'
 import {emitKeypressEvents} from 'readline'
 import type {Key} from 'readline'
 import {
@@ -11,6 +11,7 @@ import {
   resizeBestFit,
 } from 'oorja/lib/teletype/auxiliary'
 import {HeadlessTerminal} from 'oorja/lib/teletype/headlessTerminal'
+import {spawnStreamingShell} from 'oorja/lib/teletype/prompt'
 import {Future} from 'oorja/lib/utils'
 
 type TeletypeOptions = {
@@ -50,7 +51,7 @@ export class Teletype {
       this.headlessTerminal = new HeadlessTerminal(dimensions)
     }
 
-    this.term = spawn(this.options.shell, [], {
+    this.term = spawnStreamingShell(this.options.shell, {
       name: 'xterm-256color',
       cols: dimensions.cols,
       rows: dimensions.rows,
