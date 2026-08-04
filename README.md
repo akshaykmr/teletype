@@ -7,10 +7,14 @@ cli tool that allows you to share your terminal online conveniently. Check out [
 [![Downloads/week](https://img.shields.io/npm/dw/oorja.svg)](https://npmjs.org/package/oorja)
 [![Follow](https://img.shields.io/twitter/follow/oorja_app?style=social)](https://twitter.com/oorja_app)
 
-
 <p align="center">
-  <img width="800" alt="image" src="https://github.com/user-attachments/assets/b7c70235-2d2d-43e5-a0a0-6778c7d2ce07" />
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/781bb955-c20c-4fed-b015-b6b66a35a995">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/128ac6df-3e87-4dba-b9da-1de9160a3127">
+    <img width="900" alt="image" src="https://github.com/user-attachments/assets/128ac6df-3e87-4dba-b9da-1de9160a3127">
+  </picture>
 </p>
+
 
 Your stream can be view-only or collaboration enabled (command-line flag).
 
