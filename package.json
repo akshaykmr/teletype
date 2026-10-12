@@ -37,7 +37,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist', {recursive: true, force: true})\" && tsc -b",
+    "build": "shx rm -rf dist && tsc -b",
     "docs:commands": "pnpm run build && pnpm run docs:commands:generate",
     "docs:commands:generate": "oclif readme --no-aliases --no-source-links && node scripts/order-readme-commands.mjs",
     "lint": "eslint . --ext .ts",
@@ -82,6 +82,7 @@
     "globals": "^17.13.0",
     "oclif": "^6.0.6",
     "prettier": "^3.9.10",
+    "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1"

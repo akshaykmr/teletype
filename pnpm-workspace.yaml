@@ -4,6 +4,3 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - http-cache-semantics@4.3.0
-
-overrides:
-  katex: 0.18.2
