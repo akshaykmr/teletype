@@ -140,7 +140,7 @@ export class App {
     const authMode = options.authMode || 'prompt'
     const isControlledMode = authMode !== 'anonymous' && this.config.hasInjectedAccessToken()
 
-    let user: UserProfile | undefined = undefined
+    let user: UserProfile | undefined
 
     try {
       if (!streamKey) {
