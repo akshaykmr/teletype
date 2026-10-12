@@ -6,7 +6,8 @@
     "rootDir": "src",
     "strict": true,
     "target": "es2023",
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "types": ["node"]
   },
   "include": ["./src/**/*"],
   "ts-node": {

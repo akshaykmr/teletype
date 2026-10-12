@@ -61,7 +61,7 @@ export class ConnectClient {
       return response
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        throw new Error('Request timed out')
+        throw new Error('Request timed out', {cause: error})
       }
       throw error // Re-throw other errors (like the custom {response} or network errors)
     } finally {
