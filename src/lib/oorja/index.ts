@@ -1,3 +1,7 @@
+import path from 'node:path'
+
+import type {HarnessRuntime} from 'oorja-harness-host'
+
 import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from 'oorja/lib/config'
 import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
 import {TeletypeManager, TeletypeOptions} from 'oorja/lib/teletype/index'
@@ -10,6 +14,7 @@ import {Future, printExitMessage} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import chalk from 'chalk'
+import {HarnessHostRunner} from 'oorja/lib/oorja/harnessHost'
 
 export class InvalidRoomLink extends Error {}
 
@@ -26,6 +31,8 @@ export class OORJA {
     private config: oorjaConfig,
     private connectClient: ConnectClient,
     public user: UserProfile,
+    private machineId: string,
+    private stateDirectory: string,
   ) {}
 
   createRoom = async (options: CreateRoomOptions) => {
@@ -52,10 +59,22 @@ export class OORJA {
     }
   }
 
-  teletype = (options: Omit<TeletypeOptions, 'userId' | 'joinChannel'>) => {
+  teletype = (options: Omit<TeletypeOptions, 'userId' | 'machineId' | 'joinChannel' | 'harnessStateDirectory'>) => {
     return new TeletypeManager({
       userId: this.user!.id,
+      machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
+      harnessStateDirectory: path.join(this.stateDirectory, 'harness-host'),
+      ...options,
+    }).run()
+  }
+
+  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; runtimes: HarnessRuntime[]}) => {
+    return new HarnessHostRunner({
+      userId: this.user!.id,
+      machineId: this.machineId,
+      joinChannel: this.connectClient.joinChannel,
+      resumeStateDirectory: path.join(this.stateDirectory, 'harness-host'),
       ...options,
     }).run()
   }
@@ -196,7 +215,13 @@ export class App {
       console.log(chalk.yellowBright("You're an anonymous user. CLI will not remember the auth-token"))
     }
     await this.socketConnect()
-    return new OORJA(oorjaConfig, this.connectClient!, user!)
+    return new OORJA(
+      oorjaConfig,
+      this.connectClient!,
+      user!,
+      this.config.getMachineId(),
+      this.config.getStateDirectory(),
+    )
   }
 
   private establishConnection = async () => {

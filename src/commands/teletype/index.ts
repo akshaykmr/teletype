@@ -79,6 +79,10 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       options: ['enabled', 'disabled'],
       default: 'enabled',
     }),
+    'harness-host': Flags.boolean({
+      description: 'Allow this machine to run agent sessions for this space.',
+      default: false,
+    }),
   }
 
   static args = {
@@ -96,6 +100,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         anonymous,
         'ci-debug': ciDebug,
         'streaming-indicator': streamingIndicatorSetting,
+        'harness-host': harnessHost,
       },
     } = await this.parse(TeleTypeCommand)
     const streamingIndicator = streamingIndicatorSetting === 'enabled'
@@ -116,6 +121,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         multiplex: shouldMultiplex,
         multishell,
         streamingIndicator,
+        harnessHost,
         streamKey: args.streamKey,
       })
       exit(0)
@@ -127,6 +133,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         multishell,
         anonymous: shouldUseAnonymousAuth,
         streamingIndicator,
+        harnessHost,
       })
       exit(0)
     }
@@ -147,7 +154,13 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     ])
     switch (answer) {
       case STREAM_USING_STREAM_KEY:
-        await this.streamUsingStreamKey(app, {shell, multiplex: shouldMultiplex, multishell, streamingIndicator})
+        await this.streamUsingStreamKey(app, {
+          shell,
+          multiplex: shouldMultiplex,
+          multishell,
+          streamingIndicator,
+          harnessHost,
+        })
         break
       case STREAM_TO_NEW_SPACE:
         await this.createRoomAndStream(app, {
@@ -156,6 +169,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
           multishell,
           anonymous: shouldUseAnonymousAuth,
           streamingIndicator,
+          harnessHost,
         })
         break
     }
@@ -169,6 +183,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       multiplex: boolean
       multishell: boolean
       streamingIndicator: boolean
+      harnessHost: boolean
       streamKey?: string
     },
   ) {
@@ -192,12 +207,14 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       multishell,
       anonymous,
       streamingIndicator,
+      harnessHost,
     }: {
       shell: string
       multiplex: boolean
       multishell: boolean
       anonymous: boolean
       streamingIndicator: boolean
+      harnessHost: boolean
     },
   ) {
     const oorja = await app.init({authMode: anonymous ? 'anonymous' : 'prompt'})
@@ -254,7 +271,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       )
     }
     this.clearstdin()
-    return await oorja.teletype({roomKey, shell, multiplex, multishell, streamingIndicator, process})
+    return await oorja.teletype({roomKey, shell, multiplex, multishell, streamingIndicator, harnessHost, process})
   }
 
   private clearstdin() {

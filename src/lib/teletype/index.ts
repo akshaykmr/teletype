@@ -1,16 +1,19 @@
 import * as os from 'os'
-import {RoomKey} from 'oorja/lib/connect/types'
 import chalk from 'chalk'
-import {Unauthorized} from 'oorja/lib/connect/errors'
-import {encrypt, decrypt} from 'oorja/lib/encryption'
-import {JoinChannelOptions} from 'oorja/lib/connect/index'
+import type {HarnessCommand, HarnessHost} from 'oorja-harness-host'
 import {Channel} from 'phoenix'
-import {printExitMessage} from 'oorja/lib/utils'
+
+import {Unauthorized} from 'oorja/lib/connect/errors'
+import {JoinChannelOptions} from 'oorja/lib/connect/index'
+import {RoomKey} from 'oorja/lib/connect/types'
+import {encrypt, decrypt} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
+import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
+import {getShellCwd} from 'oorja/lib/teletype/cwd'
+import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
-import {getShellCwd} from 'oorja/lib/teletype/cwd'
+import {printExitMessage} from 'oorja/lib/utils'
 
 enum MessageType {
   IN = 'i',
@@ -22,15 +25,19 @@ enum MessageType {
   FILE_TRANSFER_INIT = 'file_transfer_init',
   FILE_TRANSFER = 'file_transfer',
   FILE_TRANSFER_DONE = 'file_transfer_done',
+  HARNESS = 'harness',
 }
 
 export type TeletypeOptions = {
   userId: string
+  machineId: string
   roomKey: RoomKey
   shell: string
   multiplex: boolean
   multishell: boolean
   streamingIndicator: boolean
+  harnessHost: boolean
+  harnessStateDirectory: string
   process: NodeJS.Process
   joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
 }
@@ -41,6 +48,7 @@ type TeletypeChannelParams = {
   tty: string
   multiplexed: boolean
   multishell: boolean
+  harness_host: boolean
 }
 
 type TeletypeChannelMetas = {
@@ -57,6 +65,7 @@ export class TeletypeManager {
   private nextTermId = '1'
   private readonly viewers = new Set<string>()
   private readonly ui?: MultishellUI
+  private harnessHost?: HarnessHost
   private stopped = false
   private resolve?: (value: null) => void
 
@@ -66,8 +75,10 @@ export class TeletypeManager {
     }
   }
 
-  run = () =>
-    new Promise<null>((resolve) => {
+  run = async () => {
+    if (this.options.harnessHost) await this.startHarnessHost()
+
+    return new Promise<null>((resolve) => {
       this.resolve = resolve
       this.channel = this.options.joinChannel({
         channel: `teletype:${this.options.roomKey.roomId}`,
@@ -77,6 +88,7 @@ export class TeletypeManager {
           tty: `${this.username}@${this.hostname}`,
           multiplexed: this.options.multiplex,
           multishell: this.options.multishell,
+          harness_host: this.options.harnessHost,
         },
         onJoin: this.startTerm,
         onClose: this.handleClose,
@@ -87,9 +99,31 @@ export class TeletypeManager {
       })
       this.ui?.start(this.handleInterrupt)
     })
+  }
+
+  private startHarnessHost = async () => {
+    const {HarnessHost, createFileResumeStateStore, createHarnessRuntimes} = await loadHarnessHost()
+    this.harnessHost = new HarnessHost({
+      hostId: this.options.machineId,
+      hostname: `${this.username}@${this.hostname}`,
+      runtimes: createHarnessRuntimes(this.options.process.cwd()),
+      resumeStates: createFileResumeStateStore(this.options.harnessStateDirectory),
+      onError: (error) => console.error('Harness host error:', error),
+      emit: (event) => {
+        this.channel.push('new_msg', {
+          b: true,
+          t: MessageType.HARNESS,
+          d: encrypt(event, this.options.roomKey),
+        })
+      },
+    })
+  }
 
   private startTerm = () => {
     this.start(this.options.process.cwd())
+    if (this.harnessHost) {
+      this.broadcastHarnessState(this.harnessHost)
+    }
   }
 
   private start = (cwd: string) => {
@@ -123,14 +157,14 @@ export class TeletypeManager {
     try {
       teletype.start()
     } catch (error) {
-      this.handleTermStartError(error)
+      void this.handleTermStartError(error)
       return
     }
     this.broadcastActiveStreams()
     this.updateUI()
   }
 
-  private handleTermExit = (termId: string) => {
+  private handleTermExit = async (termId: string) => {
     this.terms[termId].stop({killTerm: false})
     delete this.terms[termId]
     this.channel.push('new_msg', {
@@ -145,13 +179,13 @@ export class TeletypeManager {
       return
     }
 
-    this.stop({killTerms: false})
+    await this.stop({killTerms: false})
     console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
     this.resolve?.(null)
   }
 
-  private handleTermStartError = (error: unknown) => {
-    this.stop({killTerms: false})
+  private handleTermStartError = async (error: unknown) => {
+    await this.stop({killTerms: false})
 
     const reason = error instanceof Error ? error.message : String(error)
     if (this.options.process.platform === 'darwin' && reason.includes('posix_spawnp failed')) {
@@ -175,17 +209,20 @@ export class TeletypeManager {
     })
   }
 
-  private handleClose = () => {
+  private handleClose = async () => {
     if (this.stopped) {
       return
     }
-    this.stop({leaveChannel: false})
+    await this.stop({leaveChannel: false})
     printExitMessage(chalk.redBright('connection closed, terminated stream.'))
     exit(3)
   }
 
-  private handleError = (err?: any) => {
-    this.stop({leaveChannel: false})
+  private handleError = async (err?: any) => {
+    if (this.stopped) {
+      return
+    }
+    await this.stop({leaveChannel: false})
     if (err instanceof Unauthorized) {
       printExitMessage(chalk.redBright(err.message))
     } else {
@@ -195,6 +232,12 @@ export class TeletypeManager {
   }
 
   private handleMessage = ({from: {session}, sid, t, d}: any) => {
+    if (t === MessageType.HARNESS) {
+      if (!this.harnessHost || !this.ensureCanWrite(session)) return
+      void this.harnessHost.handleCommand(decrypt(d, this.options.roomKey) as HarnessCommand)
+      return
+    }
+
     if (t === MessageType.NEW_STREAM) {
       if (!this.ensureCanWrite(session)) {
         return
@@ -287,6 +330,9 @@ export class TeletypeManager {
     if (!metas[0].tty) {
       this.viewers.add(session)
     }
+    if (this.harnessHost) {
+      this.broadcastHarnessState(this.harnessHost)
+    }
     this.broadcastActiveStreams()
     this.updateUI()
   }
@@ -294,11 +340,22 @@ export class TeletypeManager {
   private handleSessionLeave = (session: string) => {
     this.viewers.delete(session)
     Object.values(this.terms).forEach((term) => term.removeSession(session))
+    if (this.harnessHost) {
+      this.broadcastHarnessState(this.harnessHost)
+    }
     this.updateUI()
   }
 
-  private handleInterrupt = () => {
-    this.stop()
+  private broadcastHarnessState = (host: HarnessHost) => {
+    this.channel.push('new_msg', {
+      b: true,
+      t: MessageType.HARNESS,
+      d: encrypt(host.getState(), this.options.roomKey),
+    })
+  }
+
+  private handleInterrupt = async () => {
+    await this.stop()
     this.ui?.confirmStopped()
     this.resolve?.(null)
   }
@@ -312,7 +369,6 @@ export class TeletypeManager {
       return true
     }
 
-    this.stop()
     printExitMessage(
       chalk.redBright(
         userType === 'task'
@@ -320,7 +376,7 @@ export class TeletypeManager {
           : `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
       ),
     )
-    exit(5)
+    void this.stop().then(() => exit(5))
     return false
   }
 
@@ -328,13 +384,17 @@ export class TeletypeManager {
     this.ui?.update(Object.keys(this.terms).length, this.viewers.size)
   }
 
-  private stop = ({killTerms = true, leaveChannel = true}: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
+  private stop = async ({
+    killTerms = true,
+    leaveChannel = true,
+  }: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
     if (this.stopped) {
       return
     }
     this.stopped = true
     this.ui?.stop()
     Object.values(this.terms).forEach((term) => term.stop({killTerm: killTerms}))
+    await this.harnessHost?.stop()
 
     if (leaveChannel) {
       this.channel.leave(1000)

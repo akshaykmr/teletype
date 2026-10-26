@@ -75,17 +75,27 @@
     "@types/inquirer": "^9.0.10",
     "@types/node": "^26.6.5",
     "@types/phoenix": "^1.6.7",
+    "@types/ws": "8.18.1",
     "@xterm/xterm": "6.0.0",
     "eslint": "^10.12.0",
     "eslint-config-oclif": "^7.1.10",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "oclif": "^6.0.6",
+    "oorja-harness-host": "0.1.0",
     "prettier": "^3.9.10",
     "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1"
+  },
+  "peerDependencies": {
+    "oorja-harness-host": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "oorja-harness-host": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.10.0"

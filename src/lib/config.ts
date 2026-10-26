@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import {randomUUID} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'fs'
 import path from 'path'
 
@@ -67,6 +68,16 @@ export class Config {
   hasInjectedAccessToken = () => {
     return Boolean(process.env[SUPAKIT_ACCESS_TOKEN_ENV])
   }
+
+  getMachineId = () => {
+    if (!this.config['machine-id']) {
+      this.config['machine-id'] = randomUUID()
+      this.saveConfig()
+    }
+    return this.config['machine-id'] as string
+  }
+
+  getStateDirectory = () => path.dirname(this.configPath)
 
   setAccessToken = (token: string) => {
     this.config[`${this.getEnv()}-access-token`] = token
