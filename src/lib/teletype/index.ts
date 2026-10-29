@@ -4,9 +4,9 @@ import type {HarnessCommand, HarnessHost} from 'oorja-harness-host'
 import {Channel} from 'phoenix'
 
 import {Unauthorized} from 'oorja/lib/connect/errors'
-import {JoinChannelOptions} from 'oorja/lib/connect/index'
+import {JoinChannel} from 'oorja/lib/connect/index'
 import {RoomKey} from 'oorja/lib/connect/types'
-import {encrypt, decrypt} from 'oorja/lib/encryption'
+import {encrypt, decrypt, EncryptedPayload} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
 import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
 import {getShellCwd} from 'oorja/lib/teletype/cwd'
@@ -25,7 +25,6 @@ enum MessageType {
   FILE_TRANSFER_INIT = 'file_transfer_init',
   FILE_TRANSFER = 'file_transfer',
   FILE_TRANSFER_DONE = 'file_transfer_done',
-  HARNESS = 'harness',
 }
 
 export type TeletypeOptions = {
@@ -39,7 +38,7 @@ export type TeletypeOptions = {
   harnessHost: boolean
   harnessStateFile: string
   process: NodeJS.Process
-  joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
+  joinChannel: JoinChannel
 }
 
 type TeletypeChannelParams = {
@@ -48,11 +47,19 @@ type TeletypeChannelParams = {
   tty: string
   multiplexed: boolean
   multishell: boolean
-  harness_host: boolean
 }
 
 type TeletypeChannelMetas = {
   metas: [{tty?: string}]
+}
+
+type HarnessChannelParams = {
+  client_type: 'teletype'
+  machine_id: string
+}
+
+type HarnessChannelMetas = {
+  metas: [{client_type: string; machine_id: string | null}]
 }
 
 export class TeletypeManager {
@@ -62,6 +69,7 @@ export class TeletypeManager {
   private readonly fileTransferDirs: Record<string, string> = {}
 
   private channel!: Channel
+  private harnessChannel?: Channel
   private nextTermId = '1'
   private readonly viewers = new Set<string>()
   private readonly ui?: MultishellUI
@@ -80,7 +88,7 @@ export class TeletypeManager {
 
     return new Promise<null>((resolve) => {
       this.resolve = resolve
-      this.channel = this.options.joinChannel({
+      this.channel = this.options.joinChannel<TeletypeChannelParams, TeletypeChannelMetas>({
         channel: `teletype:${this.options.roomKey.roomId}`,
         params: {
           username: this.username,
@@ -88,7 +96,6 @@ export class TeletypeManager {
           tty: `${this.username}@${this.hostname}`,
           multiplexed: this.options.multiplex,
           multishell: this.options.multishell,
-          harness_host: this.options.harnessHost,
         },
         onJoin: this.startTerm,
         onClose: this.handleClose,
@@ -110,20 +117,30 @@ export class TeletypeManager {
       runtimes: createHarnessRuntimes(this.options.process.cwd()),
       onError: (error) => console.error('Harness host error:', error),
       emit: (event) => {
-        this.channel.push('new_msg', {
+        this.harnessChannel?.push('new_msg', {
           b: true,
-          t: MessageType.HARNESS,
+          t: HARNESS_MESSAGE_TYPE,
+          e: true,
           d: encrypt(event, this.options.roomKey),
         })
       },
+    })
+
+    this.harnessChannel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
+      channel: `harness:${this.options.roomKey.roomId}`,
+      params: {
+        client_type: 'teletype',
+        machine_id: this.options.machineId,
+      },
+      onJoin: this.broadcastHarnessState,
+      onMessage: this.handleHarnessMessage,
+      handleSessionJoin: this.handleHarnessSessionChange,
+      handleSessionLeave: this.handleHarnessSessionChange,
     })
   }
 
   private startTerm = () => {
     this.start(this.options.process.cwd())
-    if (this.harnessHost) {
-      this.broadcastHarnessState(this.harnessHost)
-    }
   }
 
   private start = (cwd: string) => {
@@ -232,12 +249,6 @@ export class TeletypeManager {
   }
 
   private handleMessage = ({from: {session}, sid, t, d}: any) => {
-    if (t === MessageType.HARNESS) {
-      if (!this.harnessHost || !this.ensureCanWrite(session)) return
-      void this.harnessHost.handleCommand(decrypt(d, this.options.roomKey) as HarnessCommand)
-      return
-    }
-
     if (t === MessageType.NEW_STREAM) {
       if (!this.ensureCanWrite(session)) {
         return
@@ -330,9 +341,6 @@ export class TeletypeManager {
     if (!metas[0].tty) {
       this.viewers.add(session)
     }
-    if (this.harnessHost) {
-      this.broadcastHarnessState(this.harnessHost)
-    }
     this.broadcastActiveStreams()
     this.updateUI()
   }
@@ -340,17 +348,25 @@ export class TeletypeManager {
   private handleSessionLeave = (session: string) => {
     this.viewers.delete(session)
     Object.values(this.terms).forEach((term) => term.removeSession(session))
-    if (this.harnessHost) {
-      this.broadcastHarnessState(this.harnessHost)
-    }
     this.updateUI()
   }
 
-  private broadcastHarnessState = (host: HarnessHost) => {
-    this.channel.push('new_msg', {
+  private handleHarnessMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
+    if (t !== HARNESS_MESSAGE_TYPE || !e || !this.harnessHost || !this.ensureCanWrite(session)) return
+    void this.harnessHost.handleCommand(decrypt(d, this.options.roomKey) as HarnessCommand)
+  }
+
+  private handleHarnessSessionChange = () => {
+    this.broadcastHarnessState()
+  }
+
+  private broadcastHarnessState = () => {
+    if (!this.harnessHost) return
+    this.harnessChannel?.push('new_msg', {
       b: true,
-      t: MessageType.HARNESS,
-      d: encrypt(host.getState(), this.options.roomKey),
+      t: HARNESS_MESSAGE_TYPE,
+      e: true,
+      d: encrypt(this.harnessHost.getState(), this.options.roomKey),
     })
   }
 
@@ -398,9 +414,19 @@ export class TeletypeManager {
 
     if (leaveChannel) {
       this.channel.leave(1000)
+      this.harnessChannel?.leave(1000)
     }
   }
 }
+
+type HarnessChannelMessage = {
+  from: {session: string}
+  t: string
+  d: EncryptedPayload
+  e: boolean
+}
+
+const HARNESS_MESSAGE_TYPE = 'harness'
 
 const getSessionIdentity = (session: string) => {
   const [userId, , userType] = session.split(':')

@@ -3,7 +3,7 @@ import * as os from 'node:os'
 import type {HarnessCommand, HarnessHost, HarnessRuntime} from 'oorja-harness-host'
 import type {Channel} from 'phoenix'
 
-import type {JoinChannelOptions} from 'oorja/lib/connect/index'
+import type {JoinChannel} from 'oorja/lib/connect/index'
 import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
@@ -16,7 +16,7 @@ export type HarnessHostRunnerOptions = {
   process: NodeJS.Process
   runtimes: HarnessRuntime[]
   stateFile: string
-  joinChannel: (options: JoinChannelOptions<Record<string, unknown>, unknown>) => Channel
+  joinChannel: JoinChannel
 }
 
 export class HarnessHostRunner {
@@ -42,6 +42,7 @@ export class HarnessHostRunner {
         this.channel.push('new_msg', {
           b: true,
           t: 'harness',
+          e: true,
           d: encrypt(event, this.options.roomKey),
         })
       },
@@ -49,12 +50,11 @@ export class HarnessHostRunner {
 
     return new Promise<null>((resolve) => {
       this.resolve = resolve
-      this.channel = this.options.joinChannel({
-        channel: `teletype:${this.options.roomKey.roomId}`,
+      this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
+        channel: `harness:${this.options.roomKey.roomId}`,
         params: {
-          username: os.userInfo().username,
-          hostname: os.hostname(),
-          harness_host: true,
+          client_type: 'teletype',
+          machine_id: this.options.machineId,
         },
         onJoin: this.handleJoin,
         onClose: this.stop,
@@ -68,8 +68,8 @@ export class HarnessHostRunner {
     })
   }
 
-  private handleMessage = ({from: {session}, t, d}: HarnessChannelMessage) => {
-    if (t !== 'harness' || getUserId(session) !== this.options.userId) return
+  private handleMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
+    if (t !== 'harness' || !e || getUserId(session) !== this.options.userId) return
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
     console.log(`Harness command received from ${session}: ${command.type}.`)
     void this.host.handleCommand(command)
@@ -95,6 +95,7 @@ export class HarnessHostRunner {
     this.channel.push('new_msg', {
       b: true,
       t: 'harness',
+      e: true,
       d: encrypt(state, this.options.roomKey),
     })
     console.log(`Harness state sent to the room: ${state.sessions.length} session(s).`)
@@ -116,6 +117,16 @@ type HarnessChannelMessage = {
   from: {session: string}
   t: string
   d: EncryptedPayload
+  e: boolean
+}
+
+type HarnessChannelParams = {
+  client_type: 'teletype'
+  machine_id: string
+}
+
+type HarnessChannelMetas = {
+  metas: [{client_type: string; machine_id: string | null}]
 }
 
 const getUserId = (session: string) => session.split(':')[0]
