@@ -15,7 +15,7 @@ export type HarnessHostRunnerOptions = {
   roomKey: RoomKey
   process: NodeJS.Process
   runtimes: HarnessRuntime[]
-  resumeStateDirectory: string
+  stateFile: string
   joinChannel: (options: JoinChannelOptions<Record<string, unknown>, unknown>) => Channel
 }
 
@@ -28,12 +28,12 @@ export class HarnessHostRunner {
   constructor(private readonly options: HarnessHostRunnerOptions) {}
 
   run = async () => {
-    const {HarnessHost, createFileResumeStateStore} = await loadHarnessHost()
-    this.host = new HarnessHost({
+    const {HarnessHost} = await loadHarnessHost()
+    this.host = await HarnessHost.start({
       hostId: this.options.machineId,
       hostname: `${os.userInfo().username}@${os.hostname()}`,
+      stateFile: this.options.stateFile,
       runtimes: this.options.runtimes,
-      resumeStates: createFileResumeStateStore(this.options.resumeStateDirectory),
       onError: (error) => console.error('Harness host error:', error),
       emit: (event) => {
         if (event.type === 'host.state') {

@@ -59,12 +59,12 @@ export class OORJA {
     }
   }
 
-  teletype = (options: Omit<TeletypeOptions, 'userId' | 'machineId' | 'joinChannel' | 'harnessStateDirectory'>) => {
+  teletype = (options: Omit<TeletypeOptions, 'userId' | 'machineId' | 'joinChannel' | 'harnessStateFile'>) => {
     return new TeletypeManager({
       userId: this.user!.id,
       machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
-      harnessStateDirectory: path.join(this.stateDirectory, 'harness-host'),
+      harnessStateFile: path.join(this.stateDirectory, 'harness-host.sqlite'),
       ...options,
     }).run()
   }
@@ -74,7 +74,7 @@ export class OORJA {
       userId: this.user!.id,
       machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
-      resumeStateDirectory: path.join(this.stateDirectory, 'harness-host'),
+      stateFile: path.join(this.stateDirectory, 'harness-host.sqlite'),
       ...options,
     }).run()
   }

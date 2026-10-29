@@ -37,7 +37,7 @@ export type TeletypeOptions = {
   multishell: boolean
   streamingIndicator: boolean
   harnessHost: boolean
-  harnessStateDirectory: string
+  harnessStateFile: string
   process: NodeJS.Process
   joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
 }
@@ -102,12 +102,12 @@ export class TeletypeManager {
   }
 
   private startHarnessHost = async () => {
-    const {HarnessHost, createFileResumeStateStore, createHarnessRuntimes} = await loadHarnessHost()
-    this.harnessHost = new HarnessHost({
+    const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
+    this.harnessHost = await HarnessHost.start({
       hostId: this.options.machineId,
       hostname: `${this.username}@${this.hostname}`,
+      stateFile: this.options.harnessStateFile,
       runtimes: createHarnessRuntimes(this.options.process.cwd()),
-      resumeStates: createFileResumeStateStore(this.options.harnessStateDirectory),
       onError: (error) => console.error('Harness host error:', error),
       emit: (event) => {
         this.channel.push('new_msg', {

@@ -85,8 +85,8 @@ importers:
         specifier: ^6.0.6
         version: 6.0.6(@types/node@26.6.5)(supports-color@8.1.1)
       oorja-harness-host:
-        specifier: 0.1.0
-        version: 0.1.0(ws@8.22.0)(zod@4.6.7)
+        specifier: 0.2.0
+        version: 0.2.0(ws@8.22.0)(zod@4.6.7)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -2239,9 +2239,9 @@ packages:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
     engines: {node: '>=18'}
 
-  oorja-harness-host@0.1.0:
-    resolution: {integrity: sha512-IUzbsE2yTE/7SxDCaBCpJdAP76vz3QyMzANm7jZ1o7v7wOQpqaBpiJTDPA8ypgqNiJSPcBCjkJ9dw0ii2BriCA==}
-    engines: {node: '>=22.10.0'}
+  oorja-harness-host@0.2.0:
+    resolution: {integrity: sha512-Sbl3DpobJiauyGYnhVEl6rHSGCZifsXTDMsY8HXhpSC+FJPWcsY59m+8sCT9uOVqOdfYP4SbcpI2z/NgNKI4eA==}
+    engines: {node: '>=22.16.0'}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -5369,7 +5369,7 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  oorja-harness-host@0.1.0(ws@8.22.0)(zod@4.6.7):
+  oorja-harness-host@0.2.0(ws@8.22.0)(zod@4.6.7):
     dependencies:
       '@ai-sdk/harness': 1.0.164(ws@8.22.0)(zod@4.6.7)
       '@ai-sdk/harness-claude-code': 1.0.168(zod@4.6.7)
