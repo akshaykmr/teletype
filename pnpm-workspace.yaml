@@ -4,4 +4,4 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - http-cache-semantics@4.3.0
-  - oorja-harness-host@0.2.0
+  - oorja-harness-host@0.2.1

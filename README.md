@@ -66,6 +66,9 @@ More ways to [contact](https://supakit.app/contact).
 * [`oorja teletype [STREAMKEY]`](#oorja-teletype-streamkey)
 * [`oorja signout`](#oorja-signout)
 * [`oorja help [COMMAND]`](#oorja-help-command)
+* [`oorja harness-host:doctor`](#oorja-harness-hostdoctor)
+* [`oorja harness-host:prepare [RUNTIMES]`](#oorja-harness-hostprepare-runtimes)
+* [`oorja harness-host:run [STREAMKEY]`](#oorja-harness-hostrun-streamkey)
 
 ## `oorja teletype [STREAMKEY]`
 
@@ -74,7 +77,7 @@ Launch a terminal streaming session in SupaKit.
 ```
 USAGE
   $ oorja teletype [STREAMKEY] [-h] [-s <value>] [-m] [--multishell] [-n] [--anonymous] [--ci-debug]
-    [--streaming-indicator enabled|disabled]
+    [--streaming-indicator enabled|disabled] [--harness-host]
 
 FLAGS
   -h, --help                          Show CLI help.
@@ -83,6 +86,7 @@ FLAGS
   -s, --shell=<value>                 shell to use. e.g. bash, fish
       --anonymous                     Create an anonymous session without prompting for sign-in.
       --ci-debug                      Create a new anonymous writable bash stream for CI debugging.
+      --harness-host                  Allow this machine to run agent sessions for this space.
       --multishell                    Allow this CLI session to host multiple terminal shells. Off by default
       --streaming-indicator=<option>  [default: enabled] Prefix the shell prompt with a streaming indicator.
                                       <options: enabled|disabled>
@@ -141,6 +145,55 @@ FLAGS
 
 DESCRIPTION
   Display help for oorja.
+```
+
+
+## `oorja harness-host:doctor`
+
+Check whether this machine can run agent sessions.
+
+```
+USAGE
+  $ oorja harness-host:doctor [--json]
+
+FLAGS
+  --json  Print machine-readable JSON.
+
+DESCRIPTION
+  Check whether this machine can run agent sessions.
+```
+
+
+## `oorja harness-host:prepare [RUNTIMES]`
+
+Set up agent runtimes on this machine.
+
+```
+USAGE
+  $ oorja harness-host:prepare [RUNTIMES...]
+
+ARGUMENTS
+  [RUNTIMES...]  (all|codex|claude-code|opencode) [default: all] Agent runtimes to set up; use all to set up every
+                 supported runtime
+
+DESCRIPTION
+  Set up agent runtimes on this machine.
+```
+
+
+## `oorja harness-host:run [STREAMKEY]`
+
+Serve harness sessions in a SupaKit space.
+
+```
+USAGE
+  $ oorja harness-host:run [STREAMKEY]
+
+ARGUMENTS
+  [STREAMKEY]  Secret stream key for the target space
+
+DESCRIPTION
+  Serve harness sessions in a SupaKit space.
 ```
 
 <!-- commandsstop -->

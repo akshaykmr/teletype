@@ -228,7 +228,7 @@ export class ConnectClient {
             onError(new Unauthorized('unauthorized: user needs to join the room before a stream can be started.'))
           return
         }
-        printExitMessage('error on channel')
+        printExitMessage(`error on channel: ${resp.reason}`)
         exit(3)
       })
     return chan
