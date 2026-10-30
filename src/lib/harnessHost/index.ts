@@ -119,14 +119,14 @@ export class HarnessHostRunner {
   }
 
   private ensureCanWrite = (session: string) => {
-    const {userId, userType} = getSessionIdentity(session)
-    if (userId === this.options.userId || (this.options.multiplayer && userType !== 'task')) {
+    const {userId, clientType} = getSessionIdentity(session)
+    if (clientType === 'user' && (userId === this.options.userId || this.options.multiplayer)) {
       return true
     }
 
     printExitMessage(
       chalk.redBright(
-        userType === 'task'
+        clientType === 'task'
           ? `unexpected input from user: ${userId} with task-token, terminating host for safety. Please report this issue`
           : `unexpected input from user: ${userId}, terminating host for safety. Please report this issue`,
       ),
@@ -165,6 +165,6 @@ type HarnessChannelMetas = {
 }
 
 const getSessionIdentity = (session: string) => {
-  const [userId, , userType] = session.split(':')
-  return {userId, userType}
+  const [userId, , clientType] = session.split(':')
+  return {userId, clientType}
 }
