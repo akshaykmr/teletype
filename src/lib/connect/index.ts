@@ -184,7 +184,7 @@ export class ConnectClient {
     })
   }
 
-  joinChannel = ({
+  joinChannel: JoinChannel = <Params extends object, Metas>({
     channel,
     params,
     onJoin,
@@ -193,7 +193,7 @@ export class ConnectClient {
     onMessage,
     handleSessionJoin,
     handleSessionLeave,
-  }: JoinChannelOptions<unknown, unknown>): Channel => {
+  }: JoinChannelOptions<Params, Metas>): Channel => {
     if (!this.socket) throw Error('no socket connection')
     const chan = this.socket.channel(channel, params!)
     if (onError) chan.onError(onError)
@@ -228,7 +228,7 @@ export class ConnectClient {
             onError(new Unauthorized('unauthorized: user needs to join the room before a stream can be started.'))
           return
         }
-        printExitMessage('error on channel')
+        printExitMessage(`error on channel: ${resp.reason}`)
         exit(3)
       })
     return chan
@@ -288,3 +288,5 @@ export type JoinChannelOptions<Params, Metas> = {
   handleSessionJoin: (session: string, currentMetas: undefined | Metas, newMetas: Metas) => void
   handleSessionLeave: (session: string, currentMetas: undefined | Metas, leftMetas: Metas) => void
 }
+
+export type JoinChannel = <Params extends object, Metas>(options: JoinChannelOptions<Params, Metas>) => Channel

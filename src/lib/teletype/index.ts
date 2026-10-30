@@ -1,16 +1,17 @@
 import * as os from 'os'
-import {RoomKey} from 'oorja/lib/connect/types'
 import chalk from 'chalk'
-import {Unauthorized} from 'oorja/lib/connect/errors'
-import {encrypt, decrypt} from 'oorja/lib/encryption'
-import {JoinChannelOptions} from 'oorja/lib/connect/index'
 import {Channel} from 'phoenix'
-import {printExitMessage} from 'oorja/lib/utils'
+
+import {Unauthorized} from 'oorja/lib/connect/errors'
+import {JoinChannel} from 'oorja/lib/connect/index'
+import {RoomKey} from 'oorja/lib/connect/types'
+import {encrypt, decrypt} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
+import {getShellCwd} from 'oorja/lib/teletype/cwd'
+import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
-import {getShellCwd} from 'oorja/lib/teletype/cwd'
+import {printExitMessage} from 'oorja/lib/utils'
 
 enum MessageType {
   IN = 'i',
@@ -32,7 +33,7 @@ export type TeletypeOptions = {
   multishell: boolean
   streamingIndicator: boolean
   process: NodeJS.Process
-  joinChannel: (options: JoinChannelOptions<TeletypeChannelParams, unknown>) => Channel
+  joinChannel: JoinChannel
 }
 
 type TeletypeChannelParams = {
@@ -69,7 +70,7 @@ export class TeletypeManager {
   run = () =>
     new Promise<null>((resolve) => {
       this.resolve = resolve
-      this.channel = this.options.joinChannel({
+      this.channel = this.options.joinChannel<TeletypeChannelParams, TeletypeChannelMetas>({
         channel: `teletype:${this.options.roomKey.roomId}`,
         params: {
           username: this.username,

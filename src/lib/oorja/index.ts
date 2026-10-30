@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from 'oorja/lib/config'
 import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
 import {TeletypeManager, TeletypeOptions} from 'oorja/lib/teletype/index'
@@ -10,6 +12,7 @@ import {Future, printExitMessage} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import chalk from 'chalk'
+import {HarnessHostRunner} from 'oorja/lib/harnessHost/index'
 
 export class InvalidRoomLink extends Error {}
 
@@ -26,6 +29,8 @@ export class OORJA {
     private config: oorjaConfig,
     private connectClient: ConnectClient,
     public user: UserProfile,
+    private machineId: string,
+    private stateDirectory: string,
   ) {}
 
   createRoom = async (options: CreateRoomOptions) => {
@@ -52,13 +57,43 @@ export class OORJA {
     }
   }
 
-  teletype = (options: Omit<TeletypeOptions, 'userId' | 'joinChannel'>) => {
-    return new TeletypeManager({
+  teletype = async ({
+    harnessHost,
+    ...options
+  }: Omit<TeletypeOptions, 'userId' | 'joinChannel'> & {harnessHost: boolean}) => {
+    const teletype = new TeletypeManager({
       userId: this.user!.id,
       joinChannel: this.connectClient.joinChannel,
       ...options,
-    }).run()
+    })
+    if (!harnessHost) {
+      return teletype.run()
+    }
+
+    const host = this.createHarnessHost({
+      roomKey: options.roomKey,
+      process: options.process,
+      multiplayer: options.multiplex,
+    })
+    await host.start()
+    try {
+      return await teletype.run()
+    } finally {
+      await host.stop()
+    }
   }
+
+  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process}) =>
+    this.createHarnessHost({...options, multiplayer: false}).run()
+
+  private createHarnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplayer: boolean}) =>
+    new HarnessHostRunner({
+      userId: this.user!.id,
+      machineId: this.machineId,
+      joinChannel: this.connectClient.joinChannel,
+      stateFile: path.join(this.stateDirectory, 'harness-host.sqlite'),
+      ...options,
+    })
 }
 
 type StreamKey = {
@@ -196,7 +231,13 @@ export class App {
       console.log(chalk.yellowBright("You're an anonymous user. CLI will not remember the auth-token"))
     }
     await this.socketConnect()
-    return new OORJA(oorjaConfig, this.connectClient!, user!)
+    return new OORJA(
+      oorjaConfig,
+      this.connectClient!,
+      user!,
+      this.config.getMachineId(),
+      this.config.getStateDirectory(),
+    )
   }
 
   private establishConnection = async () => {
