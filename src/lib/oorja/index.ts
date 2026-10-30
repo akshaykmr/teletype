@@ -1,7 +1,5 @@
 import path from 'node:path'
 
-import type {HarnessRuntime} from 'oorja-harness-host'
-
 import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from 'oorja/lib/config'
 import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
 import {TeletypeManager, TeletypeOptions} from 'oorja/lib/teletype/index'
@@ -59,25 +57,41 @@ export class OORJA {
     }
   }
 
-  teletype = (options: Omit<TeletypeOptions, 'userId' | 'machineId' | 'joinChannel' | 'harnessStateFile'>) => {
-    return new TeletypeManager({
+  teletype = async ({
+    harnessHost,
+    ...options
+  }: Omit<TeletypeOptions, 'userId' | 'joinChannel'> & {harnessHost: boolean}) => {
+    const teletype = new TeletypeManager({
       userId: this.user!.id,
-      machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
-      harnessStateFile: path.join(this.stateDirectory, 'harness-host.sqlite'),
       ...options,
-    }).run()
+    })
+    if (!harnessHost) return teletype.run()
+
+    const host = this.createHarnessHost({
+      roomKey: options.roomKey,
+      process: options.process,
+      multiplex: options.multiplex,
+    })
+    await host.start()
+    try {
+      return await teletype.run()
+    } finally {
+      await host.stop()
+    }
   }
 
-  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; runtimes: HarnessRuntime[]}) => {
-    return new HarnessHostRunner({
+  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process}) =>
+    this.createHarnessHost({...options, multiplex: false}).run()
+
+  private createHarnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplex: boolean}) =>
+    new HarnessHostRunner({
       userId: this.user!.id,
       machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
       stateFile: path.join(this.stateDirectory, 'harness-host.sqlite'),
       ...options,
-    }).run()
-  }
+    })
 }
 
 type StreamKey = {

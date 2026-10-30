@@ -1,20 +1,24 @@
 import * as os from 'node:os'
 
-import type {HarnessCommand, HarnessHost, HarnessRuntime} from 'oorja-harness-host'
+import chalk from 'chalk'
+import type {HarnessCommand, HarnessHost} from 'oorja-harness-host'
 import type {Channel} from 'phoenix'
 
 import type {JoinChannel} from 'oorja/lib/connect/index'
+import {canWrite, getSessionIdentity} from 'oorja/lib/connect/session'
 import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
+import {exit} from 'oorja/lib/exit'
 import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
+import {Future, printExitMessage} from 'oorja/lib/utils'
 
 export type HarnessHostRunnerOptions = {
   userId: string
   machineId: string
   roomKey: RoomKey
   process: NodeJS.Process
-  runtimes: HarnessRuntime[]
+  multiplex: boolean
   stateFile: string
   joinChannel: JoinChannel
 }
@@ -22,18 +26,18 @@ export type HarnessHostRunnerOptions = {
 export class HarnessHostRunner {
   private channel!: Channel
   private host!: HarnessHost
-  private resolve?: (value: null) => void
+  private readonly finished = new Future<null>()
   private stopped = false
 
   constructor(private readonly options: HarnessHostRunnerOptions) {}
 
-  run = async () => {
-    const {HarnessHost} = await loadHarnessHost()
+  start = async () => {
+    const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
     this.host = await HarnessHost.start({
       hostId: this.options.machineId,
       hostname: `${os.userInfo().username}@${os.hostname()}`,
       stateFile: this.options.stateFile,
-      runtimes: this.options.runtimes,
+      runtimes: createHarnessRuntimes(this.options.process.cwd()),
       onError: (error) => console.error('Harness host error:', error),
       emit: (event) => {
         if (event.type === 'host.state') {
@@ -48,28 +52,30 @@ export class HarnessHostRunner {
       },
     })
 
-    return new Promise<null>((resolve) => {
-      this.resolve = resolve
-      this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
-        channel: `harness:${this.options.roomKey.roomId}`,
-        params: {
-          client_type: 'teletype',
-          machine_id: this.options.machineId,
-        },
-        onJoin: this.handleJoin,
-        onClose: this.stop,
-        onError: this.stop,
-        onMessage: this.handleMessage,
-        handleSessionJoin: this.handleSessionJoin,
-        handleSessionLeave: this.handleSessionLeave,
-      })
-      this.options.process.once('SIGINT', this.stop)
-      this.options.process.once('SIGTERM', this.stop)
+    this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
+      channel: `harness:${this.options.roomKey.roomId}`,
+      params: {
+        client_type: 'teletype',
+        machine_id: this.options.machineId,
+      },
+      onJoin: this.handleJoin,
+      onClose: this.stop,
+      onError: this.stop,
+      onMessage: this.handleMessage,
+      handleSessionJoin: this.handleSessionJoin,
+      handleSessionLeave: this.handleSessionLeave,
     })
   }
 
+  run = async () => {
+    await this.start()
+    this.options.process.once('SIGINT', this.stop)
+    this.options.process.once('SIGTERM', this.stop)
+    return this.finished.promise
+  }
+
   private handleMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
-    if (t !== 'harness' || !e || getUserId(session) !== this.options.userId) return
+    if (t !== 'harness' || !e || !this.ensureCanWrite(session)) return
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
     console.log(`Harness command received from ${session}: ${command.type}.`)
     void this.host.handleCommand(command)
@@ -101,15 +107,29 @@ export class HarnessHostRunner {
     console.log(`Harness state sent to the room: ${state.sessions.length} session(s).`)
   }
 
-  private stop = () => {
+  private ensureCanWrite = (session: string) => {
+    if (canWrite(session, this.options.userId, this.options.multiplex)) return true
+
+    const {userId, userType} = getSessionIdentity(session)
+    printExitMessage(
+      chalk.redBright(
+        userType === 'task'
+          ? `unexpected input from user: ${userId} with task-token, terminating host for safety. Please report this issue`
+          : `unexpected input from user: ${userId}, terminating host for safety. Please report this issue`,
+      ),
+    )
+    void this.stop().then(() => exit(5))
+    return false
+  }
+
+  stop = async () => {
     if (this.stopped) return
     this.stopped = true
     this.options.process.removeListener('SIGINT', this.stop)
     this.options.process.removeListener('SIGTERM', this.stop)
-    void this.host.stop().finally(() => {
-      this.channel.leave(1000)
-      this.resolve?.(null)
-    })
+    await this.host.stop()
+    this.channel.leave(1000)
+    this.finished.resolve?.(null)
   }
 }
 
@@ -128,5 +148,3 @@ type HarnessChannelParams = {
 type HarnessChannelMetas = {
   metas: [{client_type: string; machine_id: string | null}]
 }
-
-const getUserId = (session: string) => session.split(':')[0]

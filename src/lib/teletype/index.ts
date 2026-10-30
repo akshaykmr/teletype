@@ -1,14 +1,13 @@
 import * as os from 'os'
 import chalk from 'chalk'
-import type {HarnessCommand, HarnessHost} from 'oorja-harness-host'
 import {Channel} from 'phoenix'
 
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {JoinChannel} from 'oorja/lib/connect/index'
+import {canWrite, getSessionIdentity} from 'oorja/lib/connect/session'
 import {RoomKey} from 'oorja/lib/connect/types'
-import {encrypt, decrypt, EncryptedPayload} from 'oorja/lib/encryption'
+import {encrypt, decrypt} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
-import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
 import {getShellCwd} from 'oorja/lib/teletype/cwd'
 import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
@@ -29,14 +28,11 @@ enum MessageType {
 
 export type TeletypeOptions = {
   userId: string
-  machineId: string
   roomKey: RoomKey
   shell: string
   multiplex: boolean
   multishell: boolean
   streamingIndicator: boolean
-  harnessHost: boolean
-  harnessStateFile: string
   process: NodeJS.Process
   joinChannel: JoinChannel
 }
@@ -53,15 +49,6 @@ type TeletypeChannelMetas = {
   metas: [{tty?: string}]
 }
 
-type HarnessChannelParams = {
-  client_type: 'teletype'
-  machine_id: string
-}
-
-type HarnessChannelMetas = {
-  metas: [{client_type: string; machine_id: string | null}]
-}
-
 export class TeletypeManager {
   private readonly username = os.userInfo().username
   private readonly hostname = os.hostname()
@@ -69,11 +56,9 @@ export class TeletypeManager {
   private readonly fileTransferDirs: Record<string, string> = {}
 
   private channel!: Channel
-  private harnessChannel?: Channel
   private nextTermId = '1'
   private readonly viewers = new Set<string>()
   private readonly ui?: MultishellUI
-  private harnessHost?: HarnessHost
   private stopped = false
   private resolve?: (value: null) => void
 
@@ -83,10 +68,8 @@ export class TeletypeManager {
     }
   }
 
-  run = async () => {
-    if (this.options.harnessHost) await this.startHarnessHost()
-
-    return new Promise<null>((resolve) => {
+  run = () =>
+    new Promise<null>((resolve) => {
       this.resolve = resolve
       this.channel = this.options.joinChannel<TeletypeChannelParams, TeletypeChannelMetas>({
         channel: `teletype:${this.options.roomKey.roomId}`,
@@ -106,38 +89,6 @@ export class TeletypeManager {
       })
       this.ui?.start(this.handleInterrupt)
     })
-  }
-
-  private startHarnessHost = async () => {
-    const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
-    this.harnessHost = await HarnessHost.start({
-      hostId: this.options.machineId,
-      hostname: `${this.username}@${this.hostname}`,
-      stateFile: this.options.harnessStateFile,
-      runtimes: createHarnessRuntimes(this.options.process.cwd()),
-      onError: (error) => console.error('Harness host error:', error),
-      emit: (event) => {
-        this.harnessChannel?.push('new_msg', {
-          b: true,
-          t: HARNESS_MESSAGE_TYPE,
-          e: true,
-          d: encrypt(event, this.options.roomKey),
-        })
-      },
-    })
-
-    this.harnessChannel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
-      channel: `harness:${this.options.roomKey.roomId}`,
-      params: {
-        client_type: 'teletype',
-        machine_id: this.options.machineId,
-      },
-      onJoin: this.broadcastHarnessState,
-      onMessage: this.handleHarnessMessage,
-      handleSessionJoin: this.handleHarnessSessionChange,
-      handleSessionLeave: this.handleHarnessSessionChange,
-    })
-  }
 
   private startTerm = () => {
     this.start(this.options.process.cwd())
@@ -174,14 +125,14 @@ export class TeletypeManager {
     try {
       teletype.start()
     } catch (error) {
-      void this.handleTermStartError(error)
+      this.handleTermStartError(error)
       return
     }
     this.broadcastActiveStreams()
     this.updateUI()
   }
 
-  private handleTermExit = async (termId: string) => {
+  private handleTermExit = (termId: string) => {
     this.terms[termId].stop({killTerm: false})
     delete this.terms[termId]
     this.channel.push('new_msg', {
@@ -196,13 +147,13 @@ export class TeletypeManager {
       return
     }
 
-    await this.stop({killTerms: false})
+    this.stop({killTerms: false})
     console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
     this.resolve?.(null)
   }
 
-  private handleTermStartError = async (error: unknown) => {
-    await this.stop({killTerms: false})
+  private handleTermStartError = (error: unknown) => {
+    this.stop({killTerms: false})
 
     const reason = error instanceof Error ? error.message : String(error)
     if (this.options.process.platform === 'darwin' && reason.includes('posix_spawnp failed')) {
@@ -226,20 +177,17 @@ export class TeletypeManager {
     })
   }
 
-  private handleClose = async () => {
+  private handleClose = () => {
     if (this.stopped) {
       return
     }
-    await this.stop({leaveChannel: false})
+    this.stop({leaveChannel: false})
     printExitMessage(chalk.redBright('connection closed, terminated stream.'))
     exit(3)
   }
 
-  private handleError = async (err?: any) => {
-    if (this.stopped) {
-      return
-    }
-    await this.stop({leaveChannel: false})
+  private handleError = (err?: any) => {
+    this.stop({leaveChannel: false})
     if (err instanceof Unauthorized) {
       printExitMessage(chalk.redBright(err.message))
     } else {
@@ -351,40 +299,18 @@ export class TeletypeManager {
     this.updateUI()
   }
 
-  private handleHarnessMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
-    if (t !== HARNESS_MESSAGE_TYPE || !e || !this.harnessHost || !this.ensureCanWrite(session)) return
-    void this.harnessHost.handleCommand(decrypt(d, this.options.roomKey) as HarnessCommand)
-  }
-
-  private handleHarnessSessionChange = () => {
-    this.broadcastHarnessState()
-  }
-
-  private broadcastHarnessState = () => {
-    if (!this.harnessHost) return
-    this.harnessChannel?.push('new_msg', {
-      b: true,
-      t: HARNESS_MESSAGE_TYPE,
-      e: true,
-      d: encrypt(this.harnessHost.getState(), this.options.roomKey),
-    })
-  }
-
-  private handleInterrupt = async () => {
-    await this.stop()
+  private handleInterrupt = () => {
+    this.stop()
     this.ui?.confirmStopped()
     this.resolve?.(null)
   }
 
   private ensureCanWrite = (session: string) => {
-    const {userId, userType} = getSessionIdentity(session)
-    if (userId === this.options.userId) {
-      return true
-    }
-    if (this.options.multiplex && userType !== 'task') {
-      return true
-    }
+    if (canWrite(session, this.options.userId, this.options.multiplex)) return true
 
+    const {userId, userType} = getSessionIdentity(session)
+
+    this.stop()
     printExitMessage(
       chalk.redBright(
         userType === 'task'
@@ -392,7 +318,7 @@ export class TeletypeManager {
           : `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
       ),
     )
-    void this.stop().then(() => exit(5))
+    exit(5)
     return false
   }
 
@@ -400,35 +326,16 @@ export class TeletypeManager {
     this.ui?.update(Object.keys(this.terms).length, this.viewers.size)
   }
 
-  private stop = async ({
-    killTerms = true,
-    leaveChannel = true,
-  }: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
+  private stop = ({killTerms = true, leaveChannel = true}: {killTerms?: boolean; leaveChannel?: boolean} = {}) => {
     if (this.stopped) {
       return
     }
     this.stopped = true
     this.ui?.stop()
     Object.values(this.terms).forEach((term) => term.stop({killTerm: killTerms}))
-    await this.harnessHost?.stop()
 
     if (leaveChannel) {
       this.channel.leave(1000)
-      this.harnessChannel?.leave(1000)
     }
   }
-}
-
-type HarnessChannelMessage = {
-  from: {session: string}
-  t: string
-  d: EncryptedPayload
-  e: boolean
-}
-
-const HARNESS_MESSAGE_TYPE = 'harness'
-
-const getSessionIdentity = (session: string) => {
-  const [userId, , userType] = session.split(':')
-  return {userId, userType}
 }
