@@ -1,7 +1,7 @@
 import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 
-import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
+import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
 export default class HarnessHostDoctor extends Command {
   static description = 'Check whether this machine can run agent sessions.'
@@ -32,6 +32,8 @@ export default class HarnessHostDoctor extends Command {
           : `${chalk.redBright('✖')} ${chalk.bold('This machine is not ready. Fix the failed checks above.')}`,
       )
     }
-    if (!ok) this.exit(1)
+    if (!ok) {
+      this.exit(1)
+    }
   }
 }

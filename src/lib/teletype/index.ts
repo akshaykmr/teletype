@@ -4,7 +4,6 @@ import {Channel} from 'phoenix'
 
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {JoinChannel} from 'oorja/lib/connect/index'
-import {canWrite, getSessionIdentity} from 'oorja/lib/connect/session'
 import {RoomKey} from 'oorja/lib/connect/types'
 import {encrypt, decrypt} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
@@ -306,9 +305,13 @@ export class TeletypeManager {
   }
 
   private ensureCanWrite = (session: string) => {
-    if (canWrite(session, this.options.userId, this.options.multiplex)) return true
-
     const {userId, userType} = getSessionIdentity(session)
+    if (userId === this.options.userId) {
+      return true
+    }
+    if (this.options.multiplex && userType !== 'task') {
+      return true
+    }
 
     this.stop()
     printExitMessage(
@@ -338,4 +341,9 @@ export class TeletypeManager {
       this.channel.leave(1000)
     }
   }
+}
+
+const getSessionIdentity = (session: string) => {
+  const [userId, , userType] = session.split(':')
+  return {userId, userType}
 }

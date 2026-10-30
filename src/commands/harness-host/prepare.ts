@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import type {HarnessSelection} from 'oorja-harness-host'
 import ora from 'ora'
 
-import {loadHarnessHost} from 'oorja/lib/harnessHostPackage'
+import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
 const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode']
 
