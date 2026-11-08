@@ -14,7 +14,7 @@ import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
 import {Future, printExitMessage} from 'oorja/lib/utils'
 
-export type HarnessHostRunnerOptions = {
+export type HarnessHostConnectionOptions = {
   userId: string
   machineId: string
   roomKey: RoomKey
@@ -43,13 +43,13 @@ export const loadHarnessHost = async () => {
   return import(packageName) as Promise<HarnessHostPackage>
 }
 
-export class HarnessHostRunner {
+export class HarnessHostConnection {
   private channel!: Channel
   private sharedHost!: SharedHarnessHost
   private readonly finished = new Future<null>()
   private stopped = false
 
-  constructor(private readonly options: HarnessHostRunnerOptions) {}
+  constructor(private readonly options: HarnessHostConnectionOptions) {}
 
   start = async () => {
     this.sharedHost = await SharedHarnessHost.open({
@@ -114,20 +114,20 @@ export class HarnessHostRunner {
 
   private handleJoin = () => {
     console.log('Harness host ready.')
-    this.broadcastState()
+    this.sendCurrentState()
   }
 
   private handleSessionJoin = (session: string) => {
     console.log(`Channel peer joined: ${session}.`)
-    this.broadcastState()
+    this.sendCurrentState()
   }
 
   private handleSessionLeave = (session: string) => {
     console.log(`Channel peer left: ${session}.`)
-    this.broadcastState()
+    this.sendCurrentState()
   }
 
-  private broadcastState = () => {
+  private sendCurrentState = () => {
     this.sharedHost.emitState()
   }
 
