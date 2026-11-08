@@ -1,7 +1,9 @@
 import * as os from 'node:os'
 
 import chalk from 'chalk'
-import type {HarnessCommand, HarnessHost} from 'oorja-harness-host'
+import type {createHarnessRuntimes, doctorHarnessHost, prepareHarnessHost} from 'oorja-harness-host/harnesses'
+import type {HarnessHost, HarnessHostOptions} from 'oorja-harness-host/host'
+import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
 import type {Channel} from 'phoenix'
 
 import type {JoinChannel} from 'oorja/lib/connect/index'
@@ -9,6 +11,7 @@ import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
 import {exit} from 'oorja/lib/exit'
+import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
 import {Future, printExitMessage} from 'oorja/lib/utils'
 
 export type HarnessHostRunnerOptions = {
@@ -21,46 +24,56 @@ export type HarnessHostRunnerOptions = {
   joinChannel: JoinChannel
 }
 
+type HarnessHostPackage = {
+  HarnessHost: {start: (options: HarnessHostOptions) => Promise<HarnessHost>}
+  createHarnessRuntimes: typeof createHarnessRuntimes
+  doctorHarnessHost: typeof doctorHarnessHost
+  prepareHarnessHost: typeof prepareHarnessHost
+}
+
 export const loadHarnessHost = async () => {
+  const packageName = 'oorja-harness-host'
   try {
-    import.meta.resolve('oorja-harness-host')
+    import.meta.resolve(packageName)
   } catch (error) {
     throw new Error('Harness hosting is not installed. Install it with: npm install --global oorja-harness-host', {
       cause: error,
     })
   }
-  return import('oorja-harness-host')
+  return import(packageName) as Promise<HarnessHostPackage>
 }
 
 export class HarnessHostRunner {
-  private channel!: Channel
-  private host!: HarnessHost
-  private readonly finished = new Future<null>()
-  private stopped = false
-
-  constructor(private readonly options: HarnessHostRunnerOptions) {}
-
-  start = async () => {
-    const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
-    this.host = await HarnessHost.start({
-      hostId: this.options.machineId,
-      hostname: `${os.userInfo().username}@${os.hostname()}`,
-      stateFile: this.options.stateFile,
-      runtimes: createHarnessRuntimes(this.options.process.cwd()),
-      onError: (error) => console.error('Harness host error:', error),
-      emit: (event) => {
-        if (event.type === 'host.state') {
-          console.log(`Harness state sent to the room: ${event.sessions.length} session(s).`)
-        }
-        this.channel.push('new_msg', {
-          b: true,
-          t: 'harness',
-          e: true,
-          d: encrypt(event, this.options.roomKey),
+  static open = async (options: HarnessHostRunnerOptions) => {
+    const sharedHost = await SharedHarnessHost.open({
+      socketPath: localSocketPath(options.stateFile, options.machineId),
+      workdir: options.process.cwd(),
+      createHost: async (emit) => {
+        const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
+        return HarnessHost.start({
+          hostId: options.machineId,
+          hostname: `${os.userInfo().username}@${os.hostname()}`,
+          workdir: options.process.cwd(),
+          stateFile: options.stateFile,
+          runtimes: createHarnessRuntimes(),
+          onError: (error) => console.error('Harness host error:', error),
+          emit,
         })
       },
     })
+    const runner = new HarnessHostRunner(options, sharedHost)
+    sharedHost.listen(runner.broadcastEvent)
+    return runner
+  }
 
+  private readonly channel: Channel
+  private readonly finished = new Future<null>()
+  private stopped = false
+
+  private constructor(
+    private readonly options: HarnessHostRunnerOptions,
+    private readonly sharedHost: SharedHarnessHost,
+  ) {
     this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
       channel: `harness:${this.options.roomKey.roomId}`,
       params: {
@@ -77,10 +90,21 @@ export class HarnessHostRunner {
   }
 
   run = async () => {
-    await this.start()
     this.options.process.once('SIGINT', this.stop)
     this.options.process.once('SIGTERM', this.stop)
     return this.finished.promise
+  }
+
+  stop = async () => {
+    if (this.stopped) {
+      return
+    }
+    this.stopped = true
+    this.options.process.removeListener('SIGINT', this.stop)
+    this.options.process.removeListener('SIGTERM', this.stop)
+    this.channel.leave(1000)
+    await this.sharedHost.stop()
+    this.finished.resolve?.(null)
   }
 
   private handleMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
@@ -89,7 +113,7 @@ export class HarnessHostRunner {
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
     console.log(`Harness command received from ${session}: ${command.type}.`)
-    void this.host.handleCommand(command)
+    this.sharedHost.handleCommand(command)
   }
 
   private handleJoin = () => {
@@ -108,14 +132,19 @@ export class HarnessHostRunner {
   }
 
   private broadcastState = () => {
-    const state = this.host.getState()
+    this.sharedHost.emitState()
+  }
+
+  private broadcastEvent = (event: HarnessEvent) => {
     this.channel.push('new_msg', {
       b: true,
       t: 'harness',
       e: true,
-      d: encrypt(state, this.options.roomKey),
+      d: encrypt(event, this.options.roomKey),
     })
-    console.log(`Harness state sent to the room: ${state.sessions.length} session(s).`)
+    if (event.type === 'host.state') {
+      console.log(`Harness state sent to the room: ${event.sessions.length} session(s).`)
+    }
   }
 
   private ensureCanWrite = (session: string) => {
@@ -134,18 +163,6 @@ export class HarnessHostRunner {
     void this.stop().then(() => exit(5))
     return false
   }
-
-  stop = async () => {
-    if (this.stopped) {
-      return
-    }
-    this.stopped = true
-    this.options.process.removeListener('SIGINT', this.stop)
-    this.options.process.removeListener('SIGTERM', this.stop)
-    await this.host.stop()
-    this.channel.leave(1000)
-    this.finished.resolve?.(null)
-  }
 }
 
 type HarnessChannelMessage = {
@@ -162,6 +179,13 @@ type HarnessChannelParams = {
 
 type HarnessChannelMetas = {
   metas: [{client_type: string; machine_id: string | null}]
+}
+
+const localSocketPath = (stateFile: string, machineId: string) => {
+  if (process.platform === 'win32') {
+    return `\\\\.\\pipe\\oorja-harness-host-${machineId}`
+  }
+  return `${stateFile}.socket`
 }
 
 const getSessionIdentity = (session: string) => {

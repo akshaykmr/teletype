@@ -1,6 +1,6 @@
 import {Args, Command} from '@oclif/core'
 import chalk from 'chalk'
-import type {HarnessSelection} from 'oorja-harness-host'
+import type {HarnessSelection} from 'oorja-harness-host/harnesses'
 import ora from 'ora'
 
 import {loadHarnessHost} from 'oorja/lib/harnessHost/index'

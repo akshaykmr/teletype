@@ -1,7 +1,9 @@
 allowBuilds:
+  '@google/genai': false
   node-pty: true
+  protobufjs: false
   unrs-resolver: true
 
 minimumReleaseAgeExclude:
   - http-cache-semantics@4.3.0
-  - oorja-harness-host@0.2.1
+  - oorja-harness-host@0.2.6
