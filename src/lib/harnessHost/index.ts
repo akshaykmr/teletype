@@ -44,36 +44,30 @@ export const loadHarnessHost = async () => {
 }
 
 export class HarnessHostRunner {
-  static open = async (options: HarnessHostRunnerOptions) => {
-    const sharedHost = await SharedHarnessHost.open({
-      socketPath: localSocketPath(options.stateFile, options.machineId),
-      workdir: options.process.cwd(),
+  private channel!: Channel
+  private sharedHost!: SharedHarnessHost
+  private readonly finished = new Future<null>()
+  private stopped = false
+
+  constructor(private readonly options: HarnessHostRunnerOptions) {}
+
+  start = async () => {
+    this.sharedHost = await SharedHarnessHost.open({
+      socketPath: localSocketPath(this.options.stateFile, this.options.machineId),
+      workdir: this.options.process.cwd(),
       createHost: async (emit) => {
         const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
         return HarnessHost.start({
-          hostId: options.machineId,
+          hostId: this.options.machineId,
           hostname: `${os.userInfo().username}@${os.hostname()}`,
-          workdir: options.process.cwd(),
-          stateFile: options.stateFile,
+          workdir: this.options.process.cwd(),
+          stateFile: this.options.stateFile,
           runtimes: createHarnessRuntimes(),
           onError: (error) => console.error('Harness host error:', error),
           emit,
         })
       },
     })
-    const runner = new HarnessHostRunner(options, sharedHost)
-    sharedHost.listen(runner.broadcastEvent)
-    return runner
-  }
-
-  private readonly channel: Channel
-  private readonly finished = new Future<null>()
-  private stopped = false
-
-  private constructor(
-    private readonly options: HarnessHostRunnerOptions,
-    private readonly sharedHost: SharedHarnessHost,
-  ) {
     this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
       channel: `harness:${this.options.roomKey.roomId}`,
       params: {
@@ -87,9 +81,11 @@ export class HarnessHostRunner {
       handleSessionJoin: this.handleSessionJoin,
       handleSessionLeave: this.handleSessionLeave,
     })
+    this.sharedHost.listen(this.broadcastEvent)
   }
 
   run = async () => {
+    await this.start()
     this.options.process.once('SIGINT', this.stop)
     this.options.process.once('SIGTERM', this.stop)
     return this.finished.promise
@@ -142,9 +138,6 @@ export class HarnessHostRunner {
       e: true,
       d: encrypt(event, this.options.roomKey),
     })
-    if (event.type === 'host.state') {
-      console.log(`Harness state sent to the room: ${event.sessions.length} session(s).`)
-    }
   }
 
   private ensureCanWrite = (session: string) => {

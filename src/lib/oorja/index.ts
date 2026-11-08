@@ -70,11 +70,12 @@ export class OORJA {
       return teletype.run()
     }
 
-    const host = await this.createHarnessHost({
+    const host = this.createHarnessHost({
       roomKey: options.roomKey,
       process: options.process,
       multiplayer: options.multiplex,
     })
+    await host.start()
     try {
       return await teletype.run()
     } finally {
@@ -82,13 +83,11 @@ export class OORJA {
     }
   }
 
-  harnessHost = async (options: {roomKey: RoomKey; process: NodeJS.Process}) => {
-    const host = await this.createHarnessHost({...options, multiplayer: false})
-    return host.run()
-  }
+  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process}) =>
+    this.createHarnessHost({...options, multiplayer: false}).run()
 
   private createHarnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplayer: boolean}) =>
-    HarnessHostRunner.open({
+    new HarnessHostRunner({
       userId: this.user!.id,
       machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
