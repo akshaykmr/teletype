@@ -103,8 +103,9 @@ export class HarnessHostConnection {
     this.finished.resolve?.(null)
   }
 
-  private handleMessage = ({from: {session}, t, d, e}: HarnessChannelMessage) => {
-    if (t !== 'harness' || !e || !this.ensureCanWrite(session)) {
+  private handleMessage = ({from: {session}, d}: HarnessChannelMessage) => {
+    const {userId, clientType} = getSessionIdentity(session)
+    if (clientType !== 'user' || !this.ensureCanWrite(userId)) {
       return
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
@@ -140,18 +141,13 @@ export class HarnessHostConnection {
     })
   }
 
-  private ensureCanWrite = (session: string) => {
-    const {userId, clientType} = getSessionIdentity(session)
-    if (clientType === 'user' && (userId === this.options.userId || this.options.multiplayer)) {
+  private ensureCanWrite = (userId: string) => {
+    if (userId === this.options.userId || this.options.multiplayer) {
       return true
     }
 
     printExitMessage(
-      chalk.redBright(
-        clientType === 'task'
-          ? `unexpected input from user: ${userId} with task-token, terminating host for safety. Please report this issue`
-          : `unexpected input from user: ${userId}, terminating host for safety. Please report this issue`,
-      ),
+      chalk.redBright(`unexpected input from user: ${userId}, terminating host for safety. Please report this issue`),
     )
     void this.stop().then(() => exit(5))
     return false
@@ -160,9 +156,7 @@ export class HarnessHostConnection {
 
 type HarnessChannelMessage = {
   from: {session: string}
-  t: string
   d: EncryptedPayload
-  e: boolean
 }
 
 type HarnessChannelParams = {
