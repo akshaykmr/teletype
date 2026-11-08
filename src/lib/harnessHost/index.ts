@@ -103,9 +103,9 @@ export class HarnessHostConnection {
     this.finished.resolve?.(null)
   }
 
-  private handleMessage = ({from: {session}, d}: HarnessChannelMessage) => {
+  private handleMessage = ({from: {session}, d, e}: HarnessChannelMessage) => {
     const {userId, clientType} = getSessionIdentity(session)
-    if (clientType !== 'user' || !this.ensureCanWrite(userId)) {
+    if (!e || clientType !== 'user' || !this.ensureCanWrite(userId)) {
       return
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
@@ -157,6 +157,7 @@ export class HarnessHostConnection {
 type HarnessChannelMessage = {
   from: {session: string}
   d: EncryptedPayload
+  e: boolean
 }
 
 type HarnessChannelParams = {
