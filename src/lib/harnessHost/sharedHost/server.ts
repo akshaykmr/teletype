@@ -5,7 +5,7 @@ import type {HarnessHost} from 'oorja-harness-host/host'
 import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
 
 export type ClientMessage =
-  {type: 'command'; roomId: string; command: HarnessCommand; workdir: string} | {type: 'state.request'; roomId: string}
+  {type: 'command'; roomId: string; command: HarnessCommand; workdir: string} | {type: 'state.emit'; roomId: string}
 
 export type ServerMessage = {type: 'event'; event: HarnessEvent}
 
@@ -80,7 +80,7 @@ export class SharedHostServer {
       case 'command':
         void this.host.handleCommand(message.command, message.workdir)
         break
-      case 'state.request':
+      case 'state.emit':
         if (this.isPublisher(socket, message.roomId)) {
           sendMessage(socket, {type: 'event', event: this.host.getState()})
         }

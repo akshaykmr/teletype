@@ -40,8 +40,8 @@ export class SharedHarnessHost {
     this.client.handleCommand(command)
   }
 
-  requestState = () => {
-    this.client.requestState()
+  emitState = () => {
+    this.client.emitState()
   }
 
   stop = async () => {
@@ -95,8 +95,8 @@ class SharedHostClient {
     })
   }
 
-  requestState = () => {
-    sendMessage(this.connectedSocket(), {type: 'state.request', roomId: this.roomId})
+  emitState = () => {
+    sendMessage(this.connectedSocket(), {type: 'state.emit', roomId: this.roomId})
   }
 
   close = () => {
