@@ -4,7 +4,8 @@ import {createServer, type Server, type Socket} from 'node:net'
 import type {HarnessHost} from 'oorja-harness-host/host'
 import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
 
-export type ClientMessage = {type: 'command'; command: HarnessCommand; workdir: string} | {type: 'state'}
+export type ClientMessage =
+  {type: 'command'; roomId: string; command: HarnessCommand; workdir: string} | {type: 'state'; roomId: string}
 
 export type ServerMessage = {type: 'event'; event: HarnessEvent}
 
@@ -17,10 +18,9 @@ export class SharedHostServer {
     createHost: (emit: (event: HarnessEvent) => void) => Promise<HarnessHost>
   }) => {
     const connections = new Set<Socket>()
-    const host = await createHost((event) => {
-      connections.forEach((socket) => sendMessage(socket, {type: 'event', event}))
-    })
-    const server = new SharedHostServer(socketPath, host, connections)
+    const roomsByConnection = new Map<Socket, string>()
+    const host = await createHost((event) => sendEventToRooms(roomsByConnection, event))
+    const server = new SharedHostServer(socketPath, host, connections, roomsByConnection)
     try {
       await server.listen()
     } catch (error) {
@@ -36,6 +36,7 @@ export class SharedHostServer {
     private readonly socketPath: string,
     private readonly host: HarnessHost,
     private readonly connections: Set<Socket>,
+    private readonly roomsByConnection: Map<Socket, string>,
   ) {
     this.server = createServer(this.handleConnection)
   }
@@ -44,6 +45,7 @@ export class SharedHostServer {
     const closed = new Promise<void>((resolve) => this.server.close(() => resolve()))
     this.connections.forEach((socket) => socket.destroy())
     this.connections.clear()
+    this.roomsByConnection.clear()
     await closed
     await this.host.stop()
     await removeSocket(this.socketPath)
@@ -66,18 +68,33 @@ export class SharedHostServer {
   private handleConnection = (socket: Socket) => {
     this.connections.add(socket)
     readMessages<ClientMessage>(socket, (message) => this.handleMessage(socket, message))
-    socket.once('close', () => this.connections.delete(socket))
+    socket.once('close', () => {
+      this.connections.delete(socket)
+      this.roomsByConnection.delete(socket)
+    })
   }
 
   private handleMessage = (socket: Socket, message: ClientMessage) => {
+    this.roomsByConnection.set(socket, message.roomId)
     switch (message.type) {
       case 'command':
         void this.host.handleCommand(message.command, message.workdir)
         break
       case 'state':
-        sendMessage(socket, {type: 'event', event: this.host.getState()})
+        if (this.isPublisher(socket, message.roomId)) {
+          sendMessage(socket, {type: 'event', event: this.host.getState()})
+        }
         break
     }
+  }
+
+  private isPublisher = (socket: Socket, roomId: string) => {
+    for (const [connection, connectionRoomId] of this.roomsByConnection) {
+      if (connectionRoomId === roomId) {
+        return connection === socket
+      }
+    }
+    return false
   }
 }
 
@@ -99,5 +116,15 @@ export const readMessages = <Message>(socket: Socket, receive: (message: Message
 const removeSocket = async (socketPath: string) => {
   if (process.platform !== 'win32') {
     await rm(socketPath, {force: true})
+  }
+}
+
+const sendEventToRooms = (connections: Map<Socket, string>, event: HarnessEvent) => {
+  const rooms = new Set<string>()
+  for (const [socket, roomId] of connections) {
+    if (!rooms.has(roomId)) {
+      rooms.add(roomId)
+      sendMessage(socket, {type: 'event', event})
+    }
   }
 }

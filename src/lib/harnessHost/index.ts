@@ -54,6 +54,7 @@ export class HarnessHostConnection {
   start = async () => {
     this.sharedHost = await SharedHarnessHost.open({
       socketPath: localSocketPath(this.options.stateFile, this.options.machineId),
+      roomId: this.options.roomKey.roomId,
       workdir: this.options.process.cwd(),
       createHost: async (emit) => {
         const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()

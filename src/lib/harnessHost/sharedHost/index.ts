@@ -8,16 +8,19 @@ import {readMessages, sendMessage, SharedHostServer, type ServerMessage} from 'o
 export class SharedHarnessHost {
   static open = async ({
     socketPath,
+    roomId,
     workdir,
     createHost,
   }: {
     socketPath: string
+    roomId: string
     workdir: string
     createHost: (emit: (event: HarnessEvent) => void) => Promise<HarnessHost>
   }) => {
     const owner = new SharedHostOwner(socketPath, createHost)
     const client = await SharedHostClient.open({
       socketPath,
+      roomId,
       workdir,
       startServer: owner.start,
     })
@@ -50,14 +53,16 @@ export class SharedHarnessHost {
 class SharedHostClient {
   static open = async ({
     socketPath,
+    roomId,
     workdir,
     startServer,
   }: {
     socketPath: string
+    roomId: string
     workdir: string
     startServer: () => Promise<void>
   }) => {
-    const client = new SharedHostClient(socketPath, workdir, startServer)
+    const client = new SharedHostClient(socketPath, roomId, workdir, startServer)
     await client.connect()
     return client
   }
@@ -70,6 +75,7 @@ class SharedHostClient {
 
   private constructor(
     private readonly socketPath: string,
+    private readonly roomId: string,
     private readonly workdir: string,
     private readonly startServer: () => Promise<void>,
   ) {}
@@ -83,13 +89,14 @@ class SharedHostClient {
   handleCommand = (command: HarnessCommand) => {
     sendMessage(this.connectedSocket(), {
       type: 'command',
+      roomId: this.roomId,
       command,
       workdir: this.workdir,
     })
   }
 
   emitState = () => {
-    sendMessage(this.connectedSocket(), {type: 'state'})
+    sendMessage(this.connectedSocket(), {type: 'state', roomId: this.roomId})
   }
 
   close = () => {
