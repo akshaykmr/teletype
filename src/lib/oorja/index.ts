@@ -12,7 +12,7 @@ import {Future, printExitMessage} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import chalk from 'chalk'
-import {HarnessHostRunner} from 'oorja/lib/harnessHost/index'
+import {HarnessHostConnection} from 'oorja/lib/harnessHost/index'
 
 export class InvalidRoomLink extends Error {}
 
@@ -87,7 +87,7 @@ export class OORJA {
     this.createHarnessHost({...options, multiplayer: false}).run()
 
   private createHarnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplayer: boolean}) =>
-    new HarnessHostRunner({
+    new HarnessHostConnection({
       userId: this.user!.id,
       machineId: this.machineId,
       joinChannel: this.connectClient.joinChannel,
