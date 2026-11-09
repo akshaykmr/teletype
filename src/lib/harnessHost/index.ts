@@ -130,7 +130,7 @@ export class HarnessHostConnection {
   }
 
   private sendCurrentState = () => {
-    this.sharedHost.emitState()
+    this.sharedHost.requestState()
   }
 
   private broadcastEvent = (event: HarnessEvent) => {
