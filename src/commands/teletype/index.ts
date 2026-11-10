@@ -226,7 +226,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     }).start()
     const {room, roomKey, inviteCode} = await oorja
       .createRoom({
-        roomName: this.getRoomName(),
+        roomName: this.suggestNewRoomName(),
         apps: {
           defaultFocus: '39',
           appList: [
@@ -285,7 +285,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     process.stdin.resume() // FIXME: investigate weird quirk. stdin hangs if this is not present
   }
 
-  private getRoomName() {
+  private suggestNewRoomName() {
     const now = new Date()
     const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     const prefix = 'Teletype · '
