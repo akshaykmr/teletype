@@ -3,6 +3,7 @@ import {Flags, Args} from '@oclif/core'
 import ora from 'ora'
 
 import {hostname} from 'os'
+import {basename} from 'path'
 import chalk from 'chalk'
 import {BaseCommand} from 'oorja/lib/command'
 import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
@@ -223,10 +224,9 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       text: chalk.bold('Creating space with TeleType app'),
       discardStdin: false,
     }).start()
-    const now = new Date()
     const {room, roomKey, inviteCode} = await oorja
       .createRoom({
-        roomName: `Teletype session - ${hostname()} @ ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`,
+        roomName: this.getRoomName(),
         apps: {
           defaultFocus: '39',
           appList: [
@@ -283,5 +283,17 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
   private clearstdin() {
     process.stdin.read()
     process.stdin.resume() // FIXME: investigate weird quirk. stdin hangs if this is not present
+  }
+
+  private getRoomName() {
+    const now = new Date()
+    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    const prefix = 'Teletype · '
+    const suffix = ` · ${time}`
+    const location = [...`${hostname().replace(/\.local$/i, '')}/${basename(process.cwd())}`]
+    const availableLength = 50 - prefix.length - suffix.length
+    const label =
+      location.length > availableLength ? `${location.slice(0, availableLength - 1).join('')}…` : location.join('')
+    return `${prefix}${label}${suffix}`
   }
 }
