@@ -197,7 +197,7 @@ export class TeletypeManager {
     } else {
       logErrorAndExit(chalk.redBright('connection error, terminated stream.'), {
         event: 'channel.error',
-        error: err || new Error('Channel connection error'),
+        error: err,
       })
     }
   }
@@ -329,7 +329,7 @@ export class TeletypeManager {
           ? `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`
           : `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
       ),
-      {event: 'channel.input', error: new Error(`Unexpected input from user ${userId}, type ${userType}`)},
+      {event: 'channel.input'},
     )
 
     return false

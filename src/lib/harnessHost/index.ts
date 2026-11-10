@@ -152,7 +152,7 @@ export class HarnessHostConnection {
 
     printExitMessage(
       chalk.redBright(`unexpected input from user: ${userId}, terminating host for safety. Please report this issue`),
-      {event: 'harness.channel.input', error: new Error(`Unexpected input from user ${userId}`)},
+      {event: 'harness.channel.input'},
     )
     void this.stop().then(() => exit(1))
     return false

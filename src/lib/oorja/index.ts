@@ -107,7 +107,6 @@ export const parseStreamKey = (streamKey: string): StreamKey => {
   if (!streamKey.startsWith('sk-')) {
     logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
       event: 'stream-key.invalid',
-      error: new Error(INVALID_STREAM_KEY_MESSAGE),
     })
   }
 
@@ -115,7 +114,6 @@ export const parseStreamKey = (streamKey: string): StreamKey => {
   if (parts.length !== 2) {
     logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
       event: 'stream-key.invalid',
-      error: new Error(INVALID_STREAM_KEY_MESSAGE),
     })
   }
 
@@ -125,7 +123,6 @@ export const parseStreamKey = (streamKey: string): StreamKey => {
   if (!roomId || !encryptionSecret) {
     logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
       event: 'stream-key.invalid',
-      error: new Error(INVALID_STREAM_KEY_MESSAGE),
     })
   }
 
@@ -166,7 +163,7 @@ export class App {
       spinner.fail(
         'There seems to be a connection issue. Check your connection or try again later. Does https://connect.oorja.io  load for you?',
       )
-      exit(1)
+      exit(1) // establishConnection already logged the underlying error.
       return Promise.reject()
     }
     spinner.succeed('Online')
@@ -195,7 +192,6 @@ export class App {
           if (!token) {
             logErrorAndExit('Token not provided :(', {
               event: 'authentication.token',
-              error: new Error('Token not provided'),
             })
           }
           this.config.setAccessToken(token)
@@ -229,7 +225,7 @@ export class App {
         return Promise.reject()
       } else {
         spinner.fail()
-        printExitMessage('Something went wrong :(', {event: 'authentication', error: e})
+        printExitMessage('Something went wrong :(')
       }
       throw e
     }
@@ -304,7 +300,7 @@ export class App {
         spinner.fail()
         logErrorAndExit('Socket connection failure..', {
           event: 'socket.connect',
-          error: e || new Error('Socket connection failure'),
+          error: e,
         })
         return Promise.reject(e)
       })

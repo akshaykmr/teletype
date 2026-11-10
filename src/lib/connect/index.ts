@@ -12,7 +12,6 @@ import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
 import {logErrorAndExit} from 'oorja/lib/utils'
-import {logger} from 'oorja/lib/log'
 
 export class ApiClientError extends Error {}
 
@@ -174,13 +173,12 @@ export class ConnectClient {
       })
       this.socket.onError((error) => {
         if (!initialConnection) {
-          logger.reportError('socket.error', error || new Error('Socket connection error'))
-          reject()
+          reject(error)
           return
         }
         logErrorAndExit('connection error', {
           event: 'socket.error',
-          error: error || new Error('Socket connection error'),
+          error,
         })
       })
       this.socket.connect()
@@ -233,7 +231,6 @@ export class ConnectClient {
         }
         logErrorAndExit(`error on channel: ${resp.reason}`, {
           event: 'channel.join',
-          error: new Error(`Could not join channel: ${resp.reason}`),
         })
       })
     return chan

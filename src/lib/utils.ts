@@ -3,14 +3,14 @@ import {writeSync} from 'fs'
 import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 
-export const printExitMessage = (printMessage: string, details?: {event: string; error: unknown}) => {
+export const printExitMessage = (printMessage: string, details?: {event: string; error?: unknown}) => {
   writeSync(process.stdout.fd, printMessage)
   if (details) {
-    logger.reportError(details.event, details.error)
+    logger.reportError(details.event, details.error ?? printMessage)
   }
 }
 
-export const logErrorAndExit = (message: string, details: {event: string; error: unknown}) => {
+export const logErrorAndExit = (message: string, details: {event: string; error?: unknown}) => {
   printExitMessage(message, details)
   exit(1)
 }

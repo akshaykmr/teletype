@@ -22,18 +22,16 @@ export class Logger {
   }
 
   error = (event: string, error: unknown, context: Record<string, unknown> = {}) => {
-    const config = this.config
-    if (!config) {
-      return {path: '', written: false}
-    }
-    return this.append(config.path, () => ({
+    return this.append(() => ({
       ...context,
-      version: config.version,
       level: 'error',
       event,
       ...this.errorDetails(error),
     }))
   }
+
+  info = (event: string, context: Record<string, unknown> = {}) =>
+    this.append(() => ({...context, level: 'info', event}))
 
   reportError = (event: string, error: unknown) => {
     const result = this.error(event, error)
@@ -42,9 +40,14 @@ export class Logger {
     }
   }
 
-  private append = (logPath: string, entry: () => Record<string, unknown>) => {
+  private append = (entry: () => Record<string, unknown>) => {
+    const config = this.config
+    if (!config) {
+      return {path: '', written: false}
+    }
+    const logPath = config.path
     try {
-      const line = `${JSON.stringify({...entry(), timestamp: new Date().toISOString()})}\n`
+      const line = `${JSON.stringify({...entry(), version: config.version, timestamp: new Date().toISOString()})}\n`
       const file = openSync(logPath, 'a', 0o600)
       try {
         if (process.platform !== 'win32') {

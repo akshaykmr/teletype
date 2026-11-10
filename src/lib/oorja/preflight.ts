@@ -53,7 +53,6 @@ export const validateCliVersion = async (connectClient: ConnectClient) => {
   if (manifest.cliVersion > CLI_VERSION) {
     logErrorAndExit(chalk.redBright('Your CLI is outdated. Please run: npm update -g oorja'), {
       event: 'cli.outdated',
-      error: new Error('CLI version is outdated'),
     })
   }
 }
