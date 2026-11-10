@@ -6,8 +6,7 @@ import {App, parseStreamKey} from 'oorja/lib/oorja/index'
 import {promptStreamKey} from 'oorja/lib/utils'
 
 export default class HarnessHostRun extends BaseCommand {
-  static description =
-    'Serve harness sessions in a SupaKit space. Prepares agent runtimes before hosting (requires pnpm).'
+  static description = 'Serve harness sessions in a SupaKit space.'
 
   static args = {
     streamKey: Args.string({description: 'Secret stream key for the target space'}),

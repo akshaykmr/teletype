@@ -102,7 +102,7 @@ FLAGS
   -s, --shell=<value>                 shell to use. e.g. bash, fish
       --anonymous                     Create an anonymous session without prompting for sign-in.
       --ci-debug                      Create a new anonymous writable bash stream for CI debugging.
-      --harness-host                  Run agent sessions for this space. Prepares runtimes on first use (requires pnpm).
+      --harness-host                  Allow this machine to run agent sessions for this space.
       --multishell                    Allow this CLI session to host multiple terminal shells. Off by default
       --streaming-indicator=<option>  [default: enabled] Prefix the shell prompt with a streaming indicator.
                                       <options: enabled|disabled>
@@ -166,7 +166,7 @@ DESCRIPTION
 
 ## `oorja harness-host:doctor`
 
-Check prerequisites for running agent sessions.
+Check whether this machine can run agent sessions.
 
 ```
 USAGE
@@ -176,7 +176,7 @@ FLAGS
   --json  Print machine-readable JSON.
 
 DESCRIPTION
-  Check prerequisites for running agent sessions.
+  Check whether this machine can run agent sessions.
 ```
 
 
@@ -199,7 +199,7 @@ DESCRIPTION
 
 ## `oorja harness-host:run [STREAMKEY]`
 
-Serve harness sessions in a SupaKit space. Prepares agent runtimes before hosting (requires pnpm).
+Serve harness sessions in a SupaKit space.
 
 ```
 USAGE
@@ -209,7 +209,7 @@ ARGUMENTS
   [STREAMKEY]  Secret stream key for the target space
 
 DESCRIPTION
-  Serve harness sessions in a SupaKit space. Prepares agent runtimes before hosting (requires pnpm).
+  Serve harness sessions in a SupaKit space.
 ```
 
 <!-- commandsstop -->
