@@ -1,10 +1,9 @@
 import * as os from 'node:os'
 
 import chalk from 'chalk'
-import type {createHarnessRuntimes, doctorHarnessHost, prepareHarnessHost} from 'oorja-harness-host/harnesses'
-import type {HarnessHost, HarnessHostOptions} from 'oorja-harness-host/host'
 import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
 import type {Channel} from 'phoenix'
+import ora from 'ora'
 
 import type {JoinChannel} from 'oorja/lib/connect/index'
 import type {RoomKey} from 'oorja/lib/connect/types'
@@ -14,6 +13,8 @@ import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
 import {Future, printErrorMessage} from 'oorja/lib/utils'
+
+import {getPreparedRuntimes, loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
 export type HarnessHostConnectionOptions = {
   userId: string
@@ -25,53 +26,43 @@ export type HarnessHostConnectionOptions = {
   joinChannel: JoinChannel
 }
 
-type HarnessHostPackage = {
-  HarnessHost: {start: (options: HarnessHostOptions) => Promise<HarnessHost>}
-  createHarnessRuntimes: typeof createHarnessRuntimes
-  doctorHarnessHost: typeof doctorHarnessHost
-  prepareHarnessHost: typeof prepareHarnessHost
-}
-
-export const loadHarnessHost = async () => {
-  const packageName = 'oorja-harness-host'
-  try {
-    import.meta.resolve(packageName)
-  } catch (error) {
-    throw new Error('Harness hosting is not installed. Install it with: npm install --global oorja-harness-host', {
-      cause: error,
-    })
-  }
-  return import(packageName) as Promise<HarnessHostPackage>
-}
-
 export class HarnessHostConnection {
   private channel!: Channel
   private sharedHost!: SharedHarnessHost
   private readonly finished = new Future<null>()
   private stopped = false
+  private standalone = false
 
   constructor(private readonly options: HarnessHostConnectionOptions) {}
 
   start = async () => {
-    this.sharedHost = await SharedHarnessHost.open({
-      socketPath: localSocketPath(this.options.stateFile, this.options.machineId),
-      roomId: this.options.roomKey.roomId,
-      workdir: this.options.process.cwd(),
-      createHost: async (emit) => {
-        const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
-        return HarnessHost.start({
-          hostId: this.options.machineId,
-          hostname: `${os.userInfo().username}@${os.hostname()}`,
-          workdir: this.options.process.cwd(),
-          stateFile: this.options.stateFile,
-          runtimes: createHarnessRuntimes(),
-          onError: (error) => {
-            logger.error('harness.error', error)
-          },
-          emit,
-        })
-      },
-    })
+    const spinner = ora('Starting Harness Host').start()
+    try {
+      this.sharedHost = await SharedHarnessHost.open({
+        socketPath: localSocketPath(this.options.stateFile, this.options.machineId),
+        roomId: this.options.roomKey.roomId,
+        workdir: this.options.process.cwd(),
+        createHost: async (emit) => {
+          const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
+          const runtimes = await getPreparedRuntimes(createHarnessRuntimes())
+          return HarnessHost.start({
+            hostId: this.options.machineId,
+            hostname: `${os.userInfo().username}@${os.hostname()}`,
+            workdir: this.options.process.cwd(),
+            stateFile: this.options.stateFile,
+            runtimes,
+            onError: (error) => {
+              logger.error('harness.error', error)
+            },
+            emit,
+          })
+        },
+      })
+      spinner.stop()
+    } catch (error) {
+      spinner.fail('Could not start Harness Host. For setup checks, run: oorja harness-host:doctor')
+      throw error
+    }
     this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
       channel: `harness:${this.options.roomKey.roomId}`,
       params: {
@@ -82,13 +73,14 @@ export class HarnessHostConnection {
       onClose: this.stop,
       onError: this.stop,
       onMessage: this.handleMessage,
-      handleSessionJoin: this.handleSessionJoin,
-      handleSessionLeave: this.handleSessionLeave,
+      handleSessionJoin: this.sendCurrentState,
+      handleSessionLeave: this.sendCurrentState,
     })
     this.sharedHost.listen(this.broadcastEvent)
   }
 
   run = async () => {
+    this.standalone = true
     await this.start()
     this.options.process.once('SIGINT', this.stop)
     this.options.process.once('SIGTERM', this.stop)
@@ -113,22 +105,16 @@ export class HarnessHostConnection {
       return
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
-    console.log(`Harness command received from ${session}: ${command.type}.`)
     this.sharedHost.handleCommand(command)
   }
 
   private handleJoin = () => {
-    console.log('Harness host ready.')
-    this.sendCurrentState()
-  }
-
-  private handleSessionJoin = (session: string) => {
-    console.log(`Channel peer joined: ${session}.`)
-    this.sendCurrentState()
-  }
-
-  private handleSessionLeave = (session: string) => {
-    console.log(`Channel peer left: ${session}.`)
+    if (this.standalone) {
+      console.log(`\n${chalk.greenBright('✔')} ${chalk.bold('Harness Host is online')}`)
+      console.log(`  ${os.userInfo().username}@${os.hostname()} ${chalk.dim('·')} ${this.options.process.cwd()}`)
+      console.log('\nOpen SparkChat in this space to run agents on this computer.')
+      console.log(chalk.dim('Press Ctrl+C to stop hosting.\n'))
+    }
     this.sendCurrentState()
   }
 

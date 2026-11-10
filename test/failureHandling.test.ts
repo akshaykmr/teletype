@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs'
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {spawnSync} from 'node:child_process'
@@ -127,6 +127,91 @@ test('HTTP failures retain status details and authentication error types', async
 })
 
 for (const scenario of [
+  {name: 'missing pnpm', args: ['teletype', '--anonymous', '--new', '--harness-host'], path: '', status: 1},
+  {
+    name: 'no prepared runtimes',
+    args: ['teletype', '--anonymous', '--new', '--harness-host'],
+    path: process.env.PATH,
+    status: 1,
+  },
+  {name: 'standalone missing pnpm', args: ['harness-host:run'], path: '', status: 1},
+  {name: 'ordinary Teletype skips harness setup', args: ['teletype', '--anonymous', '--new'], path: '', status: 99},
+]) {
+  test(`setup before network access: ${scenario.name}`, {skip: process.platform === 'win32'}, (t) => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'oorja-preflight-'))
+    t.after(() => rmSync(directory, {recursive: true, force: true}))
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `
+      import {execute} from '@oclif/core';
+      globalThis.fetch = () => process.exit(99);
+      await execute({dir: process.cwd(), args: process.argv.slice(1)});
+    `,
+        ...scenario.args,
+      ],
+      {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: {...process.env, HOME: directory, XDG_CONFIG_HOME: directory, PATH: scenario.path},
+      },
+    )
+    assert.equal(result.status, scenario.status, result.stdout + result.stderr)
+    assert.equal(existsSync(path.join(directory, '.ai-sdk-harness')), false)
+  })
+}
+
+for (const preparedPi of [false, true]) {
+  test(
+    `Harness Host startup with ${preparedPi ? 'only Pi' : 'no runtimes'} prepared`,
+    {skip: process.platform === 'win32'},
+    (t) => {
+      const directory = mkdtempSync(path.join(tmpdir(), 'oorja-harness-'))
+      t.after(() => rmSync(directory, {recursive: true, force: true}))
+      if (preparedPi) {
+        const bin = path.join(directory, '.ai-sdk-harness', '.harness-bootstrap', 'pi', 'node_modules', '.bin')
+        mkdirSync(bin, {recursive: true})
+        symlinkSync(process.execPath, path.join(bin, 'pi'))
+      }
+      const result = spawnSync(
+        process.execPath,
+        [
+          '--input-type=module',
+          '-e',
+          `
+      import assert from 'node:assert/strict';
+      import {HarnessHostConnection} from 'oorja/lib/harnessHost/index';
+      import {checkHarnessSetup} from 'oorja/lib/harnessHost/setup';
+      import {createRoomKey, decrypt} from 'oorja/lib/encryption';
+      const roomKey = createRoomKey('test');
+      const state = Promise.withResolvers();
+      const host = new HarnessHostConnection({
+        userId: 'test', machineId: 'test', roomKey,
+        process, multiplayer: false, stateFile: process.env.HOME + '/host.sqlite',
+        joinChannel: ({onJoin}) => {
+          queueMicrotask(onJoin);
+          return {push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
+        },
+      });
+      await checkHarnessSetup(process.cwd());
+      await host.start();
+      assert.deepEqual((await state.promise).harnesses, ['pi']);
+      await host.stop();
+    `,
+        ],
+        {encoding: 'utf8', timeout: 10000, env: {...process.env, HOME: directory}},
+      )
+
+      assert.equal(result.status, preparedPi ? 0 : 1, result.stderr)
+      assert.equal(existsSync(path.join(directory, 'host.sqlite')), preparedPi)
+      assert.equal(existsSync(path.join(directory, '.ai-sdk-harness')), preparedPi)
+    },
+  )
+}
+
+for (const scenario of [
   {name: 'missing shell fails', missing: true, exitCode: 0, multishell: false, status: 1},
   {name: 'nonzero shell exit fails', missing: false, exitCode: 7, multishell: false, status: 1},
   {name: 'normal shell exit succeeds', missing: false, exitCode: 0, multishell: false, status: 0},
@@ -153,7 +238,7 @@ for (const scenario of [
       logger.configure(directory, 'test');
       await new TeletypeManager({
         userId: 'test', roomKey: createRoomKey('test'), shell,
-        multiplex: false, multishell, streamingIndicator: false, process,
+        multiplex: false, multishell, streamingIndicator: false, harnessHost: false, process,
         joinChannel: ({onJoin}) => {
           queueMicrotask(onJoin);
           return {

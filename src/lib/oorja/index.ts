@@ -58,13 +58,11 @@ export class OORJA {
     }
   }
 
-  teletype = async ({
-    harnessHost,
-    ...options
-  }: Omit<TeletypeOptions, 'userId' | 'joinChannel'> & {harnessHost: boolean}) => {
+  teletype = async ({harnessHost, ...options}: Omit<TeletypeOptions, 'userId' | 'joinChannel'>) => {
     const teletype = new TeletypeManager({
       userId: this.user!.id,
       joinChannel: this.connectClient.joinChannel,
+      harnessHost,
       ...options,
     })
     if (!harnessHost) {

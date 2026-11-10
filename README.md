@@ -189,7 +189,7 @@ USAGE
   $ oorja harness-host:prepare [RUNTIMES...]
 
 ARGUMENTS
-  [RUNTIMES...]  (all|codex|claude-code|opencode) [default: all] Agent runtimes to set up; use all to set up every
+  [RUNTIMES...]  (all|codex|claude-code|opencode|pi) [default: all] Agent runtimes to set up; use all to set up every
                  supported runtime
 
 DESCRIPTION

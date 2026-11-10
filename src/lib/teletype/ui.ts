@@ -4,21 +4,22 @@ import {clearLine, cursorTo} from 'readline'
 export class MultishellUI {
   private stopHosting?: () => void
 
-  constructor(private readonly process: NodeJS.Process) {}
+  constructor(private readonly options: {process: NodeJS.Process; harnessHostEnabled: boolean}) {}
 
   start(stopHosting: () => void) {
     this.stopHosting = stopHosting
-    this.process.once('SIGINT', stopHosting)
+    this.options.process.once('SIGINT', stopHosting)
   }
 
   update(shells: number, viewers: number) {
-    const {stdout} = this.process
+    const {stdout} = this.options.process
     if (!stdout.isTTY) {
       return
     }
 
     const status = [
       chalk.bold.blueBright('TeleType host online'),
+      ...(this.options.harnessHostEnabled ? [chalk.green('Harness Host on')] : []),
       chalk.green(`${shells} shell${shells === 1 ? '' : 's'} active`),
       chalk.cyan(`${viewers} viewer${viewers === 1 ? '' : 's'} connected`),
       chalk.dim('Ctrl-C to stop hosting'),
@@ -30,17 +31,17 @@ export class MultishellUI {
 
   stop() {
     if (this.stopHosting) {
-      this.process.off('SIGINT', this.stopHosting)
+      this.options.process.off('SIGINT', this.stopHosting)
       this.stopHosting = undefined
     }
 
-    if (this.process.stdout.isTTY) {
-      clearLine(this.process.stdout, 0)
-      cursorTo(this.process.stdout, 0)
+    if (this.options.process.stdout.isTTY) {
+      clearLine(this.options.process.stdout, 0)
+      cursorTo(this.options.process.stdout, 0)
     }
   }
 
   confirmStopped() {
-    this.process.stdout.write(chalk.blueBright('TeleType hosting stopped. All terminal streams have ended.\n'))
+    this.options.process.stdout.write(chalk.blueBright('TeleType hosting stopped. All terminal streams have ended.\n'))
   }
 }

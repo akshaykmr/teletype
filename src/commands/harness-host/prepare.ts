@@ -4,9 +4,9 @@ import type {HarnessSelection} from 'oorja-harness-host/harnesses'
 import ora from 'ora'
 
 import {BaseCommand} from 'oorja/lib/command'
-import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
+import {checkHarnessPrerequisites, loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
-const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode']
+const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode', 'pi']
 
 export default class HarnessHostPrepare extends BaseCommand {
   static description = 'Set up agent runtimes on this machine.'
@@ -23,16 +23,17 @@ export default class HarnessHostPrepare extends BaseCommand {
   async run() {
     const {args} = await this.parse(HarnessHostPrepare)
     const runtimes = args.runtimes as HarnessSelection[]
-    const {prepareHarnessHost} = await loadHarnessHost()
     const spinner = ora('Setting up agent runtimes').start()
     try {
+      const {prepareHarnessHost} = await loadHarnessHost()
+      await checkHarnessPrerequisites(process.cwd())
       const results = await prepareHarnessHost(process.cwd(), runtimes)
       spinner.succeed(chalk.bold('Agent runtimes ready'))
       results.forEach(({harnessId, detail}) => {
         this.log(`  ${chalk.blueBright(harnessId)}  ${chalk.dim(detail)}`)
       })
     } catch (error) {
-      spinner.fail(chalk.bold('Could not set up agent runtimes'))
+      spinner.fail(chalk.bold('Could not set up agent runtimes. For setup checks, run: oorja harness-host:doctor'))
       throw error
     }
   }
