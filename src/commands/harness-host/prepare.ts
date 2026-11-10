@@ -4,7 +4,7 @@ import type {HarnessSelection} from 'oorja-harness-host/harnesses'
 import ora from 'ora'
 
 import {BaseCommand} from 'oorja/lib/command'
-import {checkHarnessPrerequisites, loadHarnessHost} from 'oorja/lib/harnessHost/index'
+import {checkHarnessPrerequisites, loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
 const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode', 'pi']
 
