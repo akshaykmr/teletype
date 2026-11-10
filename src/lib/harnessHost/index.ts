@@ -1,4 +1,7 @@
 import * as os from 'node:os'
+import {constants} from 'node:fs'
+import {access} from 'node:fs/promises'
+import {join} from 'node:path'
 
 import chalk from 'chalk'
 import type {
@@ -63,7 +66,7 @@ export const checkHarnessPrerequisites = async (cwd: string, selections: Harness
         failures.set(
           check.name,
           check.name === 'pnpm'
-            ? 'pnpm is required to prepare agent runtimes. Install it with: npm install --global pnpm'
+            ? 'pnpm is required. Install it with: npm install --global pnpm\nThen run: oorja harness-host:prepare all'
             : check.detail,
         )
       }
@@ -84,16 +87,16 @@ export class HarnessHostConnection {
   constructor(private readonly options: HarnessHostConnectionOptions) {}
 
   start = async () => {
-    const spinner = ora('Preparing Harness Host').start()
+    const spinner = ora('Starting Harness Host').start()
     try {
       this.sharedHost = await SharedHarnessHost.open({
         socketPath: localSocketPath(this.options.stateFile, this.options.machineId),
         roomId: this.options.roomKey.roomId,
         workdir: this.options.process.cwd(),
         createHost: async (emit) => {
-          const {HarnessHost, createHarnessRuntimes, prepareHarnessHost} = await loadHarnessHost()
+          const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
           await checkHarnessPrerequisites(this.options.process.cwd())
-          await prepareHarnessHost(this.options.process.cwd())
+          await checkHarnessSetup()
           return HarnessHost.start({
             hostId: this.options.machineId,
             hostname: `${os.userInfo().username}@${os.hostname()}`,
@@ -109,7 +112,7 @@ export class HarnessHostConnection {
       })
       spinner.stop()
     } catch (error) {
-      spinner.fail('Could not start Harness Host')
+      spinner.fail('Could not start Harness Host. For setup checks, run: oorja harness-host:doctor')
       throw error
     }
     this.channel = this.options.joinChannel<HarnessChannelParams, HarnessChannelMetas>({
@@ -219,4 +222,29 @@ const localSocketPath = (stateFile: string, machineId: string) => {
 const getSessionIdentity = (session: string) => {
   const [userId, , clientType] = session.split(':')
   return {userId, clientType}
+}
+
+const checkHarnessSetup = async () => {
+  const commands = {codex: 'codex', 'claude-code': 'claude', opencode: 'opencode', pi: 'pi'}
+  const missing: string[] = []
+  for (const [harness, command] of Object.entries(commands)) {
+    const executable = process.platform === 'win32' && harness !== 'pi' ? `${command}.cmd` : command
+    const path = join(
+      os.homedir(),
+      '.ai-sdk-harness',
+      '.harness-bootstrap',
+      harness,
+      'node_modules',
+      '.bin',
+      executable,
+    )
+    try {
+      await access(path, constants.X_OK)
+    } catch {
+      missing.push(harness)
+    }
+  }
+  if (missing.length) {
+    throw new Error(`Agent setup is incomplete (${missing.join(', ')}).\nRun: oorja harness-host:prepare all`)
+  }
 }

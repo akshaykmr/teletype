@@ -23,9 +23,9 @@ export default class HarnessHostPrepare extends BaseCommand {
   async run() {
     const {args} = await this.parse(HarnessHostPrepare)
     const runtimes = args.runtimes as HarnessSelection[]
-    const {prepareHarnessHost} = await loadHarnessHost()
     const spinner = ora('Setting up agent runtimes').start()
     try {
+      const {prepareHarnessHost} = await loadHarnessHost()
       await checkHarnessPrerequisites(process.cwd(), runtimes)
       const results = await prepareHarnessHost(process.cwd(), runtimes)
       spinner.succeed(chalk.bold('Agent runtimes ready'))
@@ -33,7 +33,7 @@ export default class HarnessHostPrepare extends BaseCommand {
         this.log(`  ${chalk.blueBright(harnessId)}  ${chalk.dim(detail)}`)
       })
     } catch (error) {
-      spinner.fail(chalk.bold('Could not set up agent runtimes'))
+      spinner.fail(chalk.bold('Could not set up agent runtimes. For setup checks, run: oorja harness-host:doctor'))
       throw error
     }
   }

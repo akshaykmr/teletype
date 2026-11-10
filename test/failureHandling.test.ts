@@ -126,15 +126,19 @@ test('HTTP failures retain status details and authentication error types', async
   )
 })
 
-test('missing pnpm prevents Harness Host from joining the channel', {skip: process.platform === 'win32'}, (t) => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'oorja-harness-'))
-  t.after(() => rmSync(directory, {recursive: true, force: true}))
-  const result = spawnSync(
-    process.execPath,
-    [
-      '--input-type=module',
-      '-e',
-      `
+for (const missingPnpm of [true, false]) {
+  test(
+    `unprepared Harness Host does not join or install (missing pnpm: ${missingPnpm})`,
+    {skip: process.platform === 'win32'},
+    (t) => {
+      const directory = mkdtempSync(path.join(tmpdir(), 'oorja-harness-'))
+      t.after(() => rmSync(directory, {recursive: true, force: true}))
+      const result = spawnSync(
+        process.execPath,
+        [
+          '--input-type=module',
+          '-e',
+          `
     import {HarnessHostConnection} from 'oorja/lib/harnessHost/index';
     import {createRoomKey} from 'oorja/lib/encryption';
     await new HarnessHostConnection({
@@ -143,13 +147,21 @@ test('missing pnpm prevents Harness Host from joining the channel', {skip: proce
       joinChannel: () => process.exit(99),
     }).start();
   `,
-    ],
-    {encoding: 'utf8', timeout: 10000, env: {...process.env, HOME: directory, PATH: ''}},
-  )
+        ],
+        {
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {...process.env, HOME: directory, PATH: missingPnpm ? '' : process.env.PATH},
+        },
+      )
 
-  assert.equal(result.status, 1, result.stderr)
-  assert.match(result.stderr, /pnpm/)
-})
+      assert.equal(result.status, 1, result.stderr)
+      assert.match(result.stderr, missingPnpm ? /pnpm/ : /codex/)
+      assert.equal(existsSync(path.join(directory, '.ai-sdk-harness')), false)
+      assert.equal(existsSync(path.join(directory, 'host.sqlite')), false)
+    },
+  )
+}
 
 for (const scenario of [
   {name: 'missing shell fails', missing: true, exitCode: 0, multishell: false, status: 1},
