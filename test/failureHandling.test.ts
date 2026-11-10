@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdtempSync, readFileSync, statSync, writeFileSync} from 'node:fs'
+import {existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {spawnSync} from 'node:child_process'
@@ -125,3 +125,89 @@ test('HTTP failures retain status details and authentication error types', async
     (error) => error instanceof Unauthorized && error.message.includes('401'),
   )
 })
+
+test(
+  'real PTY exits report shell failures and preserve normal and multishell exits',
+  {skip: process.platform === 'win32'},
+  async (t) => {
+    for (const scenario of [
+      {name: 'missing shell', missing: true, exitCode: 0, multishell: false, status: 1},
+      {name: 'failed shell', missing: false, exitCode: 7, multishell: false, status: 1},
+      {name: 'normal shell', missing: false, exitCode: 0, multishell: false, status: 0},
+      {name: 'multishell failure keeps hosting', missing: false, exitCode: 7, multishell: true, status: 0},
+    ]) {
+      await t.test(scenario.name, () => {
+        const directory = mkdtempSync(path.join(tmpdir(), 'oorja-shell-'))
+        const shell = path.join(directory, 'shell')
+        try {
+          if (!scenario.missing) {
+            writeFileSync(shell, `#!/bin/sh\nprintf 'shell ran\\n'\nexit ${scenario.exitCode}\n`, {mode: 0o700})
+          }
+          const result = spawnSync(
+            process.execPath,
+            [
+              '--input-type=module',
+              '-e',
+              `
+          import {TeletypeManager} from 'oorja/lib/teletype/index';
+          import {logger} from 'oorja/lib/log';
+          import {createRoomKey} from 'oorja/lib/encryption';
+          const [directory, shell, mode] = process.argv.slice(1);
+          const multishell = mode === 'multi';
+          logger.configure(directory, 'test');
+          const manager = new TeletypeManager({
+            userId: 'test', roomKey: createRoomKey('test'), shell,
+            multiplex: false, multishell, streamingIndicator: false, process,
+            joinChannel: ({onJoin}) => {
+              queueMicrotask(onJoin);
+              return {
+                push: (_event, message) => {
+                  if (message.t === 'stream_exited' && multishell) {
+                    setImmediate(() => {
+                      console.log('still hosting after shell exit');
+                      process.emit('SIGINT');
+                    });
+                  }
+                },
+                leave: () => console.log('channel left'),
+              };
+            },
+          });
+          await manager.run();
+          console.log('manager completed');
+        `,
+              directory,
+              shell,
+              scenario.multishell ? 'multi' : 'single',
+            ],
+            {encoding: 'utf8', timeout: 5000},
+          )
+
+          assert.equal(result.error, undefined)
+          assert.equal(result.status, scenario.status, result.stdout + result.stderr)
+          assert.match(result.stdout, /channel left/)
+          const logPath = path.join(directory, 'oorja.log')
+          if (scenario.missing || scenario.exitCode !== 0) {
+            const entry = JSON.parse(readFileSync(logPath, 'utf8'))
+            // Platforms can report an exec failure synchronously or as a PTY exit.
+            assert.ok(['terminal.start', 'terminal.exit'].includes(entry.event))
+            assert.match(result.stdout, /Failed to start|exited with code/)
+            assert.match(result.stderr, /Details logged to:/)
+            assert.doesNotMatch(result.stdout, /terminated shell stream to SupaKit. byee/)
+            if (!scenario.missing) {
+              assert.match(entry.message, /exited with code 7/)
+            }
+          } else {
+            assert.equal(existsSync(logPath), false)
+            assert.match(result.stdout, /manager completed/)
+          }
+          if (scenario.multishell) {
+            assert.match(result.stdout, /still hosting after shell exit[\s\S]*channel left[\s\S]*manager completed/)
+          }
+        } finally {
+          rmSync(directory, {recursive: true, force: true})
+        }
+      })
+    }
+  },
+)

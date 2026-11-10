@@ -24,7 +24,7 @@ type TeletypeOptions = {
   localAttachmentEnabled: boolean
   process: NodeJS.Process
   onData: (data: string) => void
-  onExit: () => void
+  onExit: (exitCode: number) => void
 }
 
 const SELF = 'self'
@@ -83,7 +83,7 @@ export class Teletype {
 
       this.options.onData(data)
     })
-    const ptyExitSubscription = this.term.onExit(this.options.onExit)
+    const ptyExitSubscription = this.term.onExit(({exitCode}) => this.options.onExit(exitCode))
 
     this.ready.then(() => {
       if (this.stopped || !canAttachLocally) {

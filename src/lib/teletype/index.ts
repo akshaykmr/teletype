@@ -11,7 +11,7 @@ import {getShellCwd} from 'oorja/lib/teletype/cwd'
 import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {logErrorAndExit} from 'oorja/lib/utils'
+import {logErrorAndExit, printExitMessage} from 'oorja/lib/utils'
 
 enum MessageType {
   IN = 'i',
@@ -117,7 +117,7 @@ export class TeletypeManager {
           d: encrypt(data, this.options.roomKey),
         })
       },
-      onExit: () => this.handleTermExit(termId),
+      onExit: (exitCode) => this.handleTermExit(termId, exitCode),
     })
 
     this.terms[termId] = teletype
@@ -131,7 +131,7 @@ export class TeletypeManager {
     this.updateUI()
   }
 
-  private handleTermExit = (termId: string) => {
+  private handleTermExit = (termId: string, exitCode: number) => {
     this.terms[termId].stop({killTerm: false})
     delete this.terms[termId]
     this.channel.push('new_msg', {
@@ -142,11 +142,17 @@ export class TeletypeManager {
     this.broadcastActiveStreams()
 
     if (Object.keys(this.terms).length > 0 || this.options.multishell) {
+      if (exitCode !== 0) {
+        printExitMessage(`Shell ${this.options.shell} exited with code ${exitCode}.\n`, {event: 'terminal.exit'})
+      }
       this.updateUI()
       return
     }
 
     this.stop({killTerms: false})
+    if (exitCode !== 0) {
+      logErrorAndExit(`Shell ${this.options.shell} exited with code ${exitCode}.\n`, {event: 'terminal.exit'})
+    }
     console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
     this.resolve?.(null)
   }
