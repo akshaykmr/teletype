@@ -66,7 +66,7 @@ export const checkHarnessPrerequisites = async (cwd: string, selections: Harness
         failures.set(
           check.name,
           check.name === 'pnpm'
-            ? 'pnpm is required. Install it with: npm install --global pnpm\nThen run: oorja harness-host:prepare all'
+            ? `pnpm is required. Install it with: npm install --global pnpm\nThen run: oorja harness-host:prepare ${selections.join(' ')}`
             : check.detail,
         )
       }
@@ -95,14 +95,13 @@ export class HarnessHostConnection {
         workdir: this.options.process.cwd(),
         createHost: async (emit) => {
           const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
-          await checkHarnessPrerequisites(this.options.process.cwd())
-          await checkHarnessSetup()
+          const runtimes = await getPreparedRuntimes(createHarnessRuntimes())
           return HarnessHost.start({
             hostId: this.options.machineId,
             hostname: `${os.userInfo().username}@${os.hostname()}`,
             workdir: this.options.process.cwd(),
             stateFile: this.options.stateFile,
-            runtimes: createHarnessRuntimes(),
+            runtimes,
             onError: (error) => {
               logger.error('harness.error', error)
             },
@@ -224,10 +223,12 @@ const getSessionIdentity = (session: string) => {
   return {userId, clientType}
 }
 
-const checkHarnessSetup = async () => {
+const getPreparedRuntimes = async (runtimes: HarnessHostOptions['runtimes']) => {
   const commands = {codex: 'codex', 'claude-code': 'claude', opencode: 'opencode', pi: 'pi'}
-  const missing: string[] = []
-  for (const [harness, command] of Object.entries(commands)) {
+  const prepared: HarnessHostOptions['runtimes'] = []
+  for (const runtime of runtimes) {
+    const harness = runtime.harnessId
+    const command = commands[harness]
     const executable = process.platform === 'win32' && harness !== 'pi' ? `${command}.cmd` : command
     const path = join(
       os.homedir(),
@@ -240,11 +241,15 @@ const checkHarnessSetup = async () => {
     )
     try {
       await access(path, constants.X_OK)
+      prepared.push(runtime)
     } catch {
-      missing.push(harness)
+      continue
     }
   }
-  if (missing.length) {
-    throw new Error(`Agent setup is incomplete (${missing.join(', ')}).\nRun: oorja harness-host:prepare all`)
+  if (!prepared.length) {
+    throw new Error(
+      'No agent runtimes are set up.\nSet up one: oorja harness-host:prepare codex\nOr set up all: oorja harness-host:prepare all',
+    )
   }
+  return prepared
 }

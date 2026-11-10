@@ -5,19 +5,25 @@ import {clearScreenDown, cursorTo} from 'readline'
 
 export const DEFAULT_DIMENSIONS: dimensions = {rows: 24, cols: 80}
 
-export const initScreen = (
-  username: string,
-  hostname: string,
-  shell: string,
-  multiplexed: boolean,
-  harnessHost: boolean,
-) => {
+export const initScreen = ({
+  username,
+  hostname,
+  shell,
+  multiplexed,
+  harnessHostEnabled,
+}: {
+  username: string
+  hostname: string
+  shell: string
+  multiplexed: boolean
+  harnessHostEnabled: boolean
+}) => {
   console.log(
     `${chalk.greenBright('✔')} ${chalk.bold(chalk.blueBright('TeleType'))} ${chalk.greenBright('is streaming')}`,
   )
   console.log(`  ${chalk.bold(`${username}@${hostname}`)} ${chalk.dim(' • ')} ${chalk.bold(shell)}\n`)
 
-  if (harnessHost) {
+  if (harnessHostEnabled) {
     console.log(`${chalk.greenBright('✔')} Harness Host is on. Run agents from SparkChat in this space.\n`)
   }
 

@@ -64,7 +64,7 @@ export class TeletypeManager {
 
   constructor(private readonly options: TeletypeOptions) {
     if (options.multishell) {
-      this.ui = new MultishellUI(options.process, options.harnessHost)
+      this.ui = new MultishellUI({process: options.process, harnessHostEnabled: options.harnessHost})
     }
   }
 

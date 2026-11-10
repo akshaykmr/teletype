@@ -90,13 +90,13 @@ export class Teletype {
       if (this.stopped || !canAttachLocally) {
         return
       }
-      initScreen(
-        this.options.username,
-        this.options.hostname,
-        this.options.shell,
-        this.options.multiplex,
-        this.options.harnessHost,
-      )
+      initScreen({
+        username: this.options.username,
+        hostname: this.options.hostname,
+        shell: this.options.shell,
+        multiplexed: this.options.multiplex,
+        harnessHostEnabled: this.options.harnessHost,
+      })
       emitKeypressEvents(stdin)
       stdin.setEncoding('utf8')
       stdin.setRawMode(true)

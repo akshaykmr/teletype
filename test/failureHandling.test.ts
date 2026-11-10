@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs'
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {spawnSync} from 'node:child_process'
@@ -126,39 +126,48 @@ test('HTTP failures retain status details and authentication error types', async
   )
 })
 
-for (const missingPnpm of [true, false]) {
+for (const preparedPi of [false, true]) {
   test(
-    `unprepared Harness Host does not join or install (missing pnpm: ${missingPnpm})`,
+    `Harness Host startup with ${preparedPi ? 'only Pi' : 'no runtimes'} prepared`,
     {skip: process.platform === 'win32'},
     (t) => {
       const directory = mkdtempSync(path.join(tmpdir(), 'oorja-harness-'))
       t.after(() => rmSync(directory, {recursive: true, force: true}))
+      if (preparedPi) {
+        const bin = path.join(directory, '.ai-sdk-harness', '.harness-bootstrap', 'pi', 'node_modules', '.bin')
+        mkdirSync(bin, {recursive: true})
+        symlinkSync(process.execPath, path.join(bin, 'pi'))
+      }
       const result = spawnSync(
         process.execPath,
         [
           '--input-type=module',
           '-e',
           `
-    import {HarnessHostConnection} from 'oorja/lib/harnessHost/index';
-    import {createRoomKey} from 'oorja/lib/encryption';
-    await new HarnessHostConnection({
-      userId: 'test', machineId: 'test', roomKey: createRoomKey('test'),
-      process, multiplayer: false, stateFile: process.env.HOME + '/host.sqlite',
-      joinChannel: () => process.exit(99),
-    }).start();
-  `,
-        ],
-        {
-          encoding: 'utf8',
-          timeout: 10000,
-          env: {...process.env, HOME: directory, PATH: missingPnpm ? '' : process.env.PATH},
+      import assert from 'node:assert/strict';
+      import {HarnessHostConnection} from 'oorja/lib/harnessHost/index';
+      import {createRoomKey, decrypt} from 'oorja/lib/encryption';
+      const roomKey = createRoomKey('test');
+      const state = Promise.withResolvers();
+      const host = new HarnessHostConnection({
+        userId: 'test', machineId: 'test', roomKey,
+        process, multiplayer: false, stateFile: process.env.HOME + '/host.sqlite',
+        joinChannel: ({onJoin}) => {
+          queueMicrotask(onJoin);
+          return {push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
         },
+      });
+      await host.start();
+      assert.deepEqual((await state.promise).harnesses, ['pi']);
+      await host.stop();
+    `,
+        ],
+        {encoding: 'utf8', timeout: 10000, env: {...process.env, HOME: directory, PATH: ''}},
       )
 
-      assert.equal(result.status, 1, result.stderr)
-      assert.match(result.stderr, missingPnpm ? /pnpm/ : /codex/)
-      assert.equal(existsSync(path.join(directory, '.ai-sdk-harness')), false)
-      assert.equal(existsSync(path.join(directory, 'host.sqlite')), false)
+      assert.equal(result.status, preparedPi ? 0 : 1, result.stderr)
+      assert.equal(existsSync(path.join(directory, 'host.sqlite')), preparedPi)
+      assert.equal(existsSync(path.join(directory, '.ai-sdk-harness')), preparedPi)
     },
   )
 }
