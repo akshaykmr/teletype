@@ -41,6 +41,10 @@ In this mode, shells are controlled from the web app rather than the local termi
 Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
 
 `,
+    `${chalk.blueBright('$ npx --yes oorja@latest teletype --ci-debug')}
+Starts a CI debug stream without a global install. Prints a link to control the shell and keeps the CI step running until the shell exits.
+
+`,
   ]
 
   static flags = {

@@ -26,7 +26,7 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-- You'll need Node 22.10.0 >. CLI is available via npm. <br />
+- You'll need Node 24.15.0 or newer. CLI is available via npm. <br />
   <a href="https://nodejs.org/en/download/" target="_blank">
   You can setup node/npm from here.
   </a> 
@@ -38,6 +38,14 @@ as a binary in future releases (i.e. not available via npm but via a script or m
 - `npm install -g oorja`
 - `teletype`
 - `teletype -m`  (for collaboration mode)
+
+For CI debugging without a global install:
+
+```sh
+npx --yes oorja@latest teletype --ci-debug
+```
+
+This creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
 
 Misc: If you have issues installing on apple M1 or similar systems:
 - `sudo xcode-select --install`
@@ -114,6 +122,9 @@ EXAMPLES
 
   $ teletype --ci-debug
   Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
+
+  $ npx --yes oorja@latest teletype --ci-debug
+  Starts a CI debug stream without a global install. Prints a link to control the shell and keeps the CI step running until the shell exits.
 ```
 
 ## `oorja signout`
