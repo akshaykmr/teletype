@@ -50,6 +50,9 @@
     "bin": "oorja",
     "commands": "./dist/commands",
     "dirname": "oorja",
+    "hooks": {
+      "init": "./dist/hooks/init/log.js"
+    },
     "plugins": [
       "@oclif/plugin-help"
     ]
