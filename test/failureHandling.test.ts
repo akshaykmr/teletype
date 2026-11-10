@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdtempSync, readFileSync, statSync, writeFileSync} from 'node:fs'
+import {existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {spawnSync} from 'node:child_process'
@@ -125,3 +125,67 @@ test('HTTP failures retain status details and authentication error types', async
     (error) => error instanceof Unauthorized && error.message.includes('401'),
   )
 })
+
+for (const scenario of [
+  {name: 'missing shell fails', missing: true, exitCode: 0, multishell: false, status: 1},
+  {name: 'nonzero shell exit fails', missing: false, exitCode: 7, multishell: false, status: 1},
+  {name: 'normal shell exit succeeds', missing: false, exitCode: 0, multishell: false, status: 0},
+  {name: 'multishell keeps hosting after shell failure', missing: false, exitCode: 7, multishell: true, status: 0},
+]) {
+  test(scenario.name, {skip: process.platform === 'win32'}, (t) => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'oorja-shell-'))
+    t.after(() => rmSync(directory, {recursive: true, force: true}))
+    const shell = path.join(directory, 'shell')
+    if (!scenario.missing) {
+      writeFileSync(shell, `#!/bin/sh\nexit ${scenario.exitCode}\n`, {mode: 0o700})
+    }
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `
+      import {TeletypeManager} from 'oorja/lib/teletype/index';
+      import {logger} from 'oorja/lib/log';
+      import {createRoomKey} from 'oorja/lib/encryption';
+      const [directory, shell, mode] = process.argv.slice(1);
+      const multishell = mode === 'multi';
+      logger.configure(directory, 'test');
+      await new TeletypeManager({
+        userId: 'test', roomKey: createRoomKey('test'), shell,
+        multiplex: false, multishell, streamingIndicator: false, process,
+        joinChannel: ({onJoin}) => {
+          queueMicrotask(onJoin);
+          return {
+            push: (_event, message) => {
+              if (message.t === 'stream_exited' && multishell) {
+                setImmediate(() => {
+                  console.log('TEST_STILL_HOSTING');
+                  process.emit('SIGINT');
+                });
+              }
+            },
+            leave() {},
+          };
+        },
+      }).run();
+    `,
+        directory,
+        shell,
+        scenario.multishell ? 'multi' : 'single',
+      ],
+      {encoding: 'utf8', timeout: 5000},
+    )
+
+    assert.equal(result.status, scenario.status, result.stdout + result.stderr)
+    const failed = scenario.missing || scenario.exitCode !== 0
+    const logPath = path.join(directory, 'oorja.log')
+    assert.equal(existsSync(logPath), failed)
+    if (failed) {
+      assert.equal(JSON.parse(readFileSync(logPath, 'utf8')).level, 'error')
+    }
+    if (scenario.multishell) {
+      assert.match(result.stdout, /TEST_STILL_HOSTING/)
+    }
+  })
+}

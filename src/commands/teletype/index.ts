@@ -7,7 +7,7 @@ import chalk from 'chalk'
 import {BaseCommand} from 'oorja/lib/command'
 import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
 import {App, parseStreamKey} from 'oorja/lib/oorja/index'
-import {printExitMessage, logErrorAndExit, promptStreamKey, setTerminalTitle} from 'oorja/lib/utils'
+import {printErrorMessage, logErrorAndExit, promptStreamKey, setTerminalTitle} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import {getDefaultShell} from 'oorja/lib/teletype/shell'
@@ -190,7 +190,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
   ) {
     const streamKey: string = options.streamKey || (await promptStreamKey())
     if (!streamKey) {
-      printExitMessage(chalk.redBright('stream-key not provided :('))
+      printErrorMessage(chalk.redBright('stream-key not provided :('))
       exit()
     }
     const streamKeyStruct = parseStreamKey(streamKey)
