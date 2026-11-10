@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import {randomUUID} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'fs'
 import path from 'path'
+import {logger} from 'oorja/lib/log'
 
 export const CLI_VERSION = 2.91
 
@@ -41,6 +42,7 @@ export class Config {
         }
         this.saveConfig()
       } else {
+        logger.error('config.load', error)
         console.error(chalk.redBright('Error loading config:'), error.message, this.configPath)
       }
     }
@@ -50,6 +52,7 @@ export class Config {
     try {
       writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8')
     } catch (error: any) {
+      logger.error('config.save', error)
       console.error(chalk.redBright('Error saving config:'), error.message)
     }
   }

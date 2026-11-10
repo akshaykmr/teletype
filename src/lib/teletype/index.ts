@@ -6,12 +6,12 @@ import {Unauthorized} from 'oorja/lib/connect/errors'
 import {JoinChannel} from 'oorja/lib/connect/index'
 import {RoomKey} from 'oorja/lib/connect/types'
 import {encrypt, decrypt} from 'oorja/lib/encryption'
-import {exit} from 'oorja/lib/exit'
+import {logger} from 'oorja/lib/log'
 import {getShellCwd} from 'oorja/lib/teletype/cwd'
 import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {printExitMessage} from 'oorja/lib/utils'
+import {logErrorAndExit} from 'oorja/lib/utils'
 
 enum MessageType {
   IN = 'i',
@@ -157,15 +157,18 @@ export class TeletypeManager {
     const reason = error instanceof Error ? error.message : String(error)
     if (this.options.process.platform === 'darwin' && reason.includes('posix_spawnp failed')) {
       const workaround = 'chmod +x "$(npm root -g)"/oorja/node_modules/node-pty/prebuilds/darwin-*/spawn-helper'
-      printExitMessage(
+      logErrorAndExit(
         `${chalk.redBright(`Failed to start ${this.options.shell}.`)}\n` +
           'node-pty may have installed its macOS spawn helper without execute permissions.\n' +
           `Try running:\n${chalk.yellowBright(workaround)}\n`,
+        {event: 'terminal.start', error},
       )
     } else {
-      printExitMessage(chalk.redBright(`Failed to start ${this.options.shell}: ${reason}\n`))
+      logErrorAndExit(chalk.redBright(`Failed to start ${this.options.shell}: ${reason}\n`), {
+        event: 'terminal.start',
+        error,
+      })
     }
-    exit(6)
   }
 
   private broadcastActiveStreams = () => {
@@ -181,18 +184,22 @@ export class TeletypeManager {
       return
     }
     this.stop({leaveChannel: false})
-    printExitMessage(chalk.redBright('connection closed, terminated stream.'))
-    exit(3)
+    logErrorAndExit(chalk.redBright('connection closed, terminated stream.'), {
+      event: 'channel.close',
+      error: new Error('Connection closed; stream terminated.'),
+    })
   }
 
   private handleError = (err?: any) => {
     this.stop({leaveChannel: false})
     if (err instanceof Unauthorized) {
-      printExitMessage(chalk.redBright(err.message))
+      logErrorAndExit(chalk.redBright(err.message), {event: 'channel.error', error: err})
     } else {
-      printExitMessage(chalk.redBright('connection error, terminated stream.'))
+      logErrorAndExit(chalk.redBright('connection error, terminated stream.'), {
+        event: 'channel.error',
+        error: err || new Error('Channel connection error'),
+      })
     }
-    exit(4)
   }
 
   private handleMessage = ({from: {session}, sid, t, d}: any) => {
@@ -227,7 +234,9 @@ export class TeletypeManager {
       }
 
       const transfer = decrypt(d, this.options.roomKey) as FileTransfer
-      this.receiveFile(sid, transfer, session).catch(console.error)
+      this.receiveFile(sid, transfer, session).catch((error) => {
+        logger.error('file.receive', error)
+      })
       return
     }
 
@@ -314,14 +323,15 @@ export class TeletypeManager {
     }
 
     this.stop()
-    printExitMessage(
+    logErrorAndExit(
       chalk.redBright(
         userType === 'task'
           ? `unexpected input from user: ${userId} with task-token, terminating stream for safety. Please report this issue`
           : `unexpected input from user: ${userId}, terminating stream for safety. Please report this issue`,
       ),
+      {event: 'channel.input', error: new Error(`Unexpected input from user ${userId}, type ${userType}`)},
     )
-    exit(5)
+
     return false
   }
 

@@ -1,17 +1,18 @@
 import inquirer from 'inquirer'
-import {Command, Flags, Args} from '@oclif/core'
+import {Flags, Args} from '@oclif/core'
 import ora from 'ora'
 
 import {hostname} from 'os'
 import chalk from 'chalk'
+import {BaseCommand} from 'oorja/lib/command'
 import {Config, STREAM_KEY_SAMPLE} from 'oorja/lib/config'
 import {App, parseStreamKey} from 'oorja/lib/oorja/index'
-import {printExitMessage, promptStreamKey, setTerminalTitle} from 'oorja/lib/utils'
+import {printExitMessage, logErrorAndExit, promptStreamKey, setTerminalTitle} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import {getDefaultShell} from 'oorja/lib/teletype/shell'
 
-export default class TeleTypeCommand extends Command {
+export default class TeleTypeCommand extends BaseCommand {
   static order = 1
   static aliases = ['tty']
   static description = `Launch a terminal streaming session in SupaKit.`
@@ -239,11 +240,16 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       })
       .catch((e) => {
         if (e instanceof Unauthorized) {
-          printExitMessage('Failed to create space. Are you sure your access-token is valid?')
+          logErrorAndExit('Failed to create space. Are you sure your access-token is valid?', {
+            event: 'space.create',
+            error: e,
+          })
         } else {
-          printExitMessage('Failed to create space. Try again later or update the CLI: npm update -g oorja')
+          logErrorAndExit('Failed to create space. Try again later or update the CLI: npm update -g oorja', {
+            event: 'space.create',
+            error: e,
+          })
         }
-        exit(9)
         return Promise.reject()
       })
     if (multishell) {

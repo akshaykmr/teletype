@@ -1,6 +1,5 @@
 import haversine from 'haversine-distance'
-import {printExitMessage} from 'oorja/lib/utils'
-import {exit} from 'oorja/lib/exit'
+import {logErrorAndExit} from 'oorja/lib/utils'
 import {geoMap} from 'oorja/lib/oorja/geoMap'
 
 export class OorjaClientError extends Error {}
@@ -53,8 +52,11 @@ export const getRegion = async (): Promise<string> => {
     method: 'GET',
   })
   if (response.status !== 200) {
-    printExitMessage('There seems to be an issue with the network')
-    exit(1)
+    logErrorAndExit('There seems to be an issue with the network', {
+      event: 'region.fetch',
+      error: new Error(`GET ${response.url} failed with ${response.status} ${response.statusText}`),
+    })
+
     return Promise.reject()
   }
   const settings = (await response.json()) as _Settings
@@ -75,9 +77,9 @@ export const getRegion = async (): Promise<string> => {
     })
     const minDistance = distances.reduce((a, b) => (a.distance < b.distance ? a : b))
     return minDistance.name
-  } catch {
-    printExitMessage('error determining region')
-    exit(1)
+  } catch (error) {
+    logErrorAndExit('error determining region', {event: 'region.select', error})
+
     return Promise.reject()
   }
 }

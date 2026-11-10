@@ -8,8 +8,9 @@ import {importKey, createRoomKey, exportKey} from 'oorja/lib/encryption'
 import {createAnonymousSession, promptAuth, validateCliVersion} from 'oorja/lib/oorja/preflight'
 import {getRegion} from 'oorja/lib/oorja/client'
 import ora from 'ora'
-import {Future, printExitMessage} from 'oorja/lib/utils'
+import {Future, printExitMessage, logErrorAndExit} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
+import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 import chalk from 'chalk'
 import {HarnessHostConnection} from 'oorja/lib/harnessHost/index'
@@ -104,22 +105,28 @@ type StreamKey = {
 
 export const parseStreamKey = (streamKey: string): StreamKey => {
   if (!streamKey.startsWith('sk-')) {
-    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    exit(3)
+    logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
+      event: 'stream-key.invalid',
+      error: new Error(INVALID_STREAM_KEY_MESSAGE),
+    })
   }
 
   const parts = streamKey.split(':')
   if (parts.length !== 2) {
-    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    exit(3)
+    logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
+      event: 'stream-key.invalid',
+      error: new Error(INVALID_STREAM_KEY_MESSAGE),
+    })
   }
 
   const [token, rest] = parts
   const [roomId, encryptionSecret] = rest.split('#')
 
   if (!roomId || !encryptionSecret) {
-    printExitMessage(INVALID_STREAM_KEY_MESSAGE)
-    exit(3)
+    logErrorAndExit(INVALID_STREAM_KEY_MESSAGE, {
+      event: 'stream-key.invalid',
+      error: new Error(INVALID_STREAM_KEY_MESSAGE),
+    })
   }
 
   return {
@@ -159,7 +166,7 @@ export class App {
       spinner.fail(
         'There seems to be a connection issue. Check your connection or try again later. Does https://connect.oorja.io  load for you?',
       )
-      exit(56)
+      exit(1)
       return Promise.reject()
     }
     spinner.succeed('Online')
@@ -186,8 +193,10 @@ export class App {
               ? await createAnonymousSession(this.connectClient!)
               : await promptAuth(this.connectClient!, linkForTokenGen(oorjaConfig))
           if (!token) {
-            printExitMessage('Token not provided :(')
-            exit(12)
+            logErrorAndExit('Token not provided :(', {
+              event: 'authentication.token',
+              error: new Error('Token not provided'),
+            })
           }
           this.config.setAccessToken(token)
           this.connectClient!.setAccessToken(token)
@@ -211,16 +220,16 @@ export class App {
       }
       if (e instanceof Unauthorized) {
         spinner.fail()
-        printExitMessage(
+        logErrorAndExit(
           isControlledMode
             ? 'The provided access token failed authentication.'
             : 'Your access token failed authentication, resetting...',
+          {event: 'authentication', error: e},
         )
-        exit(33)
         return Promise.reject()
       } else {
         spinner.fail()
-        printExitMessage('Something went wrong :(')
+        printExitMessage('Something went wrong :(', {event: 'authentication', error: e})
       }
       throw e
     }
@@ -256,7 +265,8 @@ export class App {
       }
 
       this.connectClient = connectClient
-    } catch {
+    } catch (error) {
+      logger.reportError('connection.establish', error)
       this.connectionCheckFailed = true
     } finally {
       this.connectionCheckFuture.resolve!()
@@ -291,8 +301,11 @@ export class App {
         return
       })
       .catch((e) => {
-        spinner.fail('Socket connection failure..')
-        exit(61)
+        spinner.fail()
+        logErrorAndExit('Socket connection failure..', {
+          event: 'socket.connect',
+          error: e || new Error('Socket connection failure'),
+        })
         return Promise.reject(e)
       })
   }

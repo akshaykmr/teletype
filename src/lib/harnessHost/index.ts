@@ -10,6 +10,7 @@ import type {JoinChannel} from 'oorja/lib/connect/index'
 import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
+import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
 import {Future, printExitMessage} from 'oorja/lib/utils'
@@ -64,7 +65,9 @@ export class HarnessHostConnection {
           workdir: this.options.process.cwd(),
           stateFile: this.options.stateFile,
           runtimes: createHarnessRuntimes(),
-          onError: (error) => console.error('Harness host error:', error),
+          onError: (error) => {
+            logger.error('harness.error', error)
+          },
           emit,
         })
       },
@@ -149,8 +152,9 @@ export class HarnessHostConnection {
 
     printExitMessage(
       chalk.redBright(`unexpected input from user: ${userId}, terminating host for safety. Please report this issue`),
+      {event: 'harness.channel.input', error: new Error(`Unexpected input from user ${userId}`)},
     )
-    void this.stop().then(() => exit(5))
+    void this.stop().then(() => exit(1))
     return false
   }
 }
