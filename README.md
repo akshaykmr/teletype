@@ -26,7 +26,7 @@ Your stream can be view-only or collaboration enabled (command-line flag).
 
 # Install and stream!
 
-- You'll need Node 22.10.0 >. CLI is available via npm. <br />
+- You'll need Node 24.15.0 or newer. CLI is available via npm. <br />
   <a href="https://nodejs.org/en/download/" target="_blank">
   You can setup node/npm from here.
   </a> 
@@ -39,9 +39,25 @@ as a binary in future releases (i.e. not available via npm but via a script or m
 - `teletype`
 - `teletype -m`  (for collaboration mode)
 
-Misc: If you have issues installing on apple M1 or similar systems:
-- `sudo xcode-select --install`
-- `CXXFLAGS="--std=c++17" npm install -g oorja`
+You can also run Teletype without a global install:
+
+```sh
+npx oorja@latest teletype
+```
+
+To create a new anonymous stream:
+
+```sh
+npx oorja@latest teletype --new --anonymous
+```
+
+Add `--multiplayer` to allow viewers to control the shell. For CI debugging:
+
+```sh
+npx --yes oorja@latest teletype --ci-debug
+```
+
+`--ci-debug` creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
 
 **your stream is end-to-end encrypted**
 
