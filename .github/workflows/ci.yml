@@ -30,11 +30,11 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
-      - name: Build
-        run: pnpm run build
+      - name: Test
+        run: pnpm test
 
       - name: Generate command docs
-        run: pnpm run docs:commands
+        run: pnpm run docs:commands:generate
 
       - name: Check generated files
         run: git diff --exit-code README.md

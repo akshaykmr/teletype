@@ -1,10 +1,11 @@
-import {Args, Command} from '@oclif/core'
+import {Args} from '@oclif/core'
 
+import {BaseCommand} from 'oorja/lib/command'
 import {Config} from 'oorja/lib/config'
 import {App, parseStreamKey} from 'oorja/lib/oorja/index'
 import {promptStreamKey} from 'oorja/lib/utils'
 
-export default class HarnessHostRun extends Command {
+export default class HarnessHostRun extends BaseCommand {
   static description = 'Serve harness sessions in a SupaKit space.'
 
   static args = {

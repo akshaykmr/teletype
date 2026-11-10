@@ -1,9 +1,10 @@
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import chalk from 'chalk'
 
+import {BaseCommand} from 'oorja/lib/command'
 import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
-export default class HarnessHostDoctor extends Command {
+export default class HarnessHostDoctor extends BaseCommand {
   static description = 'Check whether this machine can run agent sessions.'
 
   static flags = {

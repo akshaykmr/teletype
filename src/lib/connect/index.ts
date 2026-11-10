@@ -11,8 +11,7 @@ import {Unauthorized, BadRequest} from 'oorja/lib/connect/errors'
 import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
-import {printExitMessage} from 'oorja/lib/utils'
-import {exit} from 'oorja/lib/exit'
+import {logErrorAndExit} from 'oorja/lib/utils'
 
 export class ApiClientError extends Error {}
 
@@ -172,13 +171,15 @@ export class ConnectClient {
         initialConnection = true
         resolve()
       })
-      this.socket.onError(() => {
+      this.socket.onError((error) => {
         if (!initialConnection) {
-          reject()
+          reject(error)
           return
         }
-        printExitMessage('connection error')
-        exit(2)
+        logErrorAndExit('connection error', {
+          event: 'socket.error',
+          error,
+        })
       })
       this.socket.connect()
     })
@@ -228,8 +229,9 @@ export class ConnectClient {
             onError(new Unauthorized('unauthorized: user needs to join the room before a stream can be started.'))
           return
         }
-        printExitMessage(`error on channel: ${resp.reason}`)
-        exit(3)
+        logErrorAndExit(`error on channel: ${resp.reason}`, {
+          event: 'channel.join',
+        })
       })
     return chan
   }
@@ -254,18 +256,16 @@ export class ConnectClient {
 const connectBaseURL = (host: string, useHttps: boolean) => `http${useHttps ? 's' : ''}://${host}/api`
 
 const handleError = (error: any) => {
-  // This function was originally designed for AxiosError.
-  // The custom _fetch method now throws an object with a `response` key
-  // for HTTP errors (`{ response }`), allowing this logic to remain unchanged.
   if (error?.response) {
     const {response} = error
-    if (response) {
-      switch (response.status) {
-        case 401:
-          throw new Unauthorized()
-        case 400:
-          throw new BadRequest()
-      }
+    const message = `HTTP ${response.status} ${response.statusText}: ${response.url}`
+    switch (response.status) {
+      case 401:
+        throw new Unauthorized(message)
+      case 400:
+        throw new BadRequest(message)
+      default:
+        throw new Error(message)
     }
   }
   throw error

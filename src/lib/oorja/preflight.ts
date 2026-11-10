@@ -3,8 +3,7 @@ import inquirer from 'inquirer'
 
 import {CLI_VERSION} from 'oorja/lib/config'
 import {ConnectClient} from 'oorja/lib/connect/index'
-import {printExitMessage} from 'oorja/lib/utils'
-import {CLI_OUTDATED_EXIT_CODE, exit} from 'oorja/lib/exit'
+import {logErrorAndExit} from 'oorja/lib/utils'
 
 const promptToken = (): Promise<string> =>
   inquirer
@@ -52,7 +51,8 @@ export const promptAuth = async (connectClient: ConnectClient, generateTokenLink
 export const validateCliVersion = async (connectClient: ConnectClient) => {
   const manifest = await connectClient.fetchCliManifest()
   if (manifest.cliVersion > CLI_VERSION) {
-    printExitMessage(chalk.redBright('Your CLI is outdated. Please run: npm update -g oorja'))
-    exit(CLI_OUTDATED_EXIT_CODE)
+    logErrorAndExit(chalk.redBright('Your CLI is outdated. Please run: npm update -g oorja'), {
+      event: 'cli.outdated',
+    })
   }
 }

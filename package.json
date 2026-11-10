@@ -41,6 +41,7 @@
     "docs:commands": "pnpm run build && pnpm run docs:commands:generate",
     "docs:commands:generate": "oclif readme --no-aliases --no-source-links && node scripts/order-readme-commands.mjs",
     "lint": "eslint . --ext .ts",
+    "test": "pnpm run build && tsc -p tsconfig.test.json && node --test test/*.test.ts",
     "prepack": "pnpm run build && oclif manifest && pnpm run docs:commands:generate",
     "prepare": "pnpm run build",
     "version": "pnpm run docs:commands && git add README.md",
@@ -50,6 +51,9 @@
     "bin": "oorja",
     "commands": "./dist/commands",
     "dirname": "oorja",
+    "hooks": {
+      "init": "./dist/hooks/init/log.js"
+    },
     "plugins": [
       "@oclif/plugin-help"
     ]

@@ -1,13 +1,14 @@
-import {Args, Command} from '@oclif/core'
+import {Args} from '@oclif/core'
 import chalk from 'chalk'
 import type {HarnessSelection} from 'oorja-harness-host/harnesses'
 import ora from 'ora'
 
+import {BaseCommand} from 'oorja/lib/command'
 import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
 const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode']
 
-export default class HarnessHostPrepare extends Command {
+export default class HarnessHostPrepare extends BaseCommand {
   static description = 'Set up agent runtimes on this machine.'
 
   static args = {
