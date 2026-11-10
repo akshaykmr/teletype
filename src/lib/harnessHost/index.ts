@@ -13,7 +13,7 @@ import type {EncryptedPayload} from 'oorja/lib/encryption'
 import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
-import {Future, printExitMessage} from 'oorja/lib/utils'
+import {Future, printErrorMessage} from 'oorja/lib/utils'
 
 export type HarnessHostConnectionOptions = {
   userId: string
@@ -150,7 +150,7 @@ export class HarnessHostConnection {
       return true
     }
 
-    printExitMessage(
+    printErrorMessage(
       chalk.redBright(`unexpected input from user: ${userId}, terminating host for safety. Please report this issue`),
       {event: 'harness.channel.input'},
     )

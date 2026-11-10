@@ -11,7 +11,7 @@ import {getShellCwd} from 'oorja/lib/teletype/cwd'
 import {downloadTransferredFile, FileTransfer} from 'oorja/lib/teletype/fileTransfer'
 import {Teletype} from 'oorja/lib/teletype/teletype'
 import {MultishellUI} from 'oorja/lib/teletype/ui'
-import {logErrorAndExit, printExitMessage} from 'oorja/lib/utils'
+import {logErrorAndExit, printErrorMessage} from 'oorja/lib/utils'
 
 enum MessageType {
   IN = 'i',
@@ -143,7 +143,7 @@ export class TeletypeManager {
 
     if (Object.keys(this.terms).length > 0 || this.options.multishell) {
       if (exitCode !== 0) {
-        printExitMessage(`Shell ${this.options.shell} exited with code ${exitCode}.\n`, {event: 'terminal.exit'})
+        printErrorMessage(`Shell ${this.options.shell} exited with code ${exitCode}.\n`, {event: 'terminal.exit'})
       }
       this.updateUI()
       return
