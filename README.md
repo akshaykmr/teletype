@@ -39,13 +39,25 @@ as a binary in future releases (i.e. not available via npm but via a script or m
 - `teletype`
 - `teletype -m`  (for collaboration mode)
 
-For CI debugging without a global install:
+You can also run Teletype without a global install:
+
+```sh
+npx oorja@latest teletype
+```
+
+To create a new anonymous stream:
+
+```sh
+npx oorja@latest teletype --new --anonymous
+```
+
+Add `--multiplayer` to allow viewers to control the shell. For CI debugging:
 
 ```sh
 npx --yes oorja@latest teletype --ci-debug
 ```
 
-This creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
+`--ci-debug` creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
 
 Misc: If you have issues installing on apple M1 or similar systems:
 - `sudo xcode-select --install`
@@ -122,6 +134,9 @@ EXAMPLES
 
   $ teletype --ci-debug
   Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
+
+  $ npx oorja@latest teletype --new --anonymous
+  Creates a new anonymous stream without a global install. Add --multiplayer to allow viewers to control the shell.
 
   $ npx --yes oorja@latest teletype --ci-debug
   Starts a CI debug stream without a global install. Prints a link to control the shell and keeps the CI step running until the shell exits.
