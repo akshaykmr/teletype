@@ -3,13 +3,9 @@ import {access} from 'node:fs/promises'
 import {homedir} from 'node:os'
 import {join} from 'node:path'
 
-import type {
-  createHarnessRuntimes,
-  doctorHarnessHost,
-  prepareHarnessHost,
-  HarnessSelection,
-} from 'oorja-harness-host/harnesses'
+import type {createHarnessRuntimes, doctorHarnessHost, prepareHarnessHost} from 'oorja-harness-host/harnesses'
 import type {HarnessHost, HarnessHostOptions} from 'oorja-harness-host/host'
+import ora from 'ora'
 
 type HarnessHostPackage = {
   HarnessHost: {start: (options: HarnessHostOptions) => Promise<HarnessHost>}
@@ -30,21 +26,29 @@ export const loadHarnessHost = async () => {
   return import(packageName) as Promise<HarnessHostPackage>
 }
 
-export const checkHarnessPrerequisites = async (cwd: string, selections: HarnessSelection[] = ['all']) => {
+export const checkHarnessSetup = async (cwd: string) => {
+  const spinner = ora('Checking Harness Host setup').start()
+  try {
+    const {createHarnessRuntimes} = await loadHarnessHost()
+    await checkHarnessPrerequisites(cwd)
+    await getPreparedRuntimes(createHarnessRuntimes())
+    spinner.stop()
+  } catch (error) {
+    spinner.fail('Harness Host setup is incomplete. For setup checks, run: oorja harness-host:doctor')
+    throw error
+  }
+}
+
+export const checkHarnessPrerequisites = async (cwd: string) => {
   const {doctorHarnessHost} = await loadHarnessHost()
   const results = await doctorHarnessHost(cwd)
   const failures = new Map<string, string>()
-  for (const {harnessId, checks} of results) {
-    if (!selections.includes('all') && !selections.includes(harnessId)) {
-      continue
-    }
+  for (const {checks} of results) {
     for (const check of checks) {
       if (!check.ok) {
         failures.set(
           check.name,
-          check.name === 'pnpm'
-            ? `pnpm is required. Install it with: npm install --global pnpm\nThen run: oorja harness-host:prepare ${selections.join(' ')}`
-            : check.detail,
+          check.name === 'pnpm' ? 'pnpm is required. Install it with: npm install --global pnpm' : check.detail,
         )
       }
     }

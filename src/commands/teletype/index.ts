@@ -12,6 +12,7 @@ import {printErrorMessage, logErrorAndExit, promptStreamKey, setTerminalTitle} f
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {exit} from 'oorja/lib/exit'
 import {getDefaultShell} from 'oorja/lib/teletype/shell'
+import {checkHarnessSetup} from 'oorja/lib/harnessHost/setup'
 
 export default class TeleTypeCommand extends BaseCommand {
   static order = 1
@@ -112,6 +113,10 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     const shouldMultiplex = multiplayer || ciDebug
     if (multishell) {
       setTerminalTitle('TeleType')
+    }
+
+    if (harnessHost) {
+      await checkHarnessSetup(process.cwd())
     }
 
     const config = new Config(this.config.configDir)

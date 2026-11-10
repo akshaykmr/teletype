@@ -26,7 +26,7 @@ export default class HarnessHostPrepare extends BaseCommand {
     const spinner = ora('Setting up agent runtimes').start()
     try {
       const {prepareHarnessHost} = await loadHarnessHost()
-      await checkHarnessPrerequisites(process.cwd(), runtimes)
+      await checkHarnessPrerequisites(process.cwd())
       const results = await prepareHarnessHost(process.cwd(), runtimes)
       spinner.succeed(chalk.bold('Agent runtimes ready'))
       results.forEach(({harnessId, detail}) => {
