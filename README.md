@@ -59,10 +59,6 @@ npx --yes oorja@latest teletype --ci-debug
 
 `--ci-debug` creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
 
-Misc: If you have issues installing on apple M1 or similar systems:
-- `sudo xcode-select --install`
-- `CXXFLAGS="--std=c++17" npm install -g oorja`
-
 **your stream is end-to-end encrypted**
 
 **PRO TIP:**
@@ -134,12 +130,6 @@ EXAMPLES
 
   $ teletype --ci-debug
   Creates a new anonymous stream without prompting for sign-in. Useful for CI debug sessions you want to control from the link.
-
-  $ npx oorja@latest teletype --new --anonymous
-  Creates a new anonymous stream without a global install. Add --multiplayer to allow viewers to control the shell.
-
-  $ npx --yes oorja@latest teletype --ci-debug
-  Starts a CI debug stream without a global install. Prints a link to control the shell and keeps the CI step running until the shell exits.
 ```
 
 ## `oorja signout`
