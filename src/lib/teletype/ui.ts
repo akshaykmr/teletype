@@ -4,7 +4,10 @@ import {clearLine, cursorTo} from 'readline'
 export class MultishellUI {
   private stopHosting?: () => void
 
-  constructor(private readonly process: NodeJS.Process) {}
+  constructor(
+    private readonly process: NodeJS.Process,
+    private readonly harnessHost: boolean,
+  ) {}
 
   start(stopHosting: () => void) {
     this.stopHosting = stopHosting
@@ -19,6 +22,7 @@ export class MultishellUI {
 
     const status = [
       chalk.bold.blueBright('TeleType host online'),
+      ...(this.harnessHost ? [chalk.green('Harness Host on')] : []),
       chalk.green(`${shells} shell${shells === 1 ? '' : 's'} active`),
       chalk.cyan(`${viewers} viewer${viewers === 1 ? '' : 's'} connected`),
       chalk.dim('Ctrl-C to stop hosting'),

@@ -4,9 +4,9 @@ import type {HarnessSelection} from 'oorja-harness-host/harnesses'
 import ora from 'ora'
 
 import {BaseCommand} from 'oorja/lib/command'
-import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
+import {checkHarnessPrerequisites, loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
-const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode']
+const HARNESS_OPTIONS = ['all', 'codex', 'claude-code', 'opencode', 'pi']
 
 export default class HarnessHostPrepare extends BaseCommand {
   static description = 'Set up agent runtimes on this machine.'
@@ -26,6 +26,7 @@ export default class HarnessHostPrepare extends BaseCommand {
     const {prepareHarnessHost} = await loadHarnessHost()
     const spinner = ora('Setting up agent runtimes').start()
     try {
+      await checkHarnessPrerequisites(process.cwd(), runtimes)
       const results = await prepareHarnessHost(process.cwd(), runtimes)
       spinner.succeed(chalk.bold('Agent runtimes ready'))
       results.forEach(({harnessId, detail}) => {

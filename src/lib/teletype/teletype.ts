@@ -20,6 +20,7 @@ type TeletypeOptions = {
   shell: string
   multiplex: boolean
   streamingIndicator: boolean
+  harnessHost: boolean
   cwd: string
   localAttachmentEnabled: boolean
   process: NodeJS.Process
@@ -89,7 +90,13 @@ export class Teletype {
       if (this.stopped || !canAttachLocally) {
         return
       }
-      initScreen(this.options.username, this.options.hostname, this.options.shell, this.options.multiplex)
+      initScreen(
+        this.options.username,
+        this.options.hostname,
+        this.options.shell,
+        this.options.multiplex,
+        this.options.harnessHost,
+      )
       emitKeypressEvents(stdin)
       stdin.setEncoding('utf8')
       stdin.setRawMode(true)

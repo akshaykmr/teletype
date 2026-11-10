@@ -82,7 +82,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       default: 'enabled',
     }),
     'harness-host': Flags.boolean({
-      description: 'Allow this machine to run agent sessions for this space.',
+      description: 'Run agent sessions for this space. Prepares runtimes on first use (requires pnpm).',
       default: false,
     }),
   }

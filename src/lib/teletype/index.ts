@@ -32,6 +32,7 @@ export type TeletypeOptions = {
   multiplex: boolean
   multishell: boolean
   streamingIndicator: boolean
+  harnessHost: boolean
   process: NodeJS.Process
   joinChannel: JoinChannel
 }
@@ -63,7 +64,7 @@ export class TeletypeManager {
 
   constructor(private readonly options: TeletypeOptions) {
     if (options.multishell) {
-      this.ui = new MultishellUI(options.process)
+      this.ui = new MultishellUI(options.process, options.harnessHost)
     }
   }
 
@@ -103,6 +104,7 @@ export class TeletypeManager {
       shell: this.options.shell,
       multiplex: this.options.multiplex,
       streamingIndicator: this.options.streamingIndicator,
+      harnessHost: this.options.harnessHost,
       cwd,
       localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,

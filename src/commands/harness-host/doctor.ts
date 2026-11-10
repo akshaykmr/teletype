@@ -5,7 +5,7 @@ import {BaseCommand} from 'oorja/lib/command'
 import {loadHarnessHost} from 'oorja/lib/harnessHost/index'
 
 export default class HarnessHostDoctor extends BaseCommand {
-  static description = 'Check whether this machine can run agent sessions.'
+  static description = 'Check prerequisites for running agent sessions.'
 
   static flags = {
     json: Flags.boolean({description: 'Print machine-readable JSON.', default: false}),
@@ -29,7 +29,7 @@ export default class HarnessHostDoctor extends BaseCommand {
       this.log('')
       this.log(
         ok
-          ? `${chalk.greenBright('✔')} ${chalk.bold('This machine is ready to run agent sessions.')}`
+          ? `${chalk.greenBright('✔')} ${chalk.bold('Prerequisite checks passed.')} Agent runtimes are prepared when Harness Host starts.`
           : `${chalk.redBright('✖')} ${chalk.bold('This machine is not ready. Fix the failed checks above.')}`,
       )
     }
