@@ -1,7 +1,7 @@
 import * as os from 'node:os'
 
 import chalk from 'chalk'
-import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
+import {HarnessId, type HarnessCommand, type HarnessEvent} from 'oorja-harness-host/messages'
 import type {Channel} from 'phoenix'
 import ora from 'ora'
 
@@ -14,7 +14,7 @@ import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
 import {Future, printErrorMessage} from 'oorja/lib/utils'
 
-import {getPreparedRuntimes, loadHarnessHost} from 'oorja/lib/harnessHost/setup'
+import {loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
 export type HarnessHostConnectionOptions = {
   userId: string
@@ -43,16 +43,21 @@ export class HarnessHostConnection {
         roomId: this.options.roomKey.roomId,
         workdir: this.options.process.cwd(),
         createHost: async (emit) => {
-          const {HarnessHost, createHarnessRuntimes} = await loadHarnessHost()
-          const runtimes = await getPreparedRuntimes(createHarnessRuntimes())
-          return HarnessHost.start({
+          const {startHarnessHost} = await loadHarnessHost()
+          return startHarnessHost({
             hostId: this.options.machineId,
             hostname: `${os.userInfo().username}@${os.hostname()}`,
             workdir: this.options.process.cwd(),
             stateFile: this.options.stateFile,
-            runtimes,
+            harnesses: Object.values(HarnessId),
             onError: (error) => {
               logger.error('harness.error', error)
+            },
+            onStdout: (text) => {
+              this.logHarnessOutput('harness.stdout', text)
+            },
+            onStderr: (text) => {
+              this.logHarnessOutput('harness.stderr', text)
             },
             emit,
           })
@@ -120,6 +125,13 @@ export class HarnessHostConnection {
 
   private sendCurrentState = () => {
     this.sharedHost.emitState()
+  }
+
+  private logHarnessOutput = (event: string, text: string) => {
+    const message = text.trim()
+    if (message) {
+      logger.info(event, {message})
+    }
   }
 
   private broadcastEvent = (event: HarnessEvent) => {

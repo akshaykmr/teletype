@@ -1,17 +1,16 @@
-import {constants} from 'node:fs'
-import {access} from 'node:fs/promises'
-import {homedir} from 'node:os'
-import {join} from 'node:path'
-
-import type {createHarnessRuntimes, doctorHarnessHost, prepareHarnessHost} from 'oorja-harness-host/harnesses'
-import type {HarnessHost, HarnessHostOptions} from 'oorja-harness-host/host'
+import type {
+  doctorHarnessHost,
+  getAvailableHarnesses,
+  prepareHarnessHost,
+} from 'oorja-harness-host/harnesses'
+import type {startHarnessHost} from 'oorja-harness-host/host'
 import ora from 'ora'
 
 type HarnessHostPackage = {
-  HarnessHost: {start: (options: HarnessHostOptions) => Promise<HarnessHost>}
-  createHarnessRuntimes: typeof createHarnessRuntimes
   doctorHarnessHost: typeof doctorHarnessHost
+  getAvailableHarnesses: typeof getAvailableHarnesses
   prepareHarnessHost: typeof prepareHarnessHost
+  startHarnessHost: typeof startHarnessHost
 }
 
 export const loadHarnessHost = async () => {
@@ -29,9 +28,14 @@ export const loadHarnessHost = async () => {
 export const checkHarnessSetup = async (cwd: string) => {
   const spinner = ora('Checking Harness Host setup').start()
   try {
-    const {createHarnessRuntimes} = await loadHarnessHost()
+    const {getAvailableHarnesses} = await loadHarnessHost()
     await checkHarnessPrerequisites(cwd)
-    await getPreparedRuntimes(createHarnessRuntimes())
+    const harnesses = await getAvailableHarnesses()
+    if (harnesses.length === 0) {
+      throw new Error(
+        'No agent runtimes are set up.\nSet up one: oorja harness-host:prepare codex\nOr set up all: oorja harness-host:prepare all',
+      )
+    }
     spinner.stop()
   } catch (error) {
     spinner.fail('Harness Host setup is incomplete. For setup checks, run: oorja harness-host:doctor')
@@ -56,29 +60,4 @@ export const checkHarnessPrerequisites = async (cwd: string) => {
   if (failures.size) {
     throw new Error([...failures.values()].join('\n'))
   }
-}
-
-export const getPreparedRuntimes = async (
-  runtimes: HarnessHostOptions['runtimes'],
-): Promise<HarnessHostOptions['runtimes']> => {
-  const commands = {codex: 'codex', 'claude-code': 'claude', opencode: 'opencode', pi: 'pi'}
-  const prepared: HarnessHostOptions['runtimes'] = []
-  for (const runtime of runtimes) {
-    const harness = runtime.harnessId
-    const command = commands[harness]
-    const executable = process.platform === 'win32' && harness !== 'pi' ? `${command}.cmd` : command
-    const path = join(homedir(), '.ai-sdk-harness', '.harness-bootstrap', harness, 'node_modules', '.bin', executable)
-    try {
-      await access(path, constants.X_OK)
-      prepared.push(runtime)
-    } catch {
-      continue
-    }
-  }
-  if (!prepared.length) {
-    throw new Error(
-      'No agent runtimes are set up.\nSet up one: oorja harness-host:prepare codex\nOr set up all: oorja harness-host:prepare all',
-    )
-  }
-  return prepared
 }
