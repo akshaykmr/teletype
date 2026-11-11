@@ -36,6 +36,7 @@ export class Teletype {
 
   private term!: IPty
   private attached = false
+  private interrupted = false
   private headlessTerminal?: HeadlessTerminal
   private readonly ptyFuture: Future<void> = new Future()
   private ptyReadyTimer?: NodeJS.Timeout
@@ -84,7 +85,13 @@ export class Teletype {
 
       this.options.onData(data)
     })
-    const ptyExitSubscription = this.term.onExit(({exitCode}) => this.options.onExit(exitCode))
+    const ptyExitSubscription = this.term.onExit(({exitCode}) => {
+      if (this.interrupted) {
+        this.options.onExit(0)
+        return
+      }
+      this.options.onExit(exitCode)
+    })
 
     this.ready.then(() => {
       if (this.stopped || !canAttachLocally) {
@@ -191,6 +198,7 @@ export class Teletype {
       return
     }
     if (key.ctrl && key.name === 'c') {
+      this.interrupted = true
       this.term.kill()
     }
   }
