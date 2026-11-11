@@ -85,9 +85,13 @@ export class Teletype {
 
       this.options.onData(data)
     })
-    const ptyExitSubscription = this.term.onExit(({exitCode}) =>
-      this.options.onExit(this.interrupted ? 0 : exitCode),
-    )
+    const ptyExitSubscription = this.term.onExit(({exitCode}) => {
+      if (this.interrupted) {
+        this.options.onExit(0)
+        return
+      }
+      this.options.onExit(exitCode)
+    })
 
     this.ready.then(() => {
       if (this.stopped || !canAttachLocally) {
