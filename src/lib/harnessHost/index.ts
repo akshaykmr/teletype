@@ -109,18 +109,9 @@ export class HarnessHostConnection {
       return
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
-    switch (command.type) {
-      case 'turn.snapshot.request':
-        break
-      case 'message.submit':
-      case 'turn.abort':
-      case 'turn.saved':
-      case 'session.model.set':
-      case 'session.destroy':
-        if (userId !== this.options.userId && !this.options.multiplayer) {
-          return
-        }
-        break
+    const canWrite = userId === this.options.userId || this.options.multiplayer
+    if (command.type !== 'turn.snapshot.request' && !canWrite) {
+      return
     }
     this.sharedHost.handleCommand(command)
   }
