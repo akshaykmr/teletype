@@ -163,6 +163,37 @@ for (const scenario of [
   })
 }
 
+test('ordinary Teletype does not load the optional Harness Host package', () => {
+  const rejectHarnessHost = `data:text/javascript,${encodeURIComponent(`
+    import {registerHooks} from 'node:module';
+    registerHooks({
+      resolve(specifier, context, nextResolve) {
+        if (specifier.startsWith('oorja-harness-host')) {
+          throw new Error('Harness Host must remain optional');
+        }
+        return nextResolve(specifier, context);
+      },
+    });
+  `)}`
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      rejectHarnessHost,
+      '--input-type=module',
+      '-e',
+      `
+        import {execute} from '@oclif/core';
+        globalThis.fetch = () => process.exit(99);
+        await execute({dir: process.cwd(), args: ['teletype', '--anonymous', '--new']});
+      `,
+    ],
+    {encoding: 'utf8', timeout: 10000},
+  )
+
+  assert.equal(result.status, 99, result.stdout + result.stderr)
+})
+
 for (const preparedPi of [false, true]) {
   test(
     `Harness Host startup with ${preparedPi ? 'only Pi' : 'no runtimes'} prepared`,

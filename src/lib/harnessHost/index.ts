@@ -1,7 +1,7 @@
 import * as os from 'node:os'
 
 import chalk from 'chalk'
-import {HarnessId, type HarnessCommand, type HarnessEvent} from 'oorja-harness-host/messages'
+import type {HarnessCommand, HarnessEvent} from 'oorja-harness-host/messages'
 import type {Channel} from 'phoenix'
 import ora from 'ora'
 
@@ -43,7 +43,7 @@ export class HarnessHostConnection {
         roomId: this.options.roomKey.roomId,
         workdir: this.options.process.cwd(),
         createHost: async (emit) => {
-          const {startHarnessHost} = await loadHarnessHost()
+          const {HarnessId, startHarnessHost} = await loadHarnessHost()
           return startHarnessHost({
             hostId: this.options.machineId,
             hostname: `${os.userInfo().username}@${os.hostname()}`,
