@@ -174,6 +174,9 @@ for (const preparedPi of [false, true]) {
         const bin = path.join(directory, '.ai-sdk-harness', '.harness-bootstrap', 'pi', 'node_modules', '.bin')
         mkdirSync(bin, {recursive: true})
         symlinkSync(process.execPath, path.join(bin, 'pi'))
+        const agent = path.join(directory, '.pi', 'agent')
+        mkdirSync(agent, {recursive: true})
+        writeFileSync(path.join(agent, 'auth.json'), JSON.stringify({deepseek: {type: 'api_key', key: 'test'}}))
       }
       const result = spawnSync(
         process.execPath,
