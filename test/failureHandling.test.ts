@@ -246,8 +246,8 @@ for (const preparedPi of [false, true]) {
 }
 
 for (const scenario of [
-  {name: 'missing shell fails', missing: true, exitCode: 0, multishell: false, status: 1},
-  {name: 'nonzero shell exit fails', missing: false, exitCode: 7, multishell: false, status: 1},
+  {name: 'missing shell reports its process exit', missing: true, exitCode: 0, multishell: false, status: 0},
+  {name: 'nonzero shell exit ends streaming normally', missing: false, exitCode: 7, multishell: false, status: 0},
   {name: 'normal shell exit succeeds', missing: false, exitCode: 0, multishell: false, status: 0},
   {name: 'multishell keeps hosting after shell failure', missing: false, exitCode: 7, multishell: true, status: 0},
 ]) {
@@ -297,11 +297,11 @@ for (const scenario of [
     )
 
     assert.equal(result.status, scenario.status, result.stdout + result.stderr)
-    const failed = scenario.missing || scenario.exitCode !== 0
     const logPath = path.join(directory, 'oorja.log')
-    assert.equal(existsSync(logPath), failed)
-    if (failed) {
-      assert.equal(JSON.parse(readFileSync(logPath, 'utf8')).level, 'error')
+    const entry = JSON.parse(readFileSync(logPath, 'utf8'))
+    assert.equal(entry.level, 'info')
+    if (!scenario.missing) {
+      assert.equal(entry.exitCode, scenario.exitCode)
     }
     if (scenario.multishell) {
       assert.match(result.stdout, /TEST_STILL_HOSTING/)

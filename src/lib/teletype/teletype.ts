@@ -86,7 +86,7 @@ export class Teletype {
       this.options.onData(data)
     })
     const ptyExitSubscription = this.term.onExit(({exitCode}) => {
-      if (this.interrupted || exitCode === 130) { // Shell status for Ctrl+C.
+      if (this.interrupted) {
         this.options.onExit(0)
         return
       }
