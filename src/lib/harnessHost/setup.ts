@@ -1,3 +1,4 @@
+import {Errors} from '@oclif/core'
 import type {
   doctorHarnessHost,
   getAvailableHarnesses,
@@ -19,28 +20,34 @@ export const loadHarnessHost = async () => {
   const packageName = 'oorja-harness-host'
   try {
     import.meta.resolve(packageName)
-  } catch (error) {
-    throw new Error('Harness hosting is not installed. Install it with: npm install --global oorja-harness-host', {
-      cause: error,
-    })
+  } catch {
+    throw new Errors.CLIError(
+      'Harness hosting is not installed.\nInstall it with: npm install --global oorja-harness-host',
+      {exit: 1},
+    )
   }
   return import(packageName) as Promise<HarnessHostPackage>
 }
 
 export const checkHarnessSetup = async (cwd: string) => {
+  const {getAvailableHarnesses} = await loadHarnessHost()
   const spinner = ora('Checking Harness Host setup').start()
   try {
-    const {getAvailableHarnesses} = await loadHarnessHost()
     await checkHarnessPrerequisites(cwd)
     const harnesses = await getAvailableHarnesses()
     if (harnesses.length === 0) {
-      throw new Error(
-        'No agent runtimes are set up.\nSet up one: oorja harness-host:prepare codex\nOr set up all: oorja harness-host:prepare all',
+      throw new Errors.CLIError(
+        'No agents are available.\nSet up one: oorja harness-host:prepare codex\nOr set up all: oorja harness-host:prepare all\nIf already set up, check your agent sign-in or API keys.',
+        {exit: 1},
       )
     }
     spinner.stop()
   } catch (error) {
-    spinner.fail('Harness Host setup is incomplete. For setup checks, run: oorja harness-host:doctor')
+    if (error instanceof Errors.CLIError) {
+      spinner.stop()
+    } else {
+      spinner.fail('Could not check Harness Host setup. Run: oorja harness-host:doctor')
+    }
     throw error
   }
 }
@@ -60,6 +67,6 @@ export const checkHarnessPrerequisites = async (cwd: string) => {
     }
   }
   if (failures.size) {
-    throw new Error([...failures.values()].join('\n'))
+    throw new Errors.CLIError([...failures.values()].join('\n'), {exit: 1})
   }
 }
