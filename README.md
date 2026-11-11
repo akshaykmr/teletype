@@ -82,9 +82,9 @@ More ways to [contact](https://supakit.app/contact).
 * [`oorja teletype [STREAMKEY]`](#oorja-teletype-streamkey)
 * [`oorja signout`](#oorja-signout)
 * [`oorja help [COMMAND]`](#oorja-help-command)
+* [`oorja harness-host [STREAMKEY]`](#oorja-harness-host-streamkey)
 * [`oorja harness-host:doctor`](#oorja-harness-hostdoctor)
 * [`oorja harness-host:prepare [RUNTIMES]`](#oorja-harness-hostprepare-runtimes)
-* [`oorja harness-host:run [STREAMKEY]`](#oorja-harness-hostrun-streamkey)
 
 ## `oorja teletype [STREAMKEY]`
 
@@ -164,6 +164,25 @@ DESCRIPTION
 ```
 
 
+## `oorja harness-host [STREAMKEY]`
+
+Run agents on this computer from SparkChat in a SupaKit space.
+
+```
+USAGE
+  $ oorja harness-host [STREAMKEY] [-m]
+
+ARGUMENTS
+  [STREAMKEY]  Secret stream key for the target space
+
+FLAGS
+  -m, --multiplayer  Allow space participants to run agents on this computer.
+
+DESCRIPTION
+  Run agents on this computer from SparkChat in a SupaKit space.
+```
+
+
 ## `oorja harness-host:doctor`
 
 Check whether this machine can run agent sessions.
@@ -194,22 +213,6 @@ ARGUMENTS
 
 DESCRIPTION
   Set up agent runtimes on this machine.
-```
-
-
-## `oorja harness-host:run [STREAMKEY]`
-
-Serve harness sessions in a SupaKit space.
-
-```
-USAGE
-  $ oorja harness-host:run [STREAMKEY]
-
-ARGUMENTS
-  [STREAMKEY]  Secret stream key for the target space
-
-DESCRIPTION
-  Serve harness sessions in a SupaKit space.
 ```
 
 <!-- commandsstop -->

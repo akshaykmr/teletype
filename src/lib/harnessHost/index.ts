@@ -10,9 +10,8 @@ import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
 import {logger} from 'oorja/lib/log'
-import {exit} from 'oorja/lib/exit'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
-import {Future, printErrorMessage} from 'oorja/lib/utils'
+import {Future} from 'oorja/lib/utils'
 
 import {loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
@@ -106,10 +105,23 @@ export class HarnessHostConnection {
 
   private handleMessage = ({from: {session}, d, e}: HarnessChannelMessage) => {
     const {userId, clientType} = getSessionIdentity(session)
-    if (!e || clientType !== 'user' || !this.ensureCanWrite(userId)) {
+    if (!e || clientType !== 'user') {
       return
     }
     const command = decrypt(d, this.options.roomKey) as HarnessCommand
+    switch (command.type) {
+      case 'turn.snapshot.request':
+        break
+      case 'message.submit':
+      case 'turn.abort':
+      case 'turn.saved':
+      case 'session.model.set':
+      case 'session.destroy':
+        if (userId !== this.options.userId && !this.options.multiplayer) {
+          return
+        }
+        break
+    }
     this.sharedHost.handleCommand(command)
   }
 
@@ -141,19 +153,6 @@ export class HarnessHostConnection {
       e: true,
       d: encrypt(event, this.options.roomKey),
     })
-  }
-
-  private ensureCanWrite = (userId: string) => {
-    if (userId === this.options.userId || this.options.multiplayer) {
-      return true
-    }
-
-    printErrorMessage(
-      chalk.redBright(`unexpected input from user: ${userId}, terminating host for safety. Please report this issue`),
-      {event: 'harness.channel.input'},
-    )
-    void this.stop().then(() => exit(1))
-    return false
   }
 }
 
