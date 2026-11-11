@@ -4,9 +4,11 @@ import type {
   prepareHarnessHost,
 } from 'oorja-harness-host/harnesses'
 import type {startHarnessHost} from 'oorja-harness-host/host'
+import type {HarnessId} from 'oorja-harness-host/messages'
 import ora from 'ora'
 
 type HarnessHostPackage = {
+  HarnessId: Record<string, HarnessId>
   doctorHarnessHost: typeof doctorHarnessHost
   getAvailableHarnesses: typeof getAvailableHarnesses
   prepareHarnessHost: typeof prepareHarnessHost
