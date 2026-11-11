@@ -108,6 +108,7 @@ export class TeletypeManager {
       cwd,
       localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,
+      onInterrupt: this.handleInterrupt,
       onData: (data) => {
         if (this.viewers.size === 0) {
           return

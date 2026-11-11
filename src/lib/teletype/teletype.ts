@@ -24,6 +24,7 @@ type TeletypeOptions = {
   cwd: string
   localAttachmentEnabled: boolean
   process: NodeJS.Process
+  onInterrupt: () => void
   onData: (data: string) => void
   onExit: (exitCode: number) => void
 }
@@ -191,7 +192,7 @@ export class Teletype {
       return
     }
     if (key.ctrl && key.name === 'c') {
-      this.term.kill()
+      this.options.onInterrupt()
     }
   }
 
