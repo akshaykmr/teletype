@@ -82,8 +82,8 @@ export class OORJA {
     }
   }
 
-  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process}) =>
-    this.createHarnessHost({...options, multiplayer: false}).run()
+  harnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplayer: boolean}) =>
+    this.createHarnessHost(options).run()
 
   private createHarnessHost = (options: {roomKey: RoomKey; process: NodeJS.Process; multiplayer: boolean}) =>
     new HarnessHostConnection({

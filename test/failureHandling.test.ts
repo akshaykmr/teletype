@@ -134,7 +134,7 @@ for (const scenario of [
     path: process.env.PATH,
     status: 1,
   },
-  {name: 'standalone missing pnpm', args: ['harness-host:run'], path: '', status: 1},
+  {name: 'standalone missing pnpm', args: ['harness-host'], path: '', status: 1},
   {name: 'ordinary Teletype skips harness setup', args: ['teletype', '--anonymous', '--new'], path: '', status: 99},
 ]) {
   test(`setup before network access: ${scenario.name}`, {skip: process.platform === 'win32'}, (t) => {
