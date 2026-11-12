@@ -3,10 +3,6 @@ import {writeSync} from 'fs'
 import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
 
-export const isPromptCancelled = (error: unknown) => {
-  return error instanceof Error && error.name === 'ExitPromptError'
-}
-
 export const printErrorMessage = (printMessage: string, details?: {event: string; error?: unknown}) => {
   writeSync(process.stdout.fd, printMessage)
   if (details) {
@@ -41,7 +37,7 @@ export const promptStreamKey = async (): Promise<string> => {
       type: 'input',
       name: 'streamKey',
       message: 'Enter the stream-key (copy from teletype app within the space):',
-      validate: (value: string) => value.trim().length > 0 || 'Enter a stream key, or press Ctrl+C to cancel.',
+      validate: (value: string) => value.trim().length > 0 || 'Enter a stream key.',
     },
   ])
   return streamKey.trim()
