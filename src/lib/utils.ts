@@ -37,9 +37,10 @@ export const promptStreamKey = async (): Promise<string> => {
       type: 'input',
       name: 'streamKey',
       message: 'Enter the stream-key (copy from teletype app within the space):',
+      validate: (value: string) => value.trim().length > 0 || 'Enter a stream key.',
     },
   ])
-  return streamKey
+  return streamKey.trim()
 }
 
 export class Future<T> {

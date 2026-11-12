@@ -1,4 +1,5 @@
 import path from 'node:path'
+import {ExitPromptError} from '@inquirer/core'
 
 import {getoorjaConfig, oorjaConfig, INVALID_STREAM_KEY_MESSAGE, Config} from 'oorja/lib/config'
 import {RoomKey, UserProfile} from 'oorja/lib/connect/types'
@@ -209,6 +210,10 @@ export class App {
         user = await this.connectClient?.fetchSessionUser(true)
       }
     } catch (e) {
+      if (e instanceof ExitPromptError) {
+        spinner.stop()
+        throw e
+      }
       if (!isControlledMode) {
         this.config.setAccessToken('')
       }
