@@ -12,9 +12,10 @@ const promptToken = (): Promise<string> =>
         type: 'input',
         name: 'accessToken',
         message: 'Please enter your access token for authentication:',
+        validate: (value: string) => value.trim().length > 0 || 'Enter an access token, or press Ctrl+C to cancel.',
       },
     ])
-    .then((answers) => answers.accessToken)
+    .then((answers) => answers.accessToken.trim())
 
 export const createAnonymousSession = async (connectClient: ConnectClient): Promise<string> => {
   console.log('Creating anonymous user...')

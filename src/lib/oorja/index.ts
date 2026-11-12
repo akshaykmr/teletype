@@ -8,7 +8,7 @@ import {importKey, createRoomKey, exportKey} from 'oorja/lib/encryption'
 import {createAnonymousSession, promptAuth, validateCliVersion} from 'oorja/lib/oorja/preflight'
 import {getRegion} from 'oorja/lib/oorja/client'
 import ora from 'ora'
-import {Future, printErrorMessage, logErrorAndExit} from 'oorja/lib/utils'
+import {Future, printErrorMessage, logErrorAndExit, isPromptCancelled} from 'oorja/lib/utils'
 import {Unauthorized} from 'oorja/lib/connect/errors'
 import {logger} from 'oorja/lib/log'
 import {exit} from 'oorja/lib/exit'
@@ -209,6 +209,10 @@ export class App {
         user = await this.connectClient?.fetchSessionUser(true)
       }
     } catch (e) {
+      if (isPromptCancelled(e)) {
+        spinner.stop()
+        throw e
+      }
       if (!isControlledMode) {
         this.config.setAccessToken('')
       }
