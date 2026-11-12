@@ -185,17 +185,18 @@ DESCRIPTION
 
 ## `oorja harness-host:doctor`
 
-Check whether this machine can run agent sessions.
+Check prerequisites and discover available agent models.
 
 ```
 USAGE
-  $ oorja harness-host:doctor [--json]
+  $ oorja harness-host:doctor [--json] [--timeout <value>]
 
 FLAGS
-  --json  Print machine-readable JSON.
+  --json             Print machine-readable JSON.
+  --timeout=<value>  [default: 30] Maximum seconds for model discovery per agent.
 
 DESCRIPTION
-  Check whether this machine can run agent sessions.
+  Check prerequisites and discover available agent models.
 ```
 
 
