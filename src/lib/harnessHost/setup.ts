@@ -1,16 +1,15 @@
 import {Errors} from '@oclif/core'
-import type {
-  doctorHarnessHost,
-  getAvailableHarnesses,
-  prepareHarnessHost,
-} from 'oorja-harness-host/harnesses'
+import type {getHarnessPrerequisites, getAvailableHarnesses, prepareHarnessHost} from 'oorja-harness-host/harnesses'
 import type {startHarnessHost} from 'oorja-harness-host/host'
 import type {HarnessId} from 'oorja-harness-host/messages'
+import type {doctorHarnessHost, HarnessReadiness} from 'oorja-harness-host/doctor'
 import ora from 'ora'
 
 type HarnessHostPackage = {
   HarnessId: Record<string, HarnessId>
+  HarnessReadiness: typeof HarnessReadiness
   doctorHarnessHost: typeof doctorHarnessHost
+  getHarnessPrerequisites: typeof getHarnessPrerequisites
   getAvailableHarnesses: typeof getAvailableHarnesses
   prepareHarnessHost: typeof prepareHarnessHost
   startHarnessHost: typeof startHarnessHost
@@ -53,8 +52,8 @@ export const checkHarnessSetup = async (cwd: string) => {
 }
 
 export const checkHarnessPrerequisites = async (cwd: string) => {
-  const {doctorHarnessHost} = await loadHarnessHost()
-  const results = await doctorHarnessHost(cwd)
+  const {getHarnessPrerequisites} = await loadHarnessHost()
+  const results = await getHarnessPrerequisites(cwd)
   const failures = new Map<string, string>()
   for (const {checks} of results) {
     for (const check of checks) {

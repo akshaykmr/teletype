@@ -88,8 +88,8 @@ importers:
         specifier: ^6.0.6
         version: 6.0.6(@types/node@24.19.2)(supports-color@8.1.1)
       oorja-harness-host:
-        specifier: 0.2.10
-        version: 0.2.10(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7)
+        specifier: 0.2.11
+        version: 0.2.11(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -2534,8 +2534,8 @@ packages:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
     engines: {node: '>=18'}
 
-  oorja-harness-host@0.2.10:
-    resolution: {integrity: sha512-j8BP2gaslb9UWXU0eN1wJdgxlaq4/vKGfqEZzJU/kZ2ofWOnNRDj6c4lgIVcDQd74C3I4uzzGAhKWXGAA95msg==}
+  oorja-harness-host@0.2.11:
+    resolution: {integrity: sha512-r6fpmwP96drun19xZWG33lqiTiyB8tyi8zwyCbFoVzU4CVpRIHXip7UtF0k1WieyzTk+/2mOHDBCjBiaOEBBgA==}
     engines: {node: '>=24.15.0'}
 
   openai@7.19.0:
@@ -6142,7 +6142,7 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  oorja-harness-host@0.2.10(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7):
+  oorja-harness-host@0.2.11(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7):
     dependencies:
       '@ai-sdk/harness': 1.0.177(ws@8.22.0)(zod@4.6.7)
       '@ai-sdk/harness-claude-code': 1.0.181(zod@4.6.7)
@@ -6151,6 +6151,7 @@ snapshots:
       '@ai-sdk/harness-pi': 1.0.180(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7)
       '@ai-sdk/provider-utils': 5.0.76(zod@4.6.7)
       '@earendil-works/pi-coding-agent': 1.5.1(@aws-sdk/credential-provider-node@3.972.85)(@smithy/signature-v4@5.7.5)(ws@8.22.0)(zod@4.6.7)
+      '@types/json-schema': 7.0.15
       ai: 7.0.166(zod@4.6.7)
       comlink: 4.4.2
     transitivePeerDependencies:

@@ -6,7 +6,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - http-cache-semantics@4.3.0
-  - oorja-harness-host@0.2.10
+  - oorja-harness-host@0.2.11
   - '@earendil-works/pi-agent-core@1.5.1'
   - '@earendil-works/pi-ai@1.5.1'
   - '@earendil-works/pi-codemode@1.5.1'
