@@ -154,8 +154,8 @@ for (const scenario of [
       ],
       {
         encoding: 'utf8',
-        timeout: 60000,
-        env: {HOME: directory, XDG_CONFIG_HOME: directory, PATH: scenario.path},
+        timeout: 10000,
+        env: {...process.env, HOME: directory, XDG_CONFIG_HOME: directory, PATH: scenario.path},
       },
     )
     assert.equal(result.status, scenario.status, result.stdout + result.stderr)
@@ -235,7 +235,7 @@ for (const preparedPi of [false, true]) {
       await host.stop();
     `,
         ],
-        {encoding: 'utf8', timeout: 60000, env: {HOME: directory, XDG_CONFIG_HOME: directory, PATH: process.env.PATH}},
+        {encoding: 'utf8', timeout: 10000, env: {...process.env, HOME: directory}},
       )
 
       assert.equal(result.status, preparedPi ? 0 : 1, result.stderr)
