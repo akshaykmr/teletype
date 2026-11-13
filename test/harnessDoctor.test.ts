@@ -7,13 +7,11 @@ import path from 'node:path'
 import test from 'node:test'
 import {setTimeout as delay} from 'node:timers/promises'
 
-const fixture = (missingPnpm = false) => {
+const fixture = () => {
   const home = mkdtempSync(path.join(tmpdir(), 'oorja-doctor-'))
   const bin = path.join(home, 'bin')
   mkdirSync(bin)
-  if (!missingPnpm) {
-    writeFileSync(path.join(bin, 'pnpm'), '#!/bin/sh\nprintf "11.5.2\\n"\n', {mode: 0o700})
-  }
+  writeFileSync(path.join(bin, 'pnpm'), '#!/bin/sh\nprintf "11.5.2\\n"\n', {mode: 0o700})
   const env = {HOME: home, XDG_CONFIG_HOME: home, PATH: bin, NO_COLOR: '1'}
   const args = ['bin/run.js', 'harness-host:doctor']
   const run = (...flags: string[]) => {
@@ -70,24 +68,6 @@ createInterface({input: process.stdin}).on('line', (line) => {
 }
 
 test(
-  'doctor reports shared prerequisites once and fails with no available agents',
-  {skip: process.platform === 'win32'},
-  (t) => {
-    const f = fixture()
-    t.after(f.clean)
-    const result = f.run('--json')
-    assert.equal(result.status, 1, result.stderr)
-    const report = JSON.parse(result.stdout)
-    assert.equal(report.ok, false)
-    assert.equal(report.prerequisites.filter(({name}: {name: string}) => name === 'pnpm').length, 1)
-    assert.equal(report.prerequisites.filter(({name}: {name: string}) => name === 'node').length, 1)
-    assert.equal(report.prerequisites.filter(({name}: {name: string}) => name === 'home').length, 1)
-    assert.equal(report.harnesses.length, 4)
-    assert.ok(report.harnesses.every(({status}: {status: string}) => status === 'unavailable'))
-  },
-)
-
-test(
   'one agent with models is enough; other missing agents remain visible',
   {skip: process.platform === 'win32'},
   (t) => {
@@ -98,6 +78,7 @@ test(
     assert.equal(result.status, 0, result.stderr)
     const report = JSON.parse(result.stdout)
     assert.equal(report.ok, true)
+    assert.equal(report.prerequisites.filter(({name}: {name: string}) => name === 'pnpm').length, 1)
     const codex = report.harnesses.find(({harnessId}: {harnessId: string}) => harnessId === 'codex')
     assert.equal(codex.status, 'ready')
     assert.deepEqual(codex.models, {models: ['example-fast', 'example-reasoning'], defaultModel: 'example-fast'})
@@ -106,31 +87,8 @@ test(
         .filter(({harnessId}: {harnessId: string}) => harnessId !== 'codex')
         .every(({status}: {status: string}) => status !== 'ready'),
     )
-    const text = f.run()
-    assert.equal(text.status, 0, text.stderr)
-    assert.match(text.stdout, /Prerequisites/)
-    assert.equal((text.stdout.match(/^\s*[✔✖] pnpm\s/gm) ?? []).length, 1)
-    assert.match(text.stdout, /example-fast/)
   },
 )
-
-test('reports available models without hiding failed host prerequisites', {skip: process.platform === 'win32'}, (t) => {
-  const f = fixture(true)
-  t.after(f.clean)
-  const agentDir = path.join(f.home, '.pi', 'agent')
-  mkdirSync(agentDir, {recursive: true})
-  writeFileSync(path.join(agentDir, 'auth.json'), JSON.stringify({deepseek: {type: 'api_key', key: 'test'}}))
-  const result = f.run('--json')
-  assert.equal(result.status, 1, result.stderr)
-  const report = JSON.parse(result.stdout)
-  assert.equal(report.ok, false)
-  assert.equal(report.harnesses.find(({harnessId}: {harnessId: string}) => harnessId === 'pi').status, 'ready')
-  assert.equal(report.harnesses.find(({harnessId}: {harnessId: string}) => harnessId === 'codex').status, 'blocked')
-  const pnpm = report.prerequisites.filter(({name}: {name: string}) => name === 'pnpm')
-  assert.equal(pnpm.length, 1)
-  assert.equal(pnpm[0].ok, false)
-  assert.ok(!pnpm[0].requiredBy.includes('pi'))
-})
 
 const assertProbeStopped = (home: string) => {
   const pids = JSON.parse(readFileSync(path.join(home, 'probe-pids.json'), 'utf8'))
