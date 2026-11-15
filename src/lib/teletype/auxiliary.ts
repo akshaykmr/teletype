@@ -2,6 +2,8 @@ import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
 import {clearScreenDown, cursorTo} from 'readline'
+import {writeSync} from 'node:fs'
+import {setTerminalTitle} from 'oorja/lib/utils'
 
 export const DEFAULT_DIMENSIONS: dimensions = {rows: 24, cols: 80}
 
@@ -84,5 +86,36 @@ export const resizeBestFit = (
   term.resize(mincols, minrows)
   if (shouldClearScreen) {
     term.write('\x0c') // clear screen
+  }
+}
+
+export class ReconnectingTitle {
+  private timer?: NodeJS.Timeout
+
+  constructor(private readonly process: NodeJS.Process) {}
+
+  start = () => {
+    if (!this.process.stdout.isTTY || this.timer) {
+      return
+    }
+    this.process.stdout.write('\u001B[22;2t') // Save the terminal's current window title.
+    let dots = 0
+    const updateTitle = () => {
+      dots = (dots % 3) + 1
+      setTerminalTitle(`(${'.'.repeat(dots)}) TeleType - reconnecting`)
+    }
+    updateTitle()
+    this.timer = setInterval(updateTitle, 500)
+    this.process.once('exit', this.stop)
+  }
+
+  stop = () => {
+    if (!this.timer) {
+      return
+    }
+    clearInterval(this.timer)
+    this.timer = undefined
+    this.process.removeListener('exit', this.stop)
+    writeSync(this.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
 }

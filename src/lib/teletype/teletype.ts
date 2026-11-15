@@ -1,5 +1,4 @@
 import {IPty} from 'node-pty'
-import {writeSync} from 'node:fs'
 import {emitKeypressEvents} from 'readline'
 import type {Key} from 'readline'
 import {
@@ -10,10 +9,11 @@ import {
   clearAttachmentScreen,
   areDimensionEqual,
   resizeBestFit,
+  ReconnectingTitle,
 } from 'oorja/lib/teletype/auxiliary'
 import {HeadlessTerminal} from 'oorja/lib/teletype/headlessTerminal'
 import {spawnStreamingShell} from 'oorja/lib/teletype/prompt'
-import {Future, setTerminalTitle} from 'oorja/lib/utils'
+import {Future} from 'oorja/lib/utils'
 
 type TeletypeOptions = {
   username: string
@@ -39,14 +39,16 @@ export class Teletype {
   private attached = false
   private interrupted = false
   private inputPaused = false
-  private reconnectTitleTimer?: NodeJS.Timeout
+  private readonly reconnectingTitle: ReconnectingTitle
   private headlessTerminal?: HeadlessTerminal
   private readonly ptyFuture: Future<void> = new Future()
   private ptyReadyTimer?: NodeJS.Timeout
   private stopped = false
   private cleanupShell: (options?: {killTerm?: boolean}) => void = () => {}
 
-  constructor(private readonly options: TeletypeOptions) {}
+  constructor(private readonly options: TeletypeOptions) {
+    this.reconnectingTitle = new ReconnectingTitle(options.process)
+  }
 
   start = () => {
     const {stdin, stdout} = this.options.process
@@ -169,24 +171,14 @@ export class Teletype {
 
   pauseInput = () => {
     this.inputPaused = true
-    const {stdout} = this.options.process
-    if (!this.attached || !stdout.isTTY || this.reconnectTitleTimer) {
-      return
+    if (this.attached) {
+      this.reconnectingTitle.start()
     }
-    stdout.write('\u001B[22;2t') // Save the terminal's current window title.
-    let dots = 0
-    const updateTitle = () => {
-      dots = (dots % 3) + 1
-      setTerminalTitle(`(${'.'.repeat(dots)}) TeleType - reconnecting`)
-    }
-    updateTitle()
-    this.reconnectTitleTimer = setInterval(updateTitle, 500)
-    this.options.process.once('exit', this.restoreTitle)
   }
 
   resumeInput = () => {
     this.inputPaused = false
-    this.restoreTitle()
+    this.reconnectingTitle.stop()
   }
 
   write = (data: string) => {
@@ -248,16 +240,6 @@ export class Teletype {
   private interrupt = () => {
     this.interrupted = true
     this.term.kill()
-  }
-
-  private restoreTitle = () => {
-    if (!this.reconnectTitleTimer) {
-      return
-    }
-    clearInterval(this.reconnectTitleTimer)
-    this.reconnectTitleTimer = undefined
-    this.options.process.removeListener('exit', this.restoreTitle)
-    writeSync(this.options.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
 
   stop = ({killTerm = true}: {killTerm?: boolean} = {}) => {
