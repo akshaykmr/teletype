@@ -98,7 +98,7 @@ export class TeletypeManager {
       return
     }
     const term = this.terms['1']
-    term?.resumeInput()
+    term?.onReconnected()
     this.broadcastActiveStreams()
     this.updateUI()
     if (!this.ui && !term?.isAttached) {
@@ -216,7 +216,7 @@ export class TeletypeManager {
     }
     logger.info('teletype.reconnecting')
     const term = this.terms['1']
-    term?.pauseInput()
+    term?.onDisconnected()
     if (term?.isAttached) {
       return
     }

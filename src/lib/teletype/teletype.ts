@@ -164,20 +164,20 @@ export class Teletype {
     stdout.write(snapshot)
     stdin.on('data', this.handleShellInput)
     if (this.inputPaused) {
-      this.pauseInput()
+      this.showReconnectingTitle()
     }
   }
 
-  pauseInput = () => {
+  onDisconnected = () => {
     this.inputPaused = true
     if (this.attached) {
       this.showReconnectingTitle()
     }
   }
 
-  resumeInput = () => {
+  onReconnected = () => {
     this.inputPaused = false
-    this.stopReconnectingTitle()
+    this.clearReconnectingTitle()
   }
 
   write = (data: string) => {
@@ -254,21 +254,21 @@ export class Teletype {
     }
     updateTitle()
     this.reconnectingTitleTimer = setInterval(updateTitle, 500)
-    this.options.process.once('exit', this.stopReconnectingTitle)
+    this.options.process.once('exit', this.clearReconnectingTitle)
   }
 
-  private stopReconnectingTitle = () => {
+  private clearReconnectingTitle = () => {
     if (!this.reconnectingTitleTimer) {
       return
     }
     clearInterval(this.reconnectingTitleTimer)
     this.reconnectingTitleTimer = undefined
-    this.options.process.removeListener('exit', this.stopReconnectingTitle)
+    this.options.process.removeListener('exit', this.clearReconnectingTitle)
     writeSync(this.options.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
 
   stop = ({killTerm = true}: {killTerm?: boolean} = {}) => {
-    this.resumeInput()
+    this.clearReconnectingTitle()
     this.stopped = true
     this.headlessTerminal?.dispose()
     this.headlessTerminal = undefined
