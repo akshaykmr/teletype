@@ -119,7 +119,7 @@ export class TeletypeManager {
       localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,
       onData: (data) => {
-        if (this.viewers.size === 0 || this.channel.state !== 'joined') {
+        if (this.viewers.size === 0) {
           return
         }
         this.channel.push('new_msg', {
@@ -185,9 +185,6 @@ export class TeletypeManager {
   }
 
   private broadcastActiveStreams = () => {
-    if (this.channel.state !== 'joined') {
-      return
-    }
     this.channel.push('new_msg', {
       t: MessageType.ACTIVE_STREAMS,
       b: true,

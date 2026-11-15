@@ -226,7 +226,7 @@ for (const preparedPi of [false, true]) {
         process, multiplayer: false, stateFile: process.env.HOME + '/host.sqlite',
         joinChannel: ({onJoin}) => {
           queueMicrotask(onJoin);
-          return {state: 'joined', push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
+          return {push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
         },
       });
       await checkHarnessSetup(process.cwd());
@@ -259,7 +259,7 @@ test('unattached Teletype rejoins without starting another shell', {skip: proces
         const roomKey = createRoomKey('test');
         const streams = [];
         const channel = {
-          state: 'joined', leave() {},
+          leave() {},
           push(_event, message) {
             if (message.t === 'active_streams') streams.push(message.d.sids);
           },
@@ -277,9 +277,7 @@ test('unattached Teletype rejoins without starting another shell', {skip: proces
         }).run();
         await setImmediate();
         try {
-          channel.state = 'errored';
           callbacks.onError(new Error('connection interrupted'));
-          channel.state = 'joined';
           callbacks.onJoin();
           assert.deepEqual(streams.at(-1), ['1']);
         } finally {
@@ -324,7 +322,6 @@ for (const scenario of [
         joinChannel: ({onJoin}) => {
           queueMicrotask(onJoin);
           return {
-            state: 'joined',
             push: (_event, message) => {
               if (message.t === 'stream_exited' && multishell) {
                 setImmediate(() => {

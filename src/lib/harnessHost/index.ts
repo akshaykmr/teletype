@@ -155,9 +155,6 @@ export class HarnessHostConnection {
   }
 
   private broadcastEvent = (event: HarnessEvent) => {
-    if (this.channel.state !== 'joined') {
-      return
-    }
     this.channel.push('new_msg', {
       b: true,
       t: 'harness',
