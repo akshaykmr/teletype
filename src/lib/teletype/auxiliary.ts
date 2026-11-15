@@ -87,4 +87,4 @@ export const resizeBestFit = (
   }
 }
 
-export const getReconnectingTitle = (dots: number) => `(${'.'.repeat(dots)}) TeleType - reconnecting`
+export const getReconnectingTitle = (dots: number) => `TeleType - reconnecting${'.'.repeat(dots)}`
