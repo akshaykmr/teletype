@@ -132,6 +132,10 @@ export class Teletype {
     return this.term.pid
   }
 
+  get isAttached() {
+    return this.attached
+  }
+
   get ready() {
     return this.ptyFuture.promise
   }
