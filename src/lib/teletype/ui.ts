@@ -41,6 +41,15 @@ export class MultishellUI {
     }
   }
 
+  reconnecting() {
+    const {stdout} = this.options.process
+    if (stdout.isTTY) {
+      clearLine(stdout, 0)
+      cursorTo(stdout, 0)
+      stdout.write(chalk.yellowBright('Connection lost. Reconnecting…'))
+    }
+  }
+
   confirmStopped() {
     this.options.process.stdout.write(chalk.blueBright('TeleType hosting stopped. All terminal streams have ended.\n'))
   }

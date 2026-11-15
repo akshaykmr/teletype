@@ -12,6 +12,7 @@ import {Socket, Channel, Presence} from 'phoenix'
 
 import camelcaseKeys from 'camelcase-keys'
 import {logErrorAndExit} from 'oorja/lib/utils'
+import {logger} from 'oorja/lib/log'
 
 export class ApiClientError extends Error {}
 
@@ -176,10 +177,7 @@ export class ConnectClient {
           reject(error)
           return
         }
-        logErrorAndExit('connection error', {
-          event: 'socket.error',
-          error,
-        })
+        logger.error('socket.error', error)
       })
       this.socket.connect()
     })

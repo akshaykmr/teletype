@@ -10,8 +10,9 @@ import type {RoomKey} from 'oorja/lib/connect/types'
 import {decrypt, encrypt} from 'oorja/lib/encryption'
 import type {EncryptedPayload} from 'oorja/lib/encryption'
 import {logger} from 'oorja/lib/log'
+import {Unauthorized} from 'oorja/lib/connect/errors'
 import {SharedHarnessHost} from 'oorja/lib/harnessHost/sharedHost/index'
-import {Future} from 'oorja/lib/utils'
+import {Future, logErrorAndExit} from 'oorja/lib/utils'
 
 import {loadHarnessHost} from 'oorja/lib/harnessHost/setup'
 
@@ -75,7 +76,7 @@ export class HarnessHostConnection {
       },
       onJoin: this.handleJoin,
       onClose: this.stop,
-      onError: this.stop,
+      onError: this.handleError,
       onMessage: this.handleMessage,
       handleSessionJoin: this.sendCurrentState,
       handleSessionLeave: this.sendCurrentState,
@@ -116,6 +117,22 @@ export class HarnessHostConnection {
     this.sharedHost.handleCommand(command)
   }
 
+  private handleError = (error: unknown) => {
+    if (this.stopped) {
+      return
+    }
+    if (error instanceof Unauthorized) {
+      void this.stop().then(() => {
+        logErrorAndExit(error.message, {event: 'harness.channel.error', error})
+      })
+      return
+    }
+    logger.info('harness.reconnecting')
+    if (this.standalone) {
+      console.log(chalk.yellowBright('Connection lost. Reconnecting…'))
+    }
+  }
+
   private handleJoin = () => {
     if (this.standalone) {
       console.log(`\n${chalk.greenBright('✔')} ${chalk.bold('Harness Host is online')}`)
@@ -138,6 +155,9 @@ export class HarnessHostConnection {
   }
 
   private broadcastEvent = (event: HarnessEvent) => {
+    if (this.channel.state !== 'joined') {
+      return
+    }
     this.channel.push('new_msg', {
       b: true,
       t: 'harness',

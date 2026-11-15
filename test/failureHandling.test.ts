@@ -226,7 +226,7 @@ for (const preparedPi of [false, true]) {
         process, multiplayer: false, stateFile: process.env.HOME + '/host.sqlite',
         joinChannel: ({onJoin}) => {
           queueMicrotask(onJoin);
-          return {push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
+          return {state: 'joined', push: (_event, message) => state.resolve(decrypt(message.d, roomKey)), leave() {}};
         },
       });
       await checkHarnessSetup(process.cwd());
@@ -244,6 +244,54 @@ for (const preparedPi of [false, true]) {
     },
   )
 }
+
+test('unattached Teletype rejoins without starting another shell', {skip: process.platform === 'win32'}, () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+        import assert from 'node:assert/strict';
+        import {setImmediate} from 'node:timers/promises';
+        import {TeletypeManager} from 'oorja/lib/teletype/index';
+        import {createRoomKey, encrypt} from 'oorja/lib/encryption';
+        const roomKey = createRoomKey('test');
+        const streams = [];
+        const channel = {
+          state: 'joined', leave() {},
+          push(_event, message) {
+            if (message.t === 'active_streams') streams.push(message.d.sids);
+          },
+        };
+        let callbacks;
+        const running = new TeletypeManager({
+          userId: 'test', roomKey, shell: '/bin/sh',
+          multiplex: false, multishell: false, streamingIndicator: false,
+          harnessHost: false, process,
+          joinChannel(options) {
+            callbacks = options;
+            queueMicrotask(options.onJoin);
+            return channel;
+          },
+        }).run();
+        await setImmediate();
+        try {
+          channel.state = 'errored';
+          callbacks.onError(new Error('connection interrupted'));
+          channel.state = 'joined';
+          callbacks.onJoin();
+          assert.deepEqual(streams.at(-1), ['1']);
+        } finally {
+          callbacks.onMessage({from: {session: 'test:session:user'}, sid: '1', t: 'i', d: encrypt('exit\\n', roomKey)});
+          await running;
+        }
+      `,
+    ],
+    {encoding: 'utf8', timeout: 5000},
+  )
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+})
 
 for (const scenario of [
   {name: 'missing shell reports its process exit', missing: true, exitCode: 0, multishell: false, status: 0},
@@ -276,6 +324,7 @@ for (const scenario of [
         joinChannel: ({onJoin}) => {
           queueMicrotask(onJoin);
           return {
+            state: 'joined',
             push: (_event, message) => {
               if (message.t === 'stream_exited' && multishell) {
                 setImmediate(() => {

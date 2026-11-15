@@ -60,6 +60,7 @@ export class TeletypeManager {
   private readonly viewers = new Set<string>()
   private readonly ui?: MultishellUI
   private stopped = false
+  private started = false
   private resolve?: (value: null) => void
 
   constructor(private readonly options: TeletypeOptions) {
@@ -80,7 +81,7 @@ export class TeletypeManager {
           multiplexed: this.options.multiplex,
           multishell: this.options.multishell,
         },
-        onJoin: this.startTerm,
+        onJoin: this.handleJoin,
         onClose: this.handleClose,
         onError: this.handleError,
         onMessage: this.handleMessage,
@@ -90,8 +91,17 @@ export class TeletypeManager {
       this.ui?.start(this.handleInterrupt)
     })
 
-  private startTerm = () => {
-    this.start(this.options.process.cwd())
+  private handleJoin = () => {
+    if (!this.started) {
+      this.started = true
+      this.start(this.options.process.cwd())
+      return
+    }
+    this.broadcastActiveStreams()
+    this.updateUI()
+    if (!this.ui) {
+      console.log(chalk.greenBright('Connection restored. Streaming resumed.'))
+    }
   }
 
   private start = (cwd: string) => {
@@ -109,7 +119,7 @@ export class TeletypeManager {
       localAttachmentEnabled: !this.options.multishell,
       process: this.options.process,
       onData: (data) => {
-        if (this.viewers.size === 0) {
+        if (this.viewers.size === 0 || this.channel.state !== 'joined') {
           return
         }
         this.channel.push('new_msg', {
@@ -175,6 +185,9 @@ export class TeletypeManager {
   }
 
   private broadcastActiveStreams = () => {
+    if (this.channel.state !== 'joined') {
+      return
+    }
     this.channel.push('new_msg', {
       t: MessageType.ACTIVE_STREAMS,
       b: true,
@@ -193,14 +206,26 @@ export class TeletypeManager {
     })
   }
 
-  private handleError = (err?: any) => {
+  private handleError = (error: unknown) => {
+    if (this.stopped) {
+      return
+    }
+    if (!(error instanceof Unauthorized) && !this.terms['1']?.isAttached) {
+      logger.info('teletype.reconnecting')
+      if (this.ui) {
+        this.ui.reconnecting()
+      } else {
+        console.log(chalk.yellowBright('Connection lost. Reconnecting…'))
+      }
+      return
+    }
     this.stop({leaveChannel: false})
-    if (err instanceof Unauthorized) {
-      logErrorAndExit(chalk.redBright(err.message), {event: 'channel.error', error: err})
+    if (error instanceof Unauthorized) {
+      logErrorAndExit(chalk.redBright(error.message), {event: 'channel.error', error})
     } else {
       logErrorAndExit(chalk.redBright('connection error, terminated stream.'), {
         event: 'channel.error',
-        error: err,
+        error,
       })
     }
   }
