@@ -268,7 +268,9 @@ export class Teletype {
   }
 
   stop = ({killTerm = true}: {killTerm?: boolean} = {}) => {
-    this.clearReconnectingTitle()
+    if (this.reconnectingTitleTimer) {
+      this.clearReconnectingTitle()
+    }
     this.stopped = true
     this.headlessTerminal?.dispose()
     this.headlessTerminal = undefined
