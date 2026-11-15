@@ -89,33 +89,20 @@ export const resizeBestFit = (
   }
 }
 
-export class ReconnectingTitle {
-  private timer?: NodeJS.Timeout
-
-  constructor(private readonly process: NodeJS.Process) {}
-
-  start = () => {
-    if (!this.process.stdout.isTTY || this.timer) {
-      return
-    }
-    this.process.stdout.write('\u001B[22;2t') // Save the terminal's current window title.
-    let dots = 0
-    const updateTitle = () => {
-      dots = (dots % 3) + 1
-      setTerminalTitle(`(${'.'.repeat(dots)}) TeleType - reconnecting`)
-    }
-    updateTitle()
-    this.timer = setInterval(updateTitle, 500)
-    this.process.once('exit', this.stop)
+export const showReconnectingTitle = (process: NodeJS.Process) => {
+  process.stdout.write('\u001B[22;2t') // Save the terminal's current window title.
+  let dots = 0
+  const updateTitle = () => {
+    dots = (dots % 3) + 1
+    setTerminalTitle(`(${'.'.repeat(dots)}) TeleType - reconnecting`)
   }
-
-  stop = () => {
-    if (!this.timer) {
-      return
-    }
-    clearInterval(this.timer)
-    this.timer = undefined
-    this.process.removeListener('exit', this.stop)
-    writeSync(this.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
+  updateTitle()
+  const timer = setInterval(updateTitle, 500)
+  const restoreTitle = () => {
+    clearInterval(timer)
+    process.removeListener('exit', restoreTitle)
+    writeSync(process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
+  process.once('exit', restoreTitle)
+  return restoreTitle
 }

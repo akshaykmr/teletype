@@ -9,7 +9,7 @@ import {
   clearAttachmentScreen,
   areDimensionEqual,
   resizeBestFit,
-  ReconnectingTitle,
+  showReconnectingTitle,
 } from 'oorja/lib/teletype/auxiliary'
 import {HeadlessTerminal} from 'oorja/lib/teletype/headlessTerminal'
 import {spawnStreamingShell} from 'oorja/lib/teletype/prompt'
@@ -39,16 +39,14 @@ export class Teletype {
   private attached = false
   private interrupted = false
   private inputPaused = false
-  private readonly reconnectingTitle: ReconnectingTitle
+  private restoreTitle?: () => void
   private headlessTerminal?: HeadlessTerminal
   private readonly ptyFuture: Future<void> = new Future()
   private ptyReadyTimer?: NodeJS.Timeout
   private stopped = false
   private cleanupShell: (options?: {killTerm?: boolean}) => void = () => {}
 
-  constructor(private readonly options: TeletypeOptions) {
-    this.reconnectingTitle = new ReconnectingTitle(options.process)
-  }
+  constructor(private readonly options: TeletypeOptions) {}
 
   start = () => {
     const {stdin, stdout} = this.options.process
@@ -171,14 +169,15 @@ export class Teletype {
 
   pauseInput = () => {
     this.inputPaused = true
-    if (this.attached) {
-      this.reconnectingTitle.start()
+    if (this.attached && this.options.process.stdout.isTTY && !this.restoreTitle) {
+      this.restoreTitle = showReconnectingTitle(this.options.process)
     }
   }
 
   resumeInput = () => {
     this.inputPaused = false
-    this.reconnectingTitle.stop()
+    this.restoreTitle?.()
+    this.restoreTitle = undefined
   }
 
   write = (data: string) => {
