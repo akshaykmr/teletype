@@ -177,7 +177,7 @@ export class Teletype {
 
   resumeInput = () => {
     this.inputPaused = false
-    this.restoreTitle()
+    this.stopReconnectingTitle()
   }
 
   write = (data: string) => {
@@ -254,16 +254,16 @@ export class Teletype {
     }
     updateTitle()
     this.reconnectingTitleTimer = setInterval(updateTitle, 500)
-    this.options.process.once('exit', this.restoreTitle)
+    this.options.process.once('exit', this.stopReconnectingTitle)
   }
 
-  private restoreTitle = () => {
+  private stopReconnectingTitle = () => {
     if (!this.reconnectingTitleTimer) {
       return
     }
     clearInterval(this.reconnectingTitleTimer)
     this.reconnectingTitleTimer = undefined
-    this.options.process.removeListener('exit', this.restoreTitle)
+    this.options.process.removeListener('exit', this.stopReconnectingTitle)
     writeSync(this.options.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
 
