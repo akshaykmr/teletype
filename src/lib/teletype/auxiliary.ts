@@ -86,3 +86,5 @@ export const resizeBestFit = (
     term.write('\x0c') // clear screen
   }
 }
+
+export const getReconnectingTitle = (dots: number) => `TeleType - reconnecting${'.'.repeat(dots)}`

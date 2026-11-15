@@ -1,4 +1,5 @@
 import {IPty} from 'node-pty'
+import {writeSync} from 'node:fs'
 import {emitKeypressEvents} from 'readline'
 import type {Key} from 'readline'
 import {
@@ -9,10 +10,11 @@ import {
   clearAttachmentScreen,
   areDimensionEqual,
   resizeBestFit,
+  getReconnectingTitle,
 } from 'oorja/lib/teletype/auxiliary'
 import {HeadlessTerminal} from 'oorja/lib/teletype/headlessTerminal'
 import {spawnStreamingShell} from 'oorja/lib/teletype/prompt'
-import {Future} from 'oorja/lib/utils'
+import {Future, setTerminalTitle} from 'oorja/lib/utils'
 
 type TeletypeOptions = {
   username: string
@@ -37,6 +39,8 @@ export class Teletype {
   private term!: IPty
   private attached = false
   private interrupted = false
+  private inputPaused = false
+  private reconnectingTitleTimer?: NodeJS.Timeout
   private headlessTerminal?: HeadlessTerminal
   private readonly ptyFuture: Future<void> = new Future()
   private ptyReadyTimer?: NodeJS.Timeout
@@ -159,6 +163,21 @@ export class Teletype {
     clearAttachmentScreen(stdout)
     stdout.write(snapshot)
     stdin.on('data', this.handleShellInput)
+    if (this.inputPaused) {
+      this.showReconnectingTitle()
+    }
+  }
+
+  onDisconnected = () => {
+    this.inputPaused = true
+    if (this.attached) {
+      this.showReconnectingTitle()
+    }
+  }
+
+  onReconnected = () => {
+    this.inputPaused = false
+    this.clearReconnectingTitle()
   }
 
   write = (data: string) => {
@@ -202,16 +221,56 @@ export class Teletype {
       return
     }
     if (key.ctrl && key.name === 'c') {
-      this.interrupted = true
-      this.term.kill()
+      this.interrupt()
     }
   }
 
   private handleShellInput = (data: Buffer | string) => {
-    this.term.write(data.toString('utf8'))
+    const input = data.toString('utf8')
+    if (this.inputPaused) {
+      if (input.includes('\x03')) {
+        this.interrupt()
+      }
+      return
+    }
+    this.term.write(input)
+  }
+
+  private interrupt = () => {
+    this.interrupted = true
+    this.term.kill()
+  }
+
+  private showReconnectingTitle = () => {
+    const {stdout} = this.options.process
+    if (!stdout.isTTY || this.reconnectingTitleTimer) {
+      return
+    }
+    stdout.write('\u001B[22;2t') // Save the terminal's current window title.
+    let dots = 0
+    const updateTitle = () => {
+      dots = (dots % 3) + 1
+      setTerminalTitle(getReconnectingTitle(dots))
+    }
+    updateTitle()
+    this.reconnectingTitleTimer = setInterval(updateTitle, 500)
+    this.options.process.once('exit', this.clearReconnectingTitle)
+  }
+
+  private clearReconnectingTitle = () => {
+    if (!this.reconnectingTitleTimer) {
+      return
+    }
+    clearInterval(this.reconnectingTitleTimer)
+    this.reconnectingTitleTimer = undefined
+    this.options.process.removeListener('exit', this.clearReconnectingTitle)
+    writeSync(this.options.process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
   }
 
   stop = ({killTerm = true}: {killTerm?: boolean} = {}) => {
+    if (this.reconnectingTitleTimer) {
+      this.clearReconnectingTitle()
+    }
     this.stopped = true
     this.headlessTerminal?.dispose()
     this.headlessTerminal = undefined
