@@ -91,7 +91,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.14.0",
     "oclif": "^6.0.15",
-    "oorja-harness-host": "0.2.11",
+    "oorja-harness-host": "0.2.12",
     "prettier": "^3.10.1",
     "shx": "^0.4.0",
     "ts-node": "^10.9.2",
@@ -99,7 +99,7 @@
     "typescript-eslint": "^8.72.2"
   },
   "peerDependencies": {
-    "oorja-harness-host": "^0.2.11"
+    "oorja-harness-host": "^0.2.12"
   },
   "peerDependenciesMeta": {
     "oorja-harness-host": {
