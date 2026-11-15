@@ -97,9 +97,11 @@ export class TeletypeManager {
       this.start(this.options.process.cwd())
       return
     }
+    const term = this.terms['1']
+    term?.resumeInput()
     this.broadcastActiveStreams()
     this.updateUI()
-    if (!this.ui) {
+    if (!this.ui && !term?.isAttached) {
       console.log(chalk.greenBright('Connection restored. Streaming resumed.'))
     }
   }
@@ -207,23 +209,21 @@ export class TeletypeManager {
     if (this.stopped) {
       return
     }
-    if (!(error instanceof Unauthorized) && !this.terms['1']?.isAttached) {
-      logger.info('teletype.reconnecting')
-      if (this.ui) {
-        this.ui.reconnecting()
-      } else {
-        console.log(chalk.yellowBright('Connection lost. Reconnecting…'))
-      }
+    if (error instanceof Unauthorized) {
+      this.stop({leaveChannel: false})
+      logErrorAndExit(chalk.redBright(error.message), {event: 'channel.error', error})
       return
     }
-    this.stop({leaveChannel: false})
-    if (error instanceof Unauthorized) {
-      logErrorAndExit(chalk.redBright(error.message), {event: 'channel.error', error})
+    logger.info('teletype.reconnecting')
+    const term = this.terms['1']
+    term?.pauseInput()
+    if (term?.isAttached) {
+      return
+    }
+    if (this.ui) {
+      this.ui.reconnecting()
     } else {
-      logErrorAndExit(chalk.redBright('connection error, terminated stream.'), {
-        event: 'channel.error',
-        error,
-      })
+      console.log(chalk.yellowBright('Connection lost. Reconnecting…'))
     }
   }
 
