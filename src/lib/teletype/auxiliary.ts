@@ -2,8 +2,6 @@ import chalk from 'chalk'
 import termSize from 'terminal-size'
 import {IPty} from 'node-pty'
 import {clearScreenDown, cursorTo} from 'readline'
-import {writeSync} from 'node:fs'
-import {setTerminalTitle} from 'oorja/lib/utils'
 
 export const DEFAULT_DIMENSIONS: dimensions = {rows: 24, cols: 80}
 
@@ -89,20 +87,4 @@ export const resizeBestFit = (
   }
 }
 
-export const showReconnectingTitle = (process: NodeJS.Process) => {
-  process.stdout.write('\u001B[22;2t') // Save the terminal's current window title.
-  let dots = 0
-  const updateTitle = () => {
-    dots = (dots % 3) + 1
-    setTerminalTitle(`(${'.'.repeat(dots)}) TeleType - reconnecting`)
-  }
-  updateTitle()
-  const timer = setInterval(updateTitle, 500)
-  const restoreTitle = () => {
-    clearInterval(timer)
-    process.removeListener('exit', restoreTitle)
-    writeSync(process.stdout.fd, '\u001B[23;2t') // Restore even during process exit.
-  }
-  process.once('exit', restoreTitle)
-  return restoreTitle
-}
+export const getReconnectingTitle = (dots: number) => `(${'.'.repeat(dots)}) TeleType - reconnecting`
