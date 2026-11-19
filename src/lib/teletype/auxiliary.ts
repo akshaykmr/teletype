@@ -9,12 +9,14 @@ export const initScreen = ({
   username,
   hostname,
   shell,
+  isProgram = false,
   multiplexed,
   harnessHostEnabled,
 }: {
   username: string
   hostname: string
   shell: string
+  isProgram?: boolean
   multiplexed: boolean
   harnessHostEnabled: boolean
 }) => {
@@ -28,20 +30,22 @@ export const initScreen = ({
   }
 
   if (multiplexed) {
-    console.log(chalk.yellowBright('You have allowed room participants to write to your shell'))
+    console.log(chalk.yellowBright('You have allowed room participants to write to your terminal'))
   }
 
   console.log(
-    `Note: Your shell size may adjust for optimum viewing experience for all participants.\n
+    `Note: Your terminal size may adjust for optimum viewing experience for all participants.\n
 This session is end-to-end encrypted.
 
-${chalk.blueBright('┌─ Control your shell')}
-${chalk.blueBright('│')} Everyone in the space can view this shell on the web.
+${chalk.blueBright('┌─ Control your terminal')}
+${chalk.blueBright('│')} Everyone in the space can view this terminal on the web.
 ${chalk.blueBright('│')} Anyone with write access can also control it there.
 ${chalk.blueBright('│')} If you prefer this terminal, press ${chalk.yellowBright('Enter')} to attach here.
-${chalk.blueBright('│')} Once attached, run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright(
-      'Ctrl-D',
-    )} to stop streaming.
+${chalk.blueBright('│')} ${
+      isProgram
+        ? 'Once attached, quit the program to stop streaming.'
+        : `Once attached, run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright('Ctrl-D')} to stop streaming.`
+    }
 ${chalk.blueBright('└─')}
 
 Press ${chalk.yellowBright('Ctrl-C')} now to stop streaming.\n`,
