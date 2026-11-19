@@ -59,6 +59,18 @@ npx --yes oorja@latest teletype --ci-debug
 
 `--ci-debug` creates an anonymous writable terminal stream and prints its link. The CI step stays running until the shell exits. `--yes` skips npm's installation prompt.
 
+To stream a terminal program instead of your default shell, put its executable and arguments after `--`:
+
+```sh
+teletype --new -- htop
+teletype --new --multiplayer -- btop --update 2000
+teletype 'sk-xxxx:space-id#encryption-secret' -- my-custom-tui --help
+```
+
+Arguments after `--` are passed directly to the program, including flags, spaces, and shell metacharacters; Teletype does not interpret them through a shell. Use an explicit shell such as `-- bash -lc 'command1 | command2'` when you want shell syntax. An explicit program skips Teletype's shell prompt setup. Without a program, Teletype still launches your default shell (or the shell selected with `--shell`). Do not combine `--shell` with a program after `--`.
+
+The program runs in the current directory with your environment. Streaming ends when it exits, without starting a fallback shell. With `--multishell`, new terminals launch the same program and arguments, and the host stays online after a terminal exits. Program access includes whatever that program permits, including any shell or command execution features it offers.
+
 **your stream is end-to-end encrypted**
 
 **PRO TIP:**
@@ -88,7 +100,7 @@ More ways to [contact](https://supakit.app/contact).
 
 ## `oorja teletype [STREAMKEY]`
 
-Launch a terminal streaming session in SupaKit.
+Launch a shell or terminal program and stream it to SupaKit.
 
 ```
 USAGE
@@ -97,23 +109,31 @@ USAGE
 
 FLAGS
   -h, --help                          Show CLI help.
-  -m, --multiplayer                   Allow space participants to type into and control this shell.
+  -m, --multiplayer                   Allow space participants to type into and control this terminal.
   -n, --new                           Create a new space
-  -s, --shell=<value>                 shell to use. e.g. bash, fish
+  -s, --shell=<value>                 Shell to use instead of the default shell. Cannot be combined with a program after
+                                      --.
       --anonymous                     Create an anonymous session without prompting for sign-in.
       --ci-debug                      Create a new anonymous writable bash stream for CI debugging.
       --harness-host                  Allow this machine to run agent sessions for this space.
-      --multishell                    Allow this CLI session to host multiple terminal shells. Off by default
+      --multishell                    Allow this CLI session to host multiple terminals using the same launch target.
+                                      Off by default
       --streaming-indicator=<option>  [default: enabled] Prefix the shell prompt with a streaming indicator.
                                       <options: enabled|disabled>
 
 DESCRIPTION
-  Launch a terminal streaming session in SupaKit.
+  Launch a shell or terminal program and stream it to SupaKit.
+
+  Pass a program and its arguments after -- to launch it directly instead of a shell.
+  Usage: teletype [STREAMKEY] [flags] -- PROGRAM [ARGS...]
 
 ALIASES
   $ oorja tty
 
 EXAMPLES
+  $ teletype --new -- htop
+  Launch htop directly instead of a shell. Everything after -- is passed to the program unchanged.
+
   $ teletype
   Will prompt to choose streaming destination - either enter a stream key for an existing space or create a new space.
 

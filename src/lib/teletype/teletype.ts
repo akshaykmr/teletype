@@ -20,6 +20,8 @@ type TeletypeOptions = {
   username: string
   hostname: string
   shell: string
+  /** Explicit program arguments; undefined keeps the normal shell startup hooks. */
+  launchArgs?: string[]
   multiplex: boolean
   streamingIndicator: boolean
   harnessHost: boolean
@@ -68,6 +70,8 @@ export class Teletype {
         env: this.options.process.env,
       },
       this.options.streamingIndicator,
+      this.options.process.platform,
+      this.options.launchArgs,
     )
 
     const dimensionPoll = setInterval(this.reEvaluateOwnDimensions, 1000)
@@ -105,6 +109,7 @@ export class Teletype {
         username: this.options.username,
         hostname: this.options.hostname,
         shell: this.options.shell,
+        hasExplicitLaunchTarget: this.options.launchArgs !== undefined,
         multiplexed: this.options.multiplex,
         harnessHostEnabled: this.options.harnessHost,
       })
@@ -186,7 +191,7 @@ export class Teletype {
 
   setDimensions = (session: string, dimensions: dimensions & {initial?: boolean}) => {
     this.userDimensions[session] = dimensions
-    resizeBestFit(this.term, this.userDimensions, dimensions.initial)
+    resizeBestFit(this.term, this.userDimensions, dimensions.initial && this.options.launchArgs === undefined)
     this.resizeHeadlessTerminal()
   }
 

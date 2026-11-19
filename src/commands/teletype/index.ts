@@ -17,9 +17,16 @@ import {checkHarnessSetup} from 'oorja/lib/harnessHost/setup'
 export default class TeleTypeCommand extends BaseCommand {
   static order = 1
   static aliases = ['tty']
-  static description = `Launch a terminal streaming session in SupaKit.`
+  static description = `Launch a shell or terminal program and stream it to SupaKit.
+
+Pass a program and its arguments after -- to launch it directly instead of a shell.
+Usage: teletype [STREAMKEY] [flags] -- PROGRAM [ARGS...]`
 
   static examples = [
+    `${chalk.blueBright('$ teletype --new -- htop')}
+Launch htop directly instead of a shell. Everything after -- is passed to the program unchanged.
+
+`,
     `${chalk.blueBright('$ teletype')}
 Will prompt to choose streaming destination - either enter a stream key for an existing space or create a new space.
 
@@ -48,17 +55,17 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     help: Flags.help({char: 'h'}),
     shell: Flags.string({
       char: 's',
-      description: 'shell to use. e.g. bash, fish',
+      description: 'Shell to use instead of the default shell. Cannot be combined with a program after --.',
     }),
     multiplayer: Flags.boolean({
       aliases: ['multiplex'],
       char: 'm',
       deprecateAliases: true,
-      description: 'Allow space participants to type into and control this shell.',
+      description: 'Allow space participants to type into and control this terminal.',
       default: false,
     }),
     multishell: Flags.boolean({
-      description: 'Allow this CLI session to host multiple terminal shells. Off by default',
+      description: 'Allow this CLI session to host multiple terminals using the same launch target. Off by default',
       default: false,
     }),
     new: Flags.boolean({
@@ -93,6 +100,9 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
   }
 
   async run() {
+    const separator = this.argv.indexOf('--')
+    const commandArgv = separator === -1 ? undefined : this.argv.slice(separator + 1)
+    const teletypeArgv = separator === -1 ? this.argv : this.argv.slice(0, separator)
     const {
       args,
       flags: {
@@ -105,9 +115,16 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
         'streaming-indicator': streamingIndicatorSetting,
         'harness-host': harnessHost,
       },
-    } = await this.parse(TeleTypeCommand)
+    } = await this.parse(TeleTypeCommand, teletypeArgv)
+    if (commandArgv && !commandArgv[0]) {
+      this.error('Specify a program after --.', {exit: 2})
+    }
+    if (commandArgv && selectedShell) {
+      this.error('Use either --shell or a program after --.', {exit: 2})
+    }
     const streamingIndicator = streamingIndicatorSetting === 'enabled'
-    const shell = selectedShell || getDefaultShell({ciDebug})
+    const shell = commandArgv?.[0] || selectedShell || getDefaultShell({ciDebug})
+    const launchArgs = commandArgv?.slice(1)
     const shouldCreateNewSpace = createNewSpace || ciDebug
     const shouldUseAnonymousAuth = anonymous || ciDebug
     const shouldMultiplex = multiplayer || ciDebug
@@ -125,6 +142,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     if (args.streamKey) {
       await this.streamUsingStreamKey(app, {
         shell,
+        launchArgs,
         multiplex: shouldMultiplex,
         multishell,
         streamingIndicator,
@@ -136,6 +154,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     if (shouldCreateNewSpace) {
       await this.createRoomAndStream(app, {
         shell,
+        launchArgs,
         multiplex: shouldMultiplex,
         multishell,
         anonymous: shouldUseAnonymousAuth,
@@ -163,6 +182,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       case STREAM_USING_STREAM_KEY:
         await this.streamUsingStreamKey(app, {
           shell,
+          launchArgs,
           multiplex: shouldMultiplex,
           multishell,
           streamingIndicator,
@@ -172,6 +192,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       case STREAM_TO_NEW_SPACE:
         await this.createRoomAndStream(app, {
           shell,
+          launchArgs,
           multiplex: shouldMultiplex,
           multishell,
           anonymous: shouldUseAnonymousAuth,
@@ -187,6 +208,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     app: App,
     options: {
       shell: string
+      launchArgs?: string[]
       multiplex: boolean
       multishell: boolean
       streamingIndicator: boolean
@@ -210,6 +232,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
     app: App,
     {
       shell,
+      launchArgs,
       multiplex,
       multishell,
       anonymous,
@@ -217,6 +240,7 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       harnessHost,
     }: {
       shell: string
+      launchArgs?: string[]
       multiplex: boolean
       multishell: boolean
       anonymous: boolean
@@ -282,7 +306,16 @@ Creates a new anonymous stream without prompting for sign-in. Useful for CI debu
       )
     }
     this.clearstdin()
-    return await oorja.teletype({roomKey, shell, multiplex, multishell, streamingIndicator, harnessHost, process})
+    return await oorja.teletype({
+      roomKey,
+      shell,
+      launchArgs,
+      multiplex,
+      multishell,
+      streamingIndicator,
+      harnessHost,
+      process,
+    })
   }
 
   private clearstdin() {

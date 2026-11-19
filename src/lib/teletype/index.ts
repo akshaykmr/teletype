@@ -29,6 +29,8 @@ export type TeletypeOptions = {
   userId: string
   roomKey: RoomKey
   shell: string
+  /** Explicit program arguments; undefined keeps the normal shell startup hooks. */
+  launchArgs?: string[]
   multiplex: boolean
   multishell: boolean
   streamingIndicator: boolean
@@ -114,6 +116,7 @@ export class TeletypeManager {
       username: this.username,
       hostname: this.hostname,
       shell: this.options.shell,
+      launchArgs: this.options.launchArgs,
       multiplex: this.options.multiplex,
       streamingIndicator: this.options.streamingIndicator,
       harnessHost: this.options.harnessHost,
@@ -162,7 +165,7 @@ export class TeletypeManager {
     }
 
     this.stop({killTerms: false})
-    console.log(chalk.blueBright('terminated shell stream to SupaKit. byee!'))
+    console.log(chalk.blueBright('terminated terminal stream to SupaKit. byee!'))
     this.resolve?.(null)
   }
 
