@@ -9,14 +9,14 @@ export const initScreen = ({
   username,
   hostname,
   shell,
-  isProgram = false,
+  hasExplicitLaunchTarget = false,
   multiplexed,
   harnessHostEnabled,
 }: {
   username: string
   hostname: string
   shell: string
-  isProgram?: boolean
+  hasExplicitLaunchTarget?: boolean
   multiplexed: boolean
   harnessHostEnabled: boolean
 }) => {
@@ -42,7 +42,7 @@ ${chalk.blueBright('│')} Everyone in the space can view this terminal on the w
 ${chalk.blueBright('│')} Anyone with write access can also control it there.
 ${chalk.blueBright('│')} If you prefer this terminal, press ${chalk.yellowBright('Enter')} to attach here.
 ${chalk.blueBright('│')} ${
-      isProgram
+      hasExplicitLaunchTarget
         ? 'Once attached, quit the program to stop streaming.'
         : `Once attached, run ${chalk.yellowBright('exit')} or press ${chalk.yellowBright('Ctrl-D')} to stop streaming.`
     }

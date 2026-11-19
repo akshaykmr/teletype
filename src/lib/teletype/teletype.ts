@@ -109,7 +109,7 @@ export class Teletype {
         username: this.options.username,
         hostname: this.options.hostname,
         shell: this.options.shell,
-        isProgram: this.options.launchArgs !== undefined,
+        hasExplicitLaunchTarget: this.options.launchArgs !== undefined,
         multiplexed: this.options.multiplex,
         harnessHostEnabled: this.options.harnessHost,
       })

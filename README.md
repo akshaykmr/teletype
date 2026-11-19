@@ -63,7 +63,7 @@ To stream a terminal program instead of your default shell, put its executable a
 
 ```sh
 teletype --new -- htop
-teletype --new --multiplayer -- lazygit -p /path/to/repo
+teletype --new --multiplayer -- btop --update 2000
 teletype 'sk-xxxx:space-id#encryption-secret' -- my-custom-tui --help
 ```
 
